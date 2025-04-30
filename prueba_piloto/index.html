@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Windows 98</title>
+  <link href="./files/styles.css" rel="stylesheet">
+  
+</head>
+<body>
+
+  <!-- Pantalla de login tipo bloqueo Windows -->
+<div id="pantallaLogin" style="display: none">
+
+  <div class="pantallaLoginBurnout">
+    <img src="./resources/burnout.png" alt="avatar" class="avatar">
+    <h2>burnout</h2>
+    <input id="loginPass" type="password" placeholder="Contraseña" >
+    <button id="buttonLogin" onclick="verificarLogin()" >Iniciar sesión</button>
+    <div id="loginError" ></div>
+  </div>
+</div>
+
+  <!-- Iconos -->
+  <div class="iconos">
+    <div class="icono" onclick="abrirVentana('miPCWindow')">
+      <img src="./resources/computer_explorer-2.png" alt="MiOrdenador">
+      <div>Mi Ordenador</div>
+    </div>
+    <div class="icono" onclick="abrirVentana('documentosWindow')">
+      <img src="./resources/directory_open_file_mydocs-4.png" alt="MisDocumentos">
+      <div>Mis Documentos</div>
+    </div>
+    <div class="icono" onclick="abrirVentana('InternetWindow')">
+      <img src="./resources/msie1-0.png" alt="InternetExplorer">
+      <div>Internet Explorer</div>
+    </div>
+    <div class="icono" onclick="abrirVentana('cmdWindow')">
+      <img src="./resources/network_normal_two_pcs-2.png" alt="InternetExplorer">
+      <div>Configurar Red</div>
+    </div>
+    <div class="icono" onclick="abrirVentana('cmdWindow')">
+      <img src="./resources/console_prompt-0.png" alt="cmd">
+      <div>CMD</div>
+    </div>
+    <div class="icono" onclick="abrirVentana('papeleraWindow')">
+      <img src="./resources/recycle_bin_empty-2.png" alt="PapeleraDeReciclaje">
+      <div>Papelera de Reciclaje</div>
+    </div>
+  </div>
+
+  <!-- Barra de tareas -->
+  <div id="barraTareas">
+    <button id="inicioBtn">
+      <img src="./resources/windows-0.png" alt="start">
+      Inicio
+    </button>
+    <span>13:37 PM</span>
+  </div>
+
+  <!-- Ventana MiPC -->
+  <div id="miPCWindow" class="ventana">
+    <div class="ventana-header">
+      Mi Ordenador
+      <div class="botones-header">
+        <div class="btn-ventana">_</div>
+        <div class="btn-ventana">☐</div>
+        <div class="btn-ventana" onclick="cerrarVentana('miPCWindow')">✕</div>
+      </div>
+    </div>
+    <div class="barra-menu">
+      <span>Archivo</span>
+      <span>Editar</span>
+      <span>Ver</span>
+      <span>Ir</span>
+      <span>Favoritos</span>
+      <span>Ayuda</span>
+  </div>
+  <div class="barra-herramientas">
+    <img src="./resources/back.png" alt="Atrás">
+    <img src="./resources/forward.png" alt="Adelante">
+    <img src="./resources/up.png" alt="Subir un nivel">
+    <img src="./resources/search.png" alt="Buscar">
+    <!-- Añade más íconos según tu descarga -->
+  </div>
+
+  <div class="barra-direccion">
+    <label>Direccion:</label>
+    <input type="text" value="My Ordenador" readonly>
+  </div>
+    <div id="miPContenido" class="contenido-mi-pc">
+      <div class="icono-pc">
+        <img src="./resources/hard_disk_drive_cool-0.png" alt="C:">
+        <span>Disco local (C:)</span>
+      </div>
+      <div class="icono-pc">
+        <img src="./resources/floppy_drive_3_5-0.png" alt="A:">
+        <span>Unidad de disquete (A:)</span>
+      </div>
+      <div class="icono-pc">
+        <img src="./resources/network_drive_cool-0.png" alt="Red">
+        <span>Entorno de red</span>
+      </div>
+      <div class="icono-pc">
+        <img src="./resources/cd_drive-0.png" alt="A:">
+        <span>Unidad de lectura CD (G:)</span>
+      </div>
+    </div>
+    <div class="barra-inferior">
+    <span>1 objeto(s) seleccionado(s)</span>
+    <span>Espacio libre: 6,07 GB, Capacidad:</span>
+    <span class="icono-barra"><img src="./resources/computer-0.png" alt="icono"></span>
+    <span>Mi PC</span>
+  </div>
+  </div>
+
+  <!-- Ventana CMD -->
+  <div id="cmdWindow" class="ventana">
+    <div class="ventana-header">
+      CMD.EXE
+      <div class="botones-header">
+        <div class="btn-ventana">_</div>
+        <div class="btn-ventana">☐</div>
+        <div class="btn-ventana" onclick="cerrarVentana('cmdWindow')">✕</div>
+      </div>
+    </div>
+    <div id="cmdContenido">
+      *** SISTEMA DE ACCESO SECRETO ***<br><br>
+      Usuario: agente_47<br>
+      Acceso: restringido<br><br>
+      >> Ingresar código de activación:
+      <br>
+      <span class="blink">_</span>
+      <input type="text" id="codigoInput" autofocus onkeydown="if(event.key==='Enter') verificarCodigo()"/>
+      <div id="error"></div>
+    </div>
+  </div>
+
+  <!-- Ventana Mapa -->
+  <div id="mapaWindow" class="ventana">
+    <div class="ventana-header">
+      Coordenadas Secretas
+      <div class="botones-header">
+        <div class="btn-ventana">_</div>
+        <div class="btn-ventana">☐</div>
+        <div class="btn-ventana" onclick="cerrarVentana('mapaWindow')">✕</div>
+      </div>
+  </div>
+    <div id="mapaWindowBody">
+      <iframe id="mapaContenido" src="mapa.html"></iframe>
+    </div>
+  </div>
+
+  <script src="./files/script.js"></script>   
+</body>
+</html>

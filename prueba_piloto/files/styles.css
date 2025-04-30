@@ -1,0 +1,389 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #008080;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+#pantallaLogin {  
+
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background-image: url('../resources/thumb.png');
+  background-color: #cccccc;
+  background-image: '../resources/thumb.png';
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  z-index: 9999;
+  font-family: 'Tahoma', sans-serif;
+}
+
+.pantallaLoginBurnout{
+  background: rgba(0,0,0,0.4);
+  padding: 40px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px black;
+  width: 300px;
+  text-align: center;
+}
+
+.avatar{
+  width: 80px; 
+  border-radius: 50%; 
+  margin-bottom: 20px;
+}
+
+#loginPass{  
+  margin-top: 15px;
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+  border: none;
+  border-radius: 4px;
+}
+
+#buttonLogin{
+  margin-top: 15px;
+  width: 100%;
+  padding: 10px;
+  background: #0078d7;
+  border: none;
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+#loginError{
+  margin-top: 10px; 
+  color: #ffaaaa;
+}
+
+.iconos {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  z-index: 1;
+}
+
+.icono {
+  width: 60px;
+  text-align: center;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.icono img {
+  width: 40px;
+  height: 40px;
+  display: block;
+  margin: 2px auto;
+}
+
+#barraTareas {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 40px;
+  background-color: #C0C0C0;
+  border-top: 2px solid #808080;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  z-index: 2;
+}
+
+#inicioBtn {
+  background-color: #C0C0C0;
+  border: 2px outset #fff;
+  padding: 2px 12px;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+#inicioBtn img {
+  width: 20px;
+  height: 20px;
+}
+
+#cmdWindow {
+  width: 750px;
+  height: 400px;
+  position: absolute;
+  top: 50px;
+  left: 80px;
+  display: none;
+  z-index: 3;
+}
+
+#miPCWindow {
+  width: 500px;
+  height: 400px;
+}
+
+.ventana {
+  width: 500px;
+  height: 300px;
+  background-color: #C0C0C0;
+  border: 2px outset #fff;
+  position: absolute;
+  top: 80px;
+  left: 80px;
+  z-index: 5;
+  display: none;
+  box-shadow: 4px 4px #808080;
+}
+
+.ventana-header {
+  background-color: #000080;
+  color: white;
+  padding: 2px 5px;
+  font-weight: bold;
+  font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: move;
+}
+
+.botones-header {
+  display: flex;
+  gap: 2px;
+}
+
+.btn-ventana {
+  width: 20px;
+  height: 20px;
+  background-color: #C0C0C0;
+  color: black;
+  font-weight: bold;
+  font-size: 12px;
+  text-align: center;
+  line-height: 18px;
+  border: 2px outset #fff;
+  cursor: pointer;
+}
+
+#cmdContenido, #mapaContenido {
+  padding: 2px;
+  font-family: monospace;
+  color: #00FF00;
+  background-color: black;
+  height: calc(100% - 26px);
+  overflow: auto;
+}
+
+#codigoInput {
+  background-color: black;
+  color: #00FF00;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: inherit;
+  width: 90%;
+  margin-top: 10px;
+}
+
+.blink {
+  animation: blink 1s step-start infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+#error {
+  color: red;
+  margin-top: 10px;
+}
+
+/* Ventana del mapa */
+#mapaWindow {
+  position: absolute;
+  top: 11%;
+  left: 120px;
+  width: 80%;
+  height: 80%;
+  border: 2px solid #000;
+  background-color: white;
+  z-index: 4;
+  display: none;
+}
+
+#mapaWindowBody iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+#mapaWindowHeader {
+  background-color: #000080;
+  color: white;
+  padding: 5px 10px;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+#mapaWindowBody {
+  width: 100%;
+  height: 97%;
+  border: none;
+}
+
+.contenido-mi-pc {
+  padding: 10px;
+  background-color: white;
+  height: calc(80% - 35px);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.icono-pc {
+  width: 80px;
+  text-align: center;
+  font-size: 12px;
+  color: black;
+}
+
+.icono-pc img {
+  width: 32px;
+  height: 32px;
+  display: block;
+  margin: 0 auto 5px auto;
+}
+
+@keyframes abrirVentana98 {
+  0% {
+    transform: scale(0.1);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.ventana.abrir98 {
+  animation: abrirVentana98 0.3s ease-out;
+  transform-origin: top left;
+}
+
+.mi-pc-ventana {
+  width: 600px;
+  height: 400px;
+  display: flex;
+  flex-direction: column;
+  background: #C0C0C0;
+  border: 2px solid #000;
+  box-shadow: inset -1px -1px #fff, inset 1px 1px #808080;
+  font-family: "MS Sans Serif", sans-serif;
+}
+
+.barra-menu, .barra-herramientas, .barra-direccion, .barra-inferior {
+  background: #C0C0C0;
+  border-top: 1px solid #fff;
+  border-left: 1px solid #fff;
+  border-bottom: 1px solid #808080;
+  border-right: 1px solid #808080;
+  padding: 2px 6px;
+  font-size: 12px;
+}
+
+.barra-menu span {
+  margin-right: 15px;
+  cursor: default;
+}
+
+.barra-herramientas img {
+  height: 20px;
+  margin-right: 8px;
+  cursor: pointer;
+}
+
+.barra-direccion {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.barra-direccion input {
+  flex: 1;
+  border: 1px solid #808080;
+  height: 18px;
+  background: white;
+  font-size: 12px;
+  padding: 0 4px;
+}
+
+.barra-inferior {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  padding: 2px 6px;
+  margin-top: auto;
+  background: #E0E0E0;
+  border-top: 2px solid #808080;
+}
+
+.icono-barra img {
+  height: 16px;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+.contenido-mi-pc {
+  flex: 1;
+  padding: 10px;
+  background: white;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-content: flex-start;
+  overflow-y: auto;
+}
+
+.icono-pc {
+  width: 80px;
+  text-align: center;
+  font-size: 11px;
+  color: black;
+}
+
+.icono-pc img {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 4px;
+}
