@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Burnout Airsoft</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/png" href="resources/logoBurnout-3.png" />
+    <link rel="stylesheet" href="assets/css/plugins.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/gallery.css">    
+  </head>
+  <body>
+    <div class="ms-main-container">      
+      <header class="ms-header">
+        <nav class="ms-nav">
+          <div class="ms-logo">
+              <a href="./index.html" data-type="page-transition">
+                  <div class="logo-dark"><img src="resources/logoBurnout-2.png" alt="logo image"></div>
+                  <div class="logo-light current"><img src="resources/logoBurnout-2.png" alt="logo image"></div>
+              </a>
+          </div>
+          <button class="hamburger" type="button" data-toggle="navigation">
+            <span class="hamburger-box">
+              <span class="hamburger-label">menu</span>
+              <span class="hamburger-inner"></span>
+            </span>
+          </button>
+          <div class="height-full-viewport">
+              <ul class="ms-navbar">
+                  <!-- Nav Link -->
+                  <li class="nav-item">
+                      <a href="index.html" data-type="page-transition">
+                          <span class="ms-btn">Inicio</span>
+                          <span class="nav-item__label">Vuelve a la página principal</span>
+                      </a>
+                  </li>
+                  <!-- Nav Link -->
+                  <li class="nav-item">
+                      <a href="galeria.html" data-type="page-transition">
+                          <span class="ms-btn">Galería</span>
+                          <span class="nav-item__label">Ver nuestros momentos</span>
+                      </a>
+                  </li>
+                  <!-- Nav Link -->
+                  <li class="nav-item">
+                      <a href="burnout.html" data-type="page-transition">
+                          <span class="ms-btn">Nosotros</span>
+                          <span class="nav-item__label">¿De verdad quieres saber de nosotros?</span>
+                      </a>
+                  </li>
+                  <!-- Nav Link -->
+                  <li class="nav-item">
+                      <a href="formulario.html" data-type="page-transition">
+                          <span class="ms-btn">Partidas</span>
+                          <span class="nav-item__label">¿Quieres apuntarte a nuestras partidas?</span>
+                      </a>
+                  </li>                  
+                  <!-- Nav Link -->
+                  <li class="nav-item">
+                      <a href="admin.html" data-type="page-transition">
+                          <span class="ms-btn">Admin</span>
+                          <span class="nav-item__label">Descubre que se cuece</span>
+                      </a>
+                  </li>
+              </ul>
+          </div>
+        </nav>
+      </header>
+      <main class="ms-container">
+        <div class="ms-section__block">
+          <div class="ms-page-title">
+            <h2 class="page-header">Galería</h2>
+            <p class="page-desc"></p>
+          </div>
+        </div>
+        <div class="ms-section__block">
+            <div id="galeria"></div>
+        </div>
+      </main>
+      <footer>
+        <div class="ms-footer">
+          <div class="copyright">Copyright © 2025. Design by Alex Serret</div>
+          <ul class="socials">
+            <li><a href="#" class="socicon-instagram"></a></li>
+            <li><a href="#" class="socicon-youtube"></a></li>
+          </ul>
+        </div>
+      </footer>
+    </div>
+    <div id="modal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <div class="modal-body">
+      <img id="modal-img" src="" alt="">
+      <div class="modal-desc">
+        <h3 id="modal-title"></h3>
+        <p id="modal-text"></p>
+      </div>
+    </div>
+  </div>
+</div>
+    <script type="text/javascript" src='assets/js/jquery-3.2.1.min.js'></script>
+    <script type="text/javascript" src='assets/js/plugins.min.js'></script>
+    <script type="text/javascript" src="assets/js/main.js"></script>
+    <script type="text/javascript" src="assets/js/gallery.js"></script>    
+  </body>
+</html>

@@ -1,0 +1,105 @@
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+th,
+td {
+  border: 1px solid #aaa;
+  padding: 8px;
+  text-align: left;
+}
+
+th {
+  background-color: #eee;
+}
+
+body {
+  font-family: Tahoma, sans-serif;
+  background-color: #f3f3f3;
+  margin: 0;
+  padding: 0;
+}
+
+#login-container {
+  width: 400px;
+  margin: 100px auto;
+  padding: 20px;
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+#login-container h2 {
+  margin-top: 0;
+  font-size: 16px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+label {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 5px;
+  color: #444;
+}
+
+input[type="text"],
+input[type="password"] {
+  width: 100%;
+  padding: 6px;
+  font-size: 13px;
+  border: 1px solid #aaa;
+  background-color: #fdfdfd;
+}
+
+input[type="submit"] {
+  background-color: #e5e5e5;
+  border: 1px solid #999;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+input[type="submit"]:hover {
+  background-color: #dcdcdc;
+}
+
+#main {
+  display: none;
+  /* Oculto hasta que se haga login */
+  margin: 20px;
+}
+
+.button-row {
+  margin-top: 15px;
+  display: flex;
+  gap: 10px;
+}
+
+.btn {
+  background-color: #e5e5e5;
+  border: 1px solid #999;
+  color: #000;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-family: Tahoma, sans-serif;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 #fff;
+}
+
+.btn:hover {
+  background-color: #dcdcdc;
+}
+
+.btn:active {
+  background-color: #c8c8c8;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}

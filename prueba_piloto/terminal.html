@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Terminal Militar</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background-color: #008080;
+      font-family: 'Tahoma', sans-serif;
+    }
+
+    .win98-window {
+      width: 600px;
+      background-color: #c0c0c0;
+      border: 2px solid #fff;
+      box-shadow: inset -2px -2px #404040, inset 2px 2px #fff;
+      margin: auto;
+    }
+
+    .title-bar {
+      background: linear-gradient(to right, #000080, #0000a0);
+      color: white;
+      padding: 2px 5px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .title-bar-text {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .title-bar-buttons button {
+      width: 16px;
+      height: 16px;
+      margin-left: 2px;
+      border: 1px solid #808080;
+      background-color: #c0c0c0;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .content {
+      padding: 10px;
+      background-color: black;
+      color: #00ff00;
+      font-family: monospace;
+      height: 300px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    #error-message, #countdown, #alert-message {
+      text-align: center;
+      font-size: 24px;
+      color: red;
+    }
+
+    #alert-message {
+      font-size: 28px;
+      font-weight: bold;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 50%, 100% { opacity: 1; }
+      25%, 75% { opacity: 0; }
+    }
+
+    canvas {
+      display: block;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 9999;
+    }
+  </style>
+</head>
+<body>
+  <div class="win98-window" id="terminal-window">
+    <div class="title-bar">
+      <div class="title-bar-text">
+        <img src="https://win98icons.alexmeub.com/icons/png/computer-3.png" width="16" height="16" />
+        Terminal Militar
+      </div>
+      <div class="title-bar-buttons">
+        <button onclick="alert('Minimizar (simulado)')">_</button>
+        <button onclick="alert('Maximizar (simulado)')">▭</button>
+        <button onclick="document.getElementById('terminal-window').style.display='none'">✕</button>
+      </div>
+    </div>
+    <div class="content" id="terminal">
+      <p>Ingrese código de activación:</p>
+      <input type="text" id="codeInput" />
+      <button onclick="validateCode()">Enviar</button>
+      <p id="status"></p>
+    </div>
+  </div>
+
+  <div id="error-message" class="hidden">ACCESO DENEGADO</div>
+  <div id="countdown" class="hidden"></div>
+  <div id="alert-message" class="hidden">ACTIVANDO PROTOCOLO DE DESTRUCCIÓN</div>
+  <canvas id="matrix-canvas" class="hidden"></canvas>
+
+  <script>
+    let attempts = 0;
+    const correctCode = "ALFA123";
+
+    function validateCode() {
+      const input = document.getElementById("codeInput").value;
+      const status = document.getElementById("status");
+
+      if (input === correctCode) {
+        status.textContent = "Código aceptado. Acceso concedido.";
+      } else {
+        attempts++;
+        status.textContent = `Código incorrecto. Intento ${attempts}/3`;
+        if (attempts >= 3) {
+          triggerDestructionProtocol();
+        }
+      }
+    }
+
+    function triggerDestructionProtocol() {
+      document.body.innerHTML = ""; // limpia todo
+      setTimeout(() => {
+        showErrorMessage();
+      }, 1000);
+    }
+
+    function showErrorMessage() {
+      document.body.innerHTML = `
+        <div id="error-message">ACCESO DENEGADO</div>
+        <div id="countdown"></div>
+        <div id="alert-message" class="hidden">ACTIVANDO PROTOCOLO DE DESTRUCCIÓN</div>
+        <canvas id="matrix-canvas" class="hidden"></canvas>
+      `;
+      startCountdown();
+    }
+
+    function startCountdown() {
+      const countdownEl = document.getElementById("countdown");
+      let seconds = 5;
+
+      const interval = setInterval(() => {
+        countdownEl.textContent = `Autodestrucción en ${seconds}...`;
+        seconds--;
+
+        if (seconds < 0) {
+          clearInterval(interval);
+          showAlertMessage();
+        }
+      }, 1000);
+    }
+
+    function showAlertMessage() {
+      document.getElementById("countdown").classList.add("hidden");
+      document.getElementById("alert-message").classList.remove("hidden");
+
+      setTimeout(() => {
+        startMatrixEffect();
+      }, 5000); // después de 5 segundos más
+    }
+
+    function startMatrixEffect() {
+      document.getElementById("alert-message").classList.add("hidden");
+      const canvas = document.getElementById("matrix-canvas");
+      canvas.classList.remove("hidden");
+
+      const ctx = canvas.getContext("2d");
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const letters = "01";
+      const fontSize = 14;
+      const columns = canvas.width / fontSize;
+      const drops = Array(Math.floor(columns)).fill(1);
+
+      function draw() {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "#0F0";
+        ctx.font = fontSize + "px monospace";
+
+        for (let i = 0; i < drops.length; i++) {
+          const text = letters.charAt(Math.floor(Math.random() * letters.length));
+          ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+          if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+            drops[i] = 0;
+          }
+
+          drops[i]++;
+        }
+      }
+
+      const interval = setInterval(draw, 33);
+
+      setTimeout(() => {
+        clearInterval(interval);
+        document.body.innerHTML = "";
+        document.body.style.background = "black";
+      }, 10000); // Efecto Matrix durante 10 segundos
+    }
+  </script>
+</body>
+</html>

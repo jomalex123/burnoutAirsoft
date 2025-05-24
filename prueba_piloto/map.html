@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mapa Interactivo</title>
+    <style>
+		html, body {
+			height: 100%;
+			margin: 0;
+			padding: 0;
+		}
+		#map {
+			height: 100%;
+			width: 100%;
+			background-image: url('mapa.jpg'); /* Asegúrate de tener esta imagen en tu carpeta local */
+			background-size: cover;
+		}
+        .point {
+            width: 10px;
+            height: 10px;
+            background-color: red;
+            border-radius: 50%;
+            position: absolute;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="map">
+        <div class="point" style="top: 120px;left: 529px;" data-message="Punto 1: Información importante"></div>
+        <div class="point" style="top: 358px;left: 811px;" data-message="Punto 2: Más información"></div>
+		<div class="point" style="top: 574px;left: 828px;" data-message="Punto 3: Más información"></div>
+		<div class="point" style="top: 573px;left: 1198px;" data-message="Punto 4: Más información"></div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.point').forEach(point => {
+            point.addEventListener('mouseover', function() {
+                showPopup(this.dataset.message, this);
+            });
+            point.addEventListener('click', function() {
+                showPopup(this.dataset.message, this);
+            });
+        });
+
+        function showPopup(message, element) {
+            let popup = document.createElement('div');
+            popup.style.position = 'absolute';
+            popup.style.backgroundColor = 'white';
+            popup.style.border = '1px solid black';
+            popup.style.padding = '10px';
+            popup.style.top = element.style.top;
+            popup.style.left = element.style.left;
+            popup.innerText = message;
+            document.body.appendChild(popup);
+
+            setTimeout(() => {
+                popup.remove();
+            }, 3000); // El popup desaparecerá después de 3 segundos
+        }
+    </script>
+</body>
+</html>
