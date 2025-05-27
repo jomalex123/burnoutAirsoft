@@ -6,13 +6,23 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="resources/logoBurnout-bn3.png" />
+    <link rel="icon" type="image/png" href="resources/logoBurnout-3.png" />
     <!-- CSS Plugins -->
     <link rel="stylesheet" href="assets/css/plugins.min.css">
     <!-- Custom CSS File -->
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/admin.css">
   </head>
+  <style>
+  body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  }
+  .content {
+  flex: 1;
+  padding: 20px;
+  }
+  </style>
   <body>
     <div class="ms-main-container">
       <!-- Preloader -->
@@ -23,18 +33,18 @@
           <div class="ms-logo">
             <a href="./index.html" data-type="page-transition">
               <div class="logo-dark">
-                <img src="resources/logoBurnout-bn2.png" alt="logo image">
+                <img src="resources/logoBurnout-2.png" alt="logo image">
               </div>
               <div class="logo-light current">
-                <img src="resources/logoBurnout-bn2.png" alt="logo image">
+                <img src="resources/logoBurnout-2.png" alt="logo image">
               </div>
             </a>
           </div>
           <button class="hamburger" type="button" data-toggle="navigation">
-            <span class="hamburger-box">
-              <span class="hamburger-label">menu</span>
-              <span class="hamburger-inner"></span>
-            </span>
+          <span class="hamburger-box">
+            <span class="hamburger-label">menu</span>
+            <span class="hamburger-inner"></span>
+          </span>
           </button>
           <div class="height-full-viewport">
             <ul class="ms-navbar">
@@ -92,31 +102,17 @@
             </div>
           </div>
         </div>
+        <!-- Container -->
         <div id="main">
-          <!-- Page Title -->
-          <div class="ms-section__block">
-            <div class="ms-page-title">
-              <h2 class="page-header">Formulario de Registro - Airsoft <h2>
-            </div>
-          </div>
-          <!-- Page Content -->
-          <div class="ms-section__block">
-            <div class=" center-block">
-              <table id="tablaInscritos">
-                <thead>
-                  <tr>
-                    <th>Correo</th>
-                    <th>Nombre</th>
-                    <th>Apellidos</th>
-                    <th>DNI</th>
-                    <th>Teléfono</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <!-- Los datos aparecerán aquí -->
-                </tbody>
-              </table>
-            </div>
+          <nav>
+            <a href="#partidas">Partidas</a>
+            <a href="#galeria">Galería</a>
+            <a href="#usuarios">Usuarios</a>
+          </nav>
+          <div class="content">
+            <!-- Aquí irá el contenido según el menú seleccionado -->
+            <h2>Bienvenido al Panel Administrativo</h2>
+            <p>Selecciona una opción del menú para comenzar.</p>
           </div>
         </div>
       </main>

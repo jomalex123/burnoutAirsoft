@@ -33,7 +33,7 @@ Author: madsparrow.us
 --------------------------------------------------------------------
 # Font: 'Yantramanav';
 --------------------------------------------------------------------
-# Colors: #151515, #df1f29, #555555
+# Colors: #151515, #df1f29, #555555, #fff
 ------------------------------------------------------------------*/
 
 /**
@@ -329,6 +329,25 @@ p {
     opacity: 1;
     transition: opacity .1s;
 }
+nav {
+  background-color: #151515;
+  color: white;
+  display: flex;
+  justify-content: flex-start;
+  padding: 10px 20px;
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+  margin-right: 20px;
+  padding: 8px 12px;
+  border-radius: 4px;
+}
+
+nav a:hover {
+  background-color: #34495e;
+}
 .ms-nav {
     padding: 2em 3em;
     color: inherit;
@@ -365,7 +384,7 @@ p {
     text-transform: uppercase;
     line-height: 1.5em;
     transition: color .3s ease .4s;
-    color: #151515;
+    color: #fff;
 }
 .hamburger.is-active .hamburger-label {
     color: #fff !important;
@@ -398,7 +417,7 @@ p {
     position: absolute;
     width: 30px;
     height: 3px;
-    background-color: #151515;
+    background-color: #fff;
     transition: all .3s ease .5s;
 }
 .hamburger-inner:before {
