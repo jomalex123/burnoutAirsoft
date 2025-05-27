@@ -1,0 +1,20 @@
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+#map {
+  height: 100%;
+  width: 100%;
+  background-image: url("mapa.jpg"); /* Asegúrate de tener esta imagen en tu carpeta local */
+  background-size: cover;
+}
+.point {
+  width: 10px;
+  height: 10px;
+  background-color: red;
+  border-radius: 50%;
+  position: absolute;
+  cursor: pointer;
+}
