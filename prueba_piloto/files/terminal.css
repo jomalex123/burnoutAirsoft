@@ -1,0 +1,76 @@
+body {
+  margin: 0;
+  padding: 20px;
+  background-color: #008080;
+  font-family: "Tahoma", sans-serif;
+}
+.win98-window {
+  width: 600px;
+  background-color: #c0c0c0;
+  border: 2px solid #fff;
+  box-shadow: inset -2px -2px #404040, inset 2px 2px #fff;
+  margin: auto;
+}
+.title-bar {
+  background: linear-gradient(to right, #000080, #0000a0);
+  color: white;
+  padding: 2px 5px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.title-bar-text {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.title-bar-buttons button {
+  width: 16px;
+  height: 16px;
+  margin-left: 2px;
+  border: 1px solid #808080;
+  background-color: #c0c0c0;
+  padding: 0;
+  cursor: pointer;
+}
+.content {
+  padding: 10px;
+  background-color: black;
+  color: #00ff00;
+  font-family: monospace;
+  height: 300px;
+}
+.hidden {
+  display: none;
+}
+#error-message,
+#countdown,
+#alert-message {
+  text-align: center;
+  font-size: 24px;
+  color: red;
+}
+#alert-message {
+  font-size: 28px;
+  font-weight: bold;
+  animation: blink 1s infinite;
+}
+@keyframes blink {
+  0%,
+  50%,
+  100% {
+    opacity: 1;
+  }
+  25%,
+  75% {
+    opacity: 0;
+  }
+}
+canvas {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+}

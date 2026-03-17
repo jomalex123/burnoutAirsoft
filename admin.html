@@ -3,16 +3,25 @@
   <head>
     <meta charset="UTF-8">
     <title>Inscritos Airsoft</title>
-    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="resources/logoBurnout-bn3.png" />
+    <link rel="icon" type="image/png" href="resources/logoBurnout-3.png" />
     <!-- CSS Plugins -->
     <link rel="stylesheet" href="assets/css/plugins.min.css">
     <!-- Custom CSS File -->
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/admin.css">
   </head>
+  <style>
+  body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  }
+  .content {
+  flex: 1;
+  padding: 20px;
+  }
+  </style>
   <body>
     <div class="ms-main-container">
       <!-- Preloader -->
@@ -21,20 +30,20 @@
       <header class="ms-header">
         <nav class="ms-nav">
           <div class="ms-logo">
-            <a href="./index.html" data-type="page-transition">
+            <a class="logonav" href="./index.html" data-type="page-transition">
               <div class="logo-dark">
-                <img src="resources/logoBurnout-bn2.png" alt="logo image">
+                <img src="resources/logoBurnout-2.png" alt="logo image">
               </div>
               <div class="logo-light current">
-                <img src="resources/logoBurnout-bn2.png" alt="logo image">
+                <img src="resources/logoBurnout-2.png" alt="logo image">
               </div>
             </a>
           </div>
           <button class="hamburger" type="button" data-toggle="navigation">
-            <span class="hamburger-box">
-              <span class="hamburger-label">menu</span>
-              <span class="hamburger-inner"></span>
-            </span>
+          <span class="hamburger-box">
+            <span class="hamburger-label">menu</span>
+            <span class="hamburger-inner"></span>
+          </span>
           </button>
           <div class="height-full-viewport">
             <ul class="ms-navbar">
@@ -91,31 +100,45 @@
               <button class="btn" type="reset" onclick="clearLogin()">Cancelar</button>
             </div>
           </div>
-        </div>
-        <div id="main">
-          <!-- Page Title -->
-          <div class="ms-section__block">
-            <div class="ms-page-title">
-              <h2 class="page-header">Formulario de Registro - Airsoft <h2>
-            </div>
-          </div>
-          <!-- Page Content -->
-          <div class="ms-section__block">
-            <div class=" center-block">
-              <table id="tablaInscritos">
-                <thead>
-                  <tr>
-                    <th>Correo</th>
-                    <th>Nombre</th>
-                    <th>Apellidos</th>
-                    <th>DNI</th>
-                    <th>Teléfono</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <!-- Los datos aparecerán aquí -->
-                </tbody>
-              </table>
+          <!-- Container -->
+          <div id="main">
+            <nav>
+              <a href="#partidas" onclick="abrirPartidas()">Partidas</a>
+              <a href="#galeria" onclick="abrirGaleria()">Galería</a>
+            </nav>
+            <div class="content">
+              <!-- Aquí irá el contenido según el menú seleccionado -->
+              <div id="partidas" style="display:none">
+                <div class="container mt-5">
+                  <div class="table-responsive">
+                    <table class="table table-bordered">
+                      <thead>
+                        <tr>
+                          <th>Nombre Completo</th>
+                          <th>Asistentes</th>
+                          <th>Teléfono</th>
+                          <th>Email</th>
+                          <th>Equipo</th>
+                        </tr>
+                      </thead>
+                      <tbody id="data-table">
+                        <!-- Datos dinámicos aquí -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+              <div id="galeria" style="display:none">
+               <h2>Agregar Imagen a la Galería</h2>
+               <a href="https://neocities.org/dashboard?dir=assets%2Fimages%2Fgallery" target="_blank">Cargar imagenes</a>
+                <form action="update-gallery.php" method="POST" enctype="multipart/form-data">
+                  <input type="text" name="imageUrl" placeholder="Nombre de la imagen" required>
+                  <input type="text" name="metadata" placeholder="Metadata" required>
+                  <input type="text" name="description" placeholder="Descripción" required>
+                  <br>
+                  <button class="btn" type="submit">Subir Archivo</button>
+              </form>            
+              </div>
             </div>
           </div>
         </div>
