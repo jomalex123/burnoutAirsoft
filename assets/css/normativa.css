@@ -1,0 +1,34 @@
+.normativa-content h3,
+.normativa-content h4 {
+  margin-top: 0;
+  font-weight: 700;
+}
+
+.normativa-content p,
+.normativa-content li {
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.normativa-content ul {
+  margin: 0;
+}
+
+.normativa-content table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.normativa-content th,
+.normativa-content td {
+  border: 1px solid rgba(255,255,255,0.15);
+  padding: 12px;
+}
+
+.normativa-content thead th {
+  font-weight: 700;
+}
+
+.normativa-content strong {
+  font-weight: 700;
+}

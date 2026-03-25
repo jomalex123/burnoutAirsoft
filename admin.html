@@ -3,7 +3,6 @@
   <head>
     <meta charset="UTF-8">
     <title>Inscritos Airsoft</title>
-    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="resources/logoBurnout-3.png" />
@@ -31,7 +30,7 @@
       <header class="ms-header">
         <nav class="ms-nav">
           <div class="ms-logo">
-            <a href="./index.html" data-type="page-transition">
+            <a class="logonav" href="./index.html" data-type="page-transition">
               <div class="logo-dark">
                 <img src="resources/logoBurnout-2.png" alt="logo image">
               </div>
@@ -101,18 +100,46 @@
               <button class="btn" type="reset" onclick="clearLogin()">Cancelar</button>
             </div>
           </div>
-        </div>
-        <!-- Container -->
-        <div id="main">
-          <nav>
-            <a href="#partidas">Partidas</a>
-            <a href="#galeria">Galería</a>
-            <a href="#usuarios">Usuarios</a>
-          </nav>
-          <div class="content">
-            <!-- Aquí irá el contenido según el menú seleccionado -->
-            <h2>Bienvenido al Panel Administrativo</h2>
-            <p>Selecciona una opción del menú para comenzar.</p>
+          <!-- Container -->
+          <div id="main">
+            <nav>
+              <a href="#partidas" onclick="abrirPartidas()">Partidas</a>
+              <a href="#galeria" onclick="abrirGaleria()">Galería</a>
+            </nav>
+            <div class="content">
+              <!-- Aquí irá el contenido según el menú seleccionado -->
+              <div id="partidas" style="display:none">
+                <div class="container mt-5">
+                  <div class="table-responsive">
+                    <table class="table table-bordered">
+                      <thead>
+                        <tr>
+                          <th>Nombre Completo</th>
+                          <th>Asistentes</th>
+                          <th>Teléfono</th>
+                          <th>Email</th>
+                          <th>Equipo</th>
+                        </tr>
+                      </thead>
+                      <tbody id="data-table">
+                        <!-- Datos dinámicos aquí -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+              <div id="galeria" style="display:none">
+               <h2>Agregar Imagen a la Galería</h2>
+               <a href="https://neocities.org/dashboard?dir=assets%2Fimages%2Fgallery" target="_blank">Cargar imagenes</a>
+                <form action="update-gallery.php" method="POST" enctype="multipart/form-data">
+                  <input type="text" name="imageUrl" placeholder="Nombre de la imagen" required>
+                  <input type="text" name="metadata" placeholder="Metadata" required>
+                  <input type="text" name="description" placeholder="Descripción" required>
+                  <br>
+                  <button class="btn" type="submit">Subir Archivo</button>
+              </form>            
+              </div>
+            </div>
           </div>
         </div>
       </main>
