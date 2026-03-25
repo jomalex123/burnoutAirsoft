@@ -103,3 +103,56 @@ input[type="submit"]:hover {
   background-color: #c8c8c8;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
 }
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  min-width: 600px; /* Asegura que no colapse en pantallas pequeñas */
+  border-collapse: collapse;
+}
+
+.table td,
+.table th {
+  max-width: 150px; /* Ajusta según lo que necesites */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .table td {
+    display: flex;
+    justify-content: space-between;
+    white-space: normal; /* En móvil, dejamos que el texto se ajuste mejor */
+    word-break: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-height: 3.6em;
+    line-height: 1.2em;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    flex: 1;
+    padding-right: 10px;
+  }
+
+  .table td span {
+    flex: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+
+
+
+
+
+
+

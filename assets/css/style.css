@@ -345,9 +345,16 @@ nav a {
   border-radius: 4px;
 }
 
+.logonav {
+  display: block;
+  height: 67px;
+  width: 67px;
+  }
+  
 nav a:hover {
   background-color: #34495e;
 }
+
 .ms-nav {
     padding: 2em 3em;
     color: inherit;
