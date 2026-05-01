@@ -11,6 +11,8 @@ window.initRegistroPage = function () {
     return;
   }
 
+  renderEventData();
+
   $form.off('input.registro change.registro').on('input.registro change.registro', 'input, select', function () {
     if ($(this).attr('id') === 'asistentes') {
       renderAsistentesFields();
@@ -71,6 +73,57 @@ window.initRegistroPage = function () {
     $modal.removeClass('is-open').attr('aria-hidden', 'true');
     $('body').removeClass('registro-modal-open');
     $('#abrirNormativa').trigger('focus');
+  }
+
+  function renderEventData() {
+    var params = new URLSearchParams(window.location.search);
+    var title = params.get('titulo');
+    var date = params.get('fecha');
+    var turn = params.get('turno');
+
+    if (title) {
+      $('#registroEventoTitulo').text('INSCRIPCION ' + title);
+      document.title = 'Inscripcion - ' + title;
+    }
+
+    if (date) {
+      $('#registroEventoFecha').text(formatEventDate(date));
+    }
+
+    if (turn) {
+      $('#registroEventoTurno').text(normalizeTurn(turn).toUpperCase());
+    }
+  }
+
+  function formatEventDate(value) {
+    var parts = value.split('-');
+
+    if (parts.length !== 3) {
+      return value.toUpperCase();
+    }
+
+    var date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+
+    if (isNaN(date.getTime())) {
+      return value.toUpperCase();
+    }
+
+    return date.toLocaleDateString('es-ES', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    }).toUpperCase();
+  }
+
+  function normalizeTurn(value) {
+    var normalized = String(value || '').toLowerCase();
+
+    if (normalized === 'maã±ana' || normalized === 'mañana') {
+      return 'manana';
+    }
+
+    return normalized;
   }
 
   function validateForm() {

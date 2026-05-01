@@ -108,7 +108,7 @@ window.initPartidasPage = function () {
         eventButton.textContent = event.title;
         eventButton.setAttribute('aria-label', day + ' de ' + monthNames[month] + ': ' + event.title + '. Abrir registro');
         eventButton.addEventListener('click', function () {
-          openEvent(event.url || 'registro.html');
+          openEvent(event);
         });
         stack.appendChild(eventButton);
       });
@@ -149,7 +149,7 @@ window.initPartidasPage = function () {
       card.appendChild(eventTitle);
       card.appendChild(time);
       card.addEventListener('click', function () {
-        openEvent(event.url || 'registro.html');
+        openEvent(event);
       });
 
       eventList.appendChild(card);
@@ -196,13 +196,31 @@ window.initPartidasPage = function () {
     ].join('-');
   }
 
-  function openEvent(url) {
+  function openEvent(event) {
+    var url = buildRegistrationUrl(event);
+
     if (typeof window.BurnoutNavigate === 'function') {
       window.BurnoutNavigate(url);
       return;
     }
 
     window.location.href = url;
+  }
+
+  function buildRegistrationUrl(event) {
+    var url = event.url || 'registro.php';
+
+    if (url === 'registro.html') {
+      url = 'registro.php';
+    }
+    var separator = url.indexOf('?') === -1 ? '?' : '&';
+    var params = [
+      'titulo=' + encodeURIComponent(event.title || ''),
+      'fecha=' + encodeURIComponent(event.date || ''),
+      'turno=' + encodeURIComponent(event.time || '')
+    ];
+
+    return url + separator + params.join('&');
   }
 };
 

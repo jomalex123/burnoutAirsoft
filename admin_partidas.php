@@ -82,7 +82,7 @@ if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 'date' => $date,
                 'title' => $title,
                 'time' => ucfirst($time),
-                'url' => 'registro.html',
+                'url' => 'registro.php',
             ];
 
             if ($date === '' || $title === '' || $time === '') {
@@ -315,7 +315,7 @@ $csrfToken = burnout_csrf_token();
                           <strong><?= htmlspecialchars((string) ($event['title'] ?? 'Sin titulo'), ENT_QUOTES, 'UTF-8') ?></strong>
                           <span><?= htmlspecialchars((string) ($event['date'] ?? ''), ENT_QUOTES, 'UTF-8') ?> · <?= htmlspecialchars((string) ($event['time'] ?? ''), ENT_QUOTES, 'UTF-8') ?></span>
                         </div>
-                        <form method="post" action="admin_partidas.php" onsubmit="return confirm('Eliminar este evento?');">
+                        <form method="post" action="admin_partidas.php">
                           <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                           <input type="hidden" name="action" value="delete">
                           <input type="hidden" name="index" value="<?= (int) $index ?>">
@@ -365,7 +365,7 @@ $csrfToken = burnout_csrf_token();
                   </div>
                   <div class="admin-gallery-modal__actions admin-gallery-modal__actions--split">
                     <button class="admin-login-submit" type="submit" name="action" value="update">Guardar evento</button>
-                    <button class="admin-danger-submit" type="submit" name="action" value="delete" data-confirm-delete>Borrar evento</button>
+                    <button class="admin-danger-submit" type="submit" name="action" value="delete">Borrar evento</button>
                   </div>
                 </form>
               </div>

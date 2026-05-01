@@ -1,32 +1,20 @@
 [
     {
-        "date": "2026-05-15",
-        "title": "Cumple Peque",
-        "time": "Tarde",
-        "url": "registro.html"
-    },
-    {
         "date": "2026-05-16",
-        "title": "Curso Iniciación 4ª Edición",
+        "title": "INSCRIPCION CURSO INICIACION 4 EDICION",
         "time": "Manana",
-        "url": "registro.html"
+        "url": "registro.php"
     },
     {
         "date": "2026-05-16",
-        "title": "Partida Burnout Airsoft",
+        "title": "PARTIDA BURNOUT AIRSOFT",
         "time": "Tarde",
-        "url": "registro.html"
+        "url": "registro.php"
     },
     {
-        "date": "2026-05-16",
-        "title": "Pizza & Beers",
+        "date": "2026-05-24",
+        "title": "PUTICLU",
         "time": "Noche",
-        "url": "registro.html"
-    },
-    {
-        "date": "2026-05-17",
-        "title": "Partida Montaventura",
-        "time": "Manana",
-        "url": "registro.html"
+        "url": "registro.php"
     }
 ]
