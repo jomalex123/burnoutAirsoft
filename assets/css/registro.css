@@ -259,6 +259,8 @@
 
 .registro-modal__body {
   background: #f4f4f4;
+  display: flex;
+  justify-content: center;
   min-height: 55vh;
 }
 
@@ -267,7 +269,7 @@
   display: block;
   height: 100%;
   min-height: 55vh;
-  width: 100%;
+  width: min(100%, 980px);
 }
 
 .registro-modal__actions {

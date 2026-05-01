@@ -1,3 +1,23 @@
+.normativa-page {
+  padding-top: 4em !important;
+}
+
+.normativa-page .ms-section__block {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 900px;
+  width: calc(100% - 48px);
+}
+
+.normativa-page .ms-page-title {
+  text-align: center;
+}
+
+.normativa-page .page-header {
+  font-size: 34px;
+  line-height: 1.1;
+}
+
 .normativa-content h3,
 .normativa-content h4 {
   margin-top: 0;
@@ -31,4 +51,18 @@
 
 .normativa-content strong {
   font-weight: 700;
+}
+
+@media only screen and (max-width: 700px) {
+  .normativa-page {
+    padding-top: 2em !important;
+  }
+
+  .normativa-page .ms-section__block {
+    width: calc(100% - 28px);
+  }
+
+  .normativa-page .page-header {
+    font-size: 26px;
+  }
 }
