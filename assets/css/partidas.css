@@ -1,0 +1,233 @@
+.partidas-page {
+  background: #f4f4f4;
+  color: #151515;
+  min-height: calc(100vh - 90px);
+}
+
+.partidas-header {
+  max-width: 920px;
+}
+
+.partidas-kicker {
+  color: #df1f29;
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.partidas-header h1 {
+  font-size: 52px;
+  line-height: 1;
+  margin-bottom: 18px;
+}
+
+.partidas-header p {
+  color: #555;
+  max-width: 620px;
+}
+
+.partidas-layout {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+}
+
+.partidas-calendar,
+.partidas-panel {
+  background: #fff;
+  border: 1px solid rgba(21, 21, 21, .1);
+  border-radius: 8px;
+  box-shadow: 0 18px 40px rgba(21, 21, 21, .08);
+}
+
+.partidas-calendar {
+  padding: 24px;
+}
+
+.partidas-toolbar {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.partidas-toolbar h2 {
+  font-size: 28px;
+  margin: 0;
+  text-align: center;
+}
+
+.partidas-nav {
+  align-items: center;
+  background: #151515;
+  border: 0;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 22px;
+  height: 42px;
+  justify-content: center;
+  transition: background .2s ease;
+  width: 42px;
+}
+
+.partidas-nav:hover {
+  background: #df1f29;
+}
+
+.partidas-weekdays,
+.partidas-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.partidas-weekdays {
+  color: #666;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  margin-bottom: 10px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.partidas-day {
+  align-items: flex-start;
+  aspect-ratio: 1 / 1;
+  background: #fafafa;
+  border: 1px solid rgba(21, 21, 21, .08);
+  border-radius: 8px;
+  color: #151515;
+  display: flex;
+  flex-direction: column;
+  font-size: 15px;
+  font-weight: 700;
+  gap: 8px;
+  min-height: 86px;
+  padding: 10px;
+  text-align: left;
+}
+
+.partidas-day.is-empty {
+  background: transparent;
+  border-color: transparent;
+}
+
+.partidas-day.has-event {
+  background: #151515;
+  border-color: #df1f29;
+  box-shadow: 0 0 0 3px rgba(223, 31, 41, .18);
+  color: #fff;
+  cursor: pointer;
+  position: relative;
+}
+
+.partidas-day.has-event:hover,
+.partidas-event-card:hover {
+  border-color: #df1f29;
+  transform: translateY(-2px);
+}
+
+.partidas-day.has-event:focus {
+  outline: 3px solid rgba(223, 31, 41, .35);
+  outline-offset: 2px;
+}
+
+.partidas-event-badge {
+  background: #df1f29;
+  border-radius: 999px;
+  color: #fff;
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  line-height: 1.2;
+  padding: 5px 8px;
+  text-transform: uppercase;
+}
+
+.partidas-event-title {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.partidas-panel {
+  align-self: start;
+  padding: 24px;
+}
+
+.partidas-panel h2 {
+  font-size: 24px;
+  margin-bottom: 18px;
+}
+
+.partidas-events {
+  display: grid;
+  gap: 12px;
+}
+
+.partidas-event-card {
+  background: #fafafa;
+  border: 1px solid rgba(21, 21, 21, .1);
+  border-radius: 8px;
+  color: #151515;
+  cursor: pointer;
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  text-align: left;
+  transition: border-color .2s ease, transform .2s ease;
+}
+
+.partidas-event-card strong {
+  font-size: 16px;
+}
+
+.partidas-event-card span {
+  color: #555;
+  font-size: 14px;
+}
+
+.partidas-empty {
+  color: #555;
+}
+
+@media only screen and (max-width: 900px) {
+  .partidas-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .partidas-header h1 {
+    font-size: 38px;
+  }
+}
+
+@media only screen and (max-width: 640px) {
+  .partidas-calendar {
+    padding: 16px;
+  }
+
+  .partidas-weekdays,
+  .partidas-grid {
+    gap: 6px;
+  }
+
+  .partidas-day {
+    border-radius: 6px;
+    font-size: 13px;
+    min-height: 64px;
+    padding: 7px;
+  }
+
+  .partidas-event-badge,
+  .partidas-event-title {
+    display: none;
+  }
+}
