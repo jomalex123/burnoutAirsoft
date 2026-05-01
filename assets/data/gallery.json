@@ -1,49 +1,47 @@
-[{
-	"src": "assets\/images\/gallery\/foto1.jpg",
-	"alt": "Operaci\u00f3n t\u00e1ctica 1",
-	"description": "\ud83d\udd25 TAC-SAT Underground Operations II. Gracias a todos los que participasteis."
-}, {
-	"src": "assets\/images\/gallery\/foto2.jpg",
-	"alt": "Operaci\u00f3n t\u00e1ctica 2",
-	"description": "\ud83d\udca5 Partida intensa en terreno urbano, \u00a1puro espect\u00e1culo!"
-}, {
-	"src": "assets\/images\/gallery\/foto3.jpg",
-	"alt": "Operaci\u00f3n t\u00e1ctica 3",
-	"description": "\ud83d\udcf8 Captura perfecta por @nouprismaairsoft"
-}, {
-	"src": "assets\/images\/gallery\/foto4.jpg",
-	"alt": "Operaci\u00f3n t\u00e1ctica 4",
-	"description": "\ud83d\udd25 TAC-SAT Underground Operations II. Gracias a todos los que participasteis."
-}, {
-	"src": "assets\/images\/gallery\/foto5.jpg",
-	"alt": "Operaci\u00f3n t\u00e1ctica 5",
-	"description": "\ud83d\udca5 Partida intensa en terreno urbano, \u00a1puro espect\u00e1culo!"
-}, {
-	"src": "assets\/images\/gallery\/foto6.jpg",
-	"alt": "Operaci\u00f3n t\u00e1ctica 6",
-	"description": "\ud83d\udcf8 Captura perfecta por @nouprismaairsoft"
-}, {
-	"src": "assets\/images\/gallery\/foto7.jpg",
-	"alt": "Operaci\u00f3n t\u00e1ctica 7",
-	"description": "\ud83d\udcf8 Captura perfecta por @nouprismaairsoft"
-}, {
-	"src": "assets\/images\/gallery\/foto8.jpg",
-	"alt": "Operaci\u00f3n t\u00e1ctica 8",
-	"description": "\ud83d\udcf8 Captura perfecta por @nouprismaairsoft"
-}, {
-	"src": "assets\/images\/gallery\/foto9.jpg",
-	"alt": "Operaci\u00f3n t\u00e1ctica 9",
-	"description": "\ud83d\udcf8 Captura perfecta por @nouprismaairsoft"
-}, {
-	"src": "assets\/images\/gallery\/foto10.jpg",
-	"alt": "Operaci\u00f3n t\u00e1ctica 10",
-	"description": "\ud83d\udcf8 Captura perfecta por @nouprismaairsoft"
-}, {
-	"src": "assets\/images\/gallery\/foto11.jpg",
-	"alt": "Operaci\u00f3n t\u00e1ctica 11",
-	"description": "\ud83d\udcf8 Captura perfecta por @nouprismaairsoft"
-}, {
-	"src": "assets\/images\/gallery\/foto12.jpg",
-	"alt": "Operaci\u00f3n t\u00e1ctica 12",
-	"description": "\ud83d\udcf8 Captura perfecta por @nouprismaairsoft"
-}]
+[
+    {
+        "src": "assets/images/gallery/foto1.jpg",
+        "alt": "Operación táctica 1",
+        "description": "🔥 TAC-SAT Underground Operations II. Gracias a todos los que participasteis."
+    },
+    {
+        "src": "assets/images/gallery/foto2.jpg",
+        "alt": "Operación táctica 2",
+        "description": "💥 Partida intensa en terreno urbano, ¡puro espectáculo!"
+    },
+    {
+        "src": "assets/images/gallery/foto3.jpg",
+        "alt": "Operación táctica 3",
+        "description": "📸 Captura perfecta por @nouprismaairsoft"
+    },
+    {
+        "src": "assets/images/gallery/foto4.jpg",
+        "alt": "Operación táctica 4",
+        "description": "🔥 TAC-SAT Underground Operations II. Gracias a todos los que participasteis."
+    },
+    {
+        "src": "assets/images/gallery/foto5.jpg",
+        "alt": "Operación táctica 5",
+        "description": "💥 Partida intensa en terreno urbano, ¡puro espectáculo!"
+    },
+    {
+        "src": "assets/images/gallery/foto6.jpg",
+        "alt": "Operación táctica 6",
+        "description": "📸 Captura perfecta por @nouprismaairsoft"
+    },
+    {
+        "src": "assets/images/gallery/foto7.jpg",
+        "alt": "Operación táctica 7",
+        "description": "📸 Captura perfecta por @nouprismaairsoft"
+    },
+    {
+        "src": "assets/images/gallery/foto8.jpg",
+        "alt": "Operación táctica 8",
+        "description": "📸 Captura perfecta por @nouprismaairsoft"
+    },
+    {
+        "src": "assets/images/gallery/foto9.jpg",
+        "alt": "Operación táctica 9",
+        "description": "📸 Captura perfecta por @nouprismaairsoft"
+    }
+]
