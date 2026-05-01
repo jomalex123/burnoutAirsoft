@@ -37,6 +37,79 @@
   gap: 24px;
 }
 
+.admin-logout {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+  margin: 0 0 18px;
+}
+
+.admin-logout span {
+  color: #555;
+  font-weight: 700;
+}
+
+.admin-logout button,
+.admin-login-submit {
+  background: #df1f29;
+  color: #fff;
+  cursor: pointer;
+  font-family: 'Yantramanav', Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  padding: 12px 18px;
+  text-transform: uppercase;
+  transition: background .2s ease;
+}
+
+.admin-logout button:hover,
+.admin-login-submit:hover {
+  background: #151515;
+}
+
+.admin-login-panel {
+  max-width: 460px;
+}
+
+.admin-login-form {
+  background: #fff;
+  border: 1px solid rgba(21, 21, 21, .1);
+  border-radius: 8px;
+  box-shadow: 0 18px 40px rgba(21, 21, 21, .08);
+  display: grid;
+  gap: 18px;
+  padding: 28px;
+}
+
+.admin-login-field {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-login-field label {
+  color: #555;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.admin-login-field input {
+  border: 1px solid rgba(21, 21, 21, .22);
+  font-size: 17px;
+  min-height: 46px;
+  padding: 0 14px;
+  width: 100%;
+}
+
+.admin-login-error {
+  background: rgba(223, 31, 41, .08);
+  border: 1px solid rgba(223, 31, 41, .24);
+  color: #9d141c;
+  padding: 12px 14px;
+}
+
 .admin-state,
 .admin-card,
 .admin-table-wrap {
