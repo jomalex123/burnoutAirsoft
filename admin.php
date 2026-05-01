@@ -93,6 +93,12 @@ $csrfToken = burnout_csrf_token();
                   <span class="nav-item__label">Calendario de partidas</span>
                 </a>
               </li>
+              <li class="nav-item">
+                <a href="admin.php" data-type="page-transition">
+                  <span class="ms-btn">Admin</span>
+                  <span class="nav-item__label">Panel de administracion</span>
+                </a>
+              </li>
             </ul>
           </div>
         </nav>

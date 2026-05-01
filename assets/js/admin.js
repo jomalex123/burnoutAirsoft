@@ -44,12 +44,10 @@ function renderAdmin($admin, registros, gallery) {
         renderRegistrationsTable(registros),
       '</div>',
       '<aside class="admin-actions">',
-        '<h2>Gestion rapida</h2>',
-        '<a href="formulario.html">Ver formulario <span>-></span></a>',
-        '<a href="galeria.html">Revisar galeria <span>-></span></a>',
-        '<a href="normativa.html">Consultar normativa <span>-></span></a>',
-        '<a href="assets/data/gallery.json">JSON galeria <span>-></span></a>',
-        '<a href="resources/registros.json">JSON registros <span>-></span></a>',
+        '<h2>Gestion</h2>',
+        '<a href="galeria.html">Ver Galeria <span>-></span></a>',
+        '<a href="admin_gallery.php">Modificar Galeria <span>-></span></a>',
+        '<a href="resources/registros.json">Ver Registros <span>-></span></a>',
       '</aside>',
     '</div>'
   ].join(''));
