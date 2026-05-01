@@ -6,10 +6,9 @@ window.initAdminPage = function () {
   }
 
   $.when(
-    loadJson('resources/registros.json'),
-    loadJson('assets/data/gallery.json')
-  ).done(function (registros, gallery) {
-    renderAdmin($admin, registros, gallery);
+    loadJson('resources/registros.json')
+  ).done(function (registros) {
+    renderAdmin($admin, registros);
   });
 };
 
@@ -25,19 +24,8 @@ function loadJson(path) {
   });
 }
 
-function renderAdmin($admin, registros, gallery) {
-  var totalRegistros = registros.length;
-  var totalGaleria = gallery.length;
-  var menores = registros.filter(isMinorRegistration).length;
-  var proximasPartidas = countFutureEvents(registros);
-
+function renderAdmin($admin, registros) {
   $admin.html([
-    '<div class="admin-stats">',
-      statCard('Registros', totalRegistros),
-      statCard('Menores', menores),
-      statCard('Fotos galeria', totalGaleria),
-      statCard('Proximas partidas', proximasPartidas),
-    '</div>',
     '<div class="admin-grid">',
       '<div class="admin-table-wrap">',
         '<h2>Ultimos registros</h2>',
@@ -47,14 +35,10 @@ function renderAdmin($admin, registros, gallery) {
         '<h2>Gestion</h2>',
         '<a href="galeria.html">Ver Galeria <span>-></span></a>',
         '<a href="admin_gallery.php">Modificar Galeria <span>-></span></a>',
-        '<a href="resources/registros.json">Ver Registros <span>-></span></a>',
+        '<a href="admin_partidas.php">Gestionar Partidas <span>-></span></a>',
       '</aside>',
     '</div>'
   ].join(''));
-}
-
-function statCard(label, value) {
-  return '<article class="admin-card"><span>' + escapeHtml(label) + '</span><strong>' + value + '</strong></article>';
 }
 
 function renderRegistrationsTable(registros) {
@@ -91,22 +75,6 @@ function readField(item, keys, fallback) {
   }
 
   return fallback;
-}
-
-function isMinorRegistration(registro) {
-  var edad = parseInt(readField(registro, ['edad', 'age', 'Edad'], ''), 10);
-  return !isNaN(edad) && edad < 18;
-}
-
-function countFutureEvents(registros) {
-  var today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  return registros.filter(function (registro) {
-    var value = readField(registro, ['fecha', 'date', 'partida', 'Fecha'], '');
-    var eventDate = new Date(value);
-    return !isNaN(eventDate.getTime()) && eventDate >= today;
-  }).length;
 }
 
 function escapeHtml(value) {

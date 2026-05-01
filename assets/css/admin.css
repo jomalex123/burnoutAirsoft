@@ -44,11 +44,6 @@
   margin: 0 0 18px;
 }
 
-.admin-logout span {
-  color: #555;
-  font-weight: 700;
-}
-
 .admin-logout button,
 .admin-login-submit {
   background: #df1f29;
@@ -262,8 +257,165 @@
   justify-content: flex-end;
 }
 
+.admin-gallery-modal__actions--split {
+  justify-content: space-between;
+}
+
+.admin-danger-submit {
+  border: 1px solid rgba(223, 31, 41, .5);
+  color: #df1f29;
+  cursor: pointer;
+  font-family: 'Yantramanav', Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  order: -1;
+  padding: 12px 18px;
+  text-transform: uppercase;
+  transition: background .2s ease, color .2s ease;
+}
+
+.admin-danger-submit:hover {
+  background: #df1f29;
+  color: #fff;
+}
+
 .admin-gallery-modal-open {
   overflow: hidden;
+}
+
+.admin-partidas-layout {
+  align-items: start;
+}
+
+.admin-partidas-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-partidas-panel h2 {
+  margin-bottom: 6px;
+}
+
+.admin-partidas-action {
+  align-items: center;
+  border: 1px solid rgba(21, 21, 21, .18);
+  color: #151515;
+  cursor: pointer;
+  display: flex;
+  font-family: 'Yantramanav', Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  justify-content: space-between;
+  letter-spacing: .08em;
+  min-height: 48px;
+  padding: 0 16px;
+  text-transform: uppercase;
+  transition: border-color .2s ease, color .2s ease;
+  width: 100%;
+}
+
+.admin-partidas-action::after {
+  content: '->';
+}
+
+.admin-partidas-action:hover {
+  border-color: #df1f29;
+  color: #df1f29;
+}
+
+.admin-time-options {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.admin-time-options label {
+  display: block;
+}
+
+.admin-time-options input {
+  height: 1px;
+  opacity: 0;
+  position: absolute;
+  width: 1px;
+}
+
+.admin-time-options span {
+  align-items: center;
+  border: 1px solid rgba(21, 21, 21, .22);
+  color: #151515;
+  cursor: pointer;
+  display: flex;
+  font-size: 13px;
+  font-weight: 700;
+  justify-content: center;
+  letter-spacing: .08em;
+  min-height: 46px;
+  padding: 0 12px;
+  text-transform: uppercase;
+  transition: background .2s ease, border-color .2s ease, color .2s ease;
+}
+
+.admin-time-options input:checked + span {
+  background: #df1f29;
+  border-color: #df1f29;
+  color: #fff;
+}
+
+.admin-time-options input:focus + span {
+  box-shadow: 0 0 0 3px rgba(223, 31, 41, .16);
+}
+
+.admin-partidas-delete-list {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-partidas-delete-item {
+  align-items: center;
+  border: 1px solid rgba(21, 21, 21, .1);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 14px;
+}
+
+.admin-partidas-delete-item strong,
+.admin-partidas-delete-item span {
+  display: block;
+}
+
+.admin-partidas-delete-item strong {
+  font-size: 16px;
+}
+
+.admin-partidas-delete-item span {
+  color: #555;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.admin-partidas-delete-item form {
+  margin: 0;
+}
+
+.admin-partidas-delete-item button {
+  border: 1px solid rgba(223, 31, 41, .5);
+  color: #df1f29;
+  cursor: pointer;
+  font-family: 'Yantramanav', Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  padding: 10px 14px;
+  text-transform: uppercase;
+}
+
+.admin-partidas-delete-item button:hover {
+  background: #df1f29;
+  color: #fff;
 }
 
 .admin-gallery-list {

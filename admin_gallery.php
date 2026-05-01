@@ -177,8 +177,17 @@ $csrfToken = burnout_csrf_token();
       <main class="ms-container admin-page">
         <div class="ms-section__block">
           <div class="admin-header">
-            <span class="admin-kicker">Burnout Airsoft</span>
-            <h1>Gestion Galeria</h1>
+            <div class="admin-header__title">
+              <span class="admin-kicker">Burnout Airsoft</span>
+              <h1>Gestion Galeria</h1>
+            </div>
+            <?php if ($adminUser): ?>
+              <form class="admin-logout" method="post" action="admin.php">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+                <input type="hidden" name="action" value="logout">
+                <button type="submit">Cerrar sesion</button>
+              </form>
+            <?php endif; ?>
             <p>Anade o elimina entradas del fichero assets/data/gallery.json.</p>
           </div>
         </div>
