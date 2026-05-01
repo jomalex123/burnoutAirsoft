@@ -1,0 +1,310 @@
+.registro-page {
+  background: #f4f4f4;
+  color: #151515;
+  min-height: calc(100vh - 90px);
+}
+
+.registro-intro,
+.registro-form {
+  max-width: 920px;
+}
+
+.registro-kicker {
+  color: #df1f29;
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.registro-intro h1 {
+  font-size: 48px;
+  line-height: 1;
+  margin-bottom: 24px;
+  max-width: 780px;
+}
+
+.registro-event-data,
+.registro-copy,
+.registro-form {
+  background: #fff;
+  border: 1px solid rgba(21, 21, 21, .1);
+  border-radius: 8px;
+  box-shadow: 0 18px 40px rgba(21, 21, 21, .08);
+}
+
+.registro-event-data {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 22px 24px;
+}
+
+.registro-event-data p,
+.registro-copy p {
+  color: #444;
+  margin: 0;
+}
+
+.registro-copy {
+  display: grid;
+  gap: 14px;
+  padding: 24px;
+}
+
+.registro-form {
+  display: grid;
+  gap: 20px;
+  padding: 28px;
+}
+
+.registro-field {
+  display: grid;
+  gap: 8px;
+}
+
+.registro-asistentes {
+  display: grid;
+  gap: 16px;
+}
+
+.registro-asistente-field {
+  background: #f7f7f7;
+  border: 1px solid rgba(21, 21, 21, .08);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.registro-field label,
+.registro-terms label {
+  color: #151515;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.registro-field input,
+.registro-field select {
+  background: #fafafa;
+  border: 1px solid rgba(21, 21, 21, .18);
+  border-radius: 6px;
+  color: #151515;
+  font-size: 16px;
+  min-height: 52px;
+  padding: 0 16px;
+  transition: border-color .2s ease, box-shadow .2s ease;
+  width: 100%;
+}
+
+.registro-field input:focus,
+.registro-field select:focus {
+  border-color: #df1f29;
+  box-shadow: 0 0 0 3px rgba(223, 31, 41, .12);
+  outline: none;
+}
+
+.registro-field.is-invalid input,
+.registro-field.is-invalid select {
+  border-color: #df1f29;
+}
+
+.registro-error {
+  color: #b91620;
+  font-size: 13px;
+  min-height: 18px;
+}
+
+.registro-terms {
+  align-items: flex-start;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 20px 1fr;
+}
+
+.registro-terms input {
+  height: 20px;
+  margin: 2px 0 0;
+  width: 20px;
+}
+
+.registro-link {
+  background: transparent;
+  border: 0;
+  color: #df1f29;
+  cursor: pointer;
+  display: inline;
+  font: inherit;
+  padding: 0;
+  text-decoration: underline;
+  text-transform: uppercase;
+}
+
+.registro-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.registro-actions .registro-clear {
+  margin-left: auto;
+}
+
+.registro-submit,
+.registro-clear {
+  align-items: center;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 700;
+  justify-content: center;
+  letter-spacing: .08em;
+  min-height: 48px;
+  padding: 0 22px;
+  text-transform: uppercase;
+  transition: background .2s ease, border-color .2s ease, color .2s ease, opacity .2s ease;
+}
+
+.registro-submit {
+  background: #df1f29;
+  border: 1px solid #df1f29;
+  color: #fff;
+}
+
+.registro-submit:hover:not(:disabled) {
+  background: #151515;
+  border-color: #151515;
+}
+
+.registro-submit:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+}
+
+.registro-clear {
+  background: #fff;
+  border: 1px solid rgba(21, 21, 21, .22);
+  color: #151515;
+}
+
+.registro-clear:hover {
+  border-color: #df1f29;
+  color: #df1f29;
+}
+
+.registro-modal {
+  display: none;
+  inset: 0;
+  padding: 24px;
+  position: fixed;
+  z-index: 9999;
+}
+
+.registro-modal.is-open {
+  display: grid;
+  place-items: center;
+}
+
+.registro-modal__overlay {
+  background: rgba(0, 0, 0, .72);
+  inset: 0;
+  position: absolute;
+}
+
+.registro-modal__dialog {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .32);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  max-height: 88vh;
+  max-width: 980px;
+  overflow: hidden;
+  position: relative;
+  width: min(100%, 980px);
+}
+
+.registro-modal__header,
+.registro-modal__actions {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 18px 22px;
+}
+
+.registro-modal__header {
+  border-bottom: 1px solid rgba(21, 21, 21, .1);
+}
+
+.registro-modal__header h2 {
+  font-size: 24px;
+  margin: 0;
+}
+
+.registro-modal__close {
+  background: #151515;
+  border: 0;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 18px;
+  height: 38px;
+  line-height: 1;
+  width: 38px;
+}
+
+.registro-modal__body {
+  background: #f4f4f4;
+  min-height: 55vh;
+}
+
+.registro-modal__body iframe {
+  border: 0;
+  display: block;
+  height: 100%;
+  min-height: 55vh;
+  width: 100%;
+}
+
+.registro-modal__actions {
+  border-top: 1px solid rgba(21, 21, 21, .1);
+  justify-content: flex-end;
+}
+
+body.registro-modal-open {
+  overflow: hidden;
+}
+
+@media only screen and (max-width: 700px) {
+  .registro-intro h1 {
+    font-size: 34px;
+  }
+
+  .registro-form,
+  .registro-copy,
+  .registro-event-data {
+    padding: 20px;
+  }
+
+  .registro-modal {
+    padding: 10px;
+  }
+
+  .registro-modal__dialog {
+    max-height: 94vh;
+  }
+
+  .registro-modal__actions,
+  .registro-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .registro-actions .registro-clear {
+    margin-left: 0;
+  }
+}

@@ -1,6 +1,13 @@
-$(document).ready(function () {
+window.initGalleryPage = function () {
+  const galeria = $('#galeria');
+
+  if (!galeria.length) {
+    return;
+  }
+
   $.getJSON('assets/data/gallery.json', function (data) {
-    const galeria = $('#galeria');
+    galeria.empty();
+    $(document).off('click.galleryModal');
 
     data.forEach((item, index) => {
       const img = $('<img>', {
@@ -12,7 +19,7 @@ $(document).ready(function () {
       galeria.append(img);
     });
 
-    $('.galeria-img').click(function () {
+    $('.galeria-img').off('click').on('click', function () {
       const index = $(this).data('index');
       const imageData = data[index];
       $('#modal-img').attr('src', imageData.src);
@@ -21,16 +28,20 @@ $(document).ready(function () {
       $('#modal').fadeIn();
     });
 
-    $('.close').click(function () {
+    $('.close').off('click').on('click', function () {
       $('#modal').fadeOut();
     });
 
-    $(document).on('click', function (e) {
+    $(document).on('click.galleryModal', function (e) {
       if ($(e.target).is('#modal')) {
         $('#modal').fadeOut();
       }
     });
   });
-});
+};
+
+if (!window.__burnoutLoadingPageScript) {
+  $(document).ready(window.initGalleryPage);
+}
 
 

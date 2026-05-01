@@ -1,0 +1,168 @@
+#admin {
+  color: #151515;
+}
+
+.admin-page {
+  background: #f4f4f4;
+  min-height: calc(100vh - 90px);
+}
+
+.admin-header {
+  max-width: 920px;
+}
+
+.admin-kicker {
+  color: #df1f29;
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.admin-header h1 {
+  font-size: 52px;
+  line-height: 1;
+  margin-bottom: 18px;
+}
+
+.admin-header p {
+  color: #555;
+  max-width: 620px;
+}
+
+.admin-panel {
+  display: grid;
+  gap: 24px;
+}
+
+.admin-state,
+.admin-card,
+.admin-table-wrap {
+  background: #fff;
+  border: 1px solid rgba(21, 21, 21, .1);
+  border-radius: 8px;
+  box-shadow: 0 18px 40px rgba(21, 21, 21, .08);
+}
+
+.admin-state {
+  color: #555;
+  padding: 28px;
+}
+
+.admin-stats {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.admin-card {
+  min-height: 118px;
+  padding: 22px;
+}
+
+.admin-card span {
+  color: #555;
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  margin-bottom: 14px;
+  text-transform: uppercase;
+}
+
+.admin-card strong {
+  display: block;
+  font-size: 40px;
+  line-height: 1;
+}
+
+.admin-grid {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+}
+
+.admin-table-wrap,
+.admin-actions {
+  padding: 24px;
+}
+
+.admin-table-wrap h2,
+.admin-actions h2 {
+  font-size: 24px;
+  margin-bottom: 18px;
+}
+
+.admin-table-scroll {
+  overflow-x: auto;
+}
+
+.admin-table {
+  border-collapse: collapse;
+  min-width: 720px;
+  width: 100%;
+}
+
+.admin-table th,
+.admin-table td {
+  border-bottom: 1px solid rgba(21, 21, 21, .08);
+  padding: 14px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.admin-table th {
+  color: #555;
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.admin-table td {
+  font-size: 15px;
+}
+
+.admin-actions {
+  align-self: start;
+  background: #151515;
+  border-radius: 8px;
+  color: #fff;
+}
+
+.admin-actions h2 {
+  color: #fff;
+}
+
+.admin-actions a {
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, .18);
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding: 14px 16px;
+  transition: border-color .2s ease, color .2s ease;
+}
+
+.admin-actions a:hover {
+  border-color: #df1f29;
+  color: #df1f29;
+}
+
+.admin-empty {
+  color: #555;
+  padding: 20px 0;
+}
+
+@media only screen and (max-width: 900px) {
+  .admin-stats,
+  .admin-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-header h1 {
+    font-size: 38px;
+  }
+}
