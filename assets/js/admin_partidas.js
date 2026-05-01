@@ -1,35 +1,19 @@
-window.initPartidasPage = function () {
-  var events = [];
-  var currentDate = new Date(2026, 4, 1);
-  var monthNames = [
-    'Enero',
-    'Febrero',
-    'Marzo',
-    'Abril',
-    'Mayo',
-    'Junio',
-    'Julio',
-    'Agosto',
-    'Septiembre',
-    'Octubre',
-    'Noviembre',
-    'Diciembre'
-  ];
+window.initAdminPartidasPage = function () {
+  var events = Array.isArray(window.BurnoutAdminEvents) ? window.BurnoutAdminEvents : [];
+  events.forEach(function (event, index) {
+    event._index = index;
+  });
 
+  var currentDate = new Date(2026, 4, 1);
+  var monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
   var grid = document.getElementById('calendarGrid');
   var title = document.getElementById('calendarTitle');
-  var eventList = document.getElementById('eventList');
   var previous = document.getElementById('prevMonth');
   var next = document.getElementById('nextMonth');
 
-  if (!grid || !title || !eventList || !previous || !next) {
+  if (!grid || !title || !previous || !next) {
     return;
   }
-
-  previous.replaceWith(previous.cloneNode(true));
-  next.replaceWith(next.cloneNode(true));
-  previous = document.getElementById('prevMonth');
-  next = document.getElementById('nextMonth');
 
   previous.addEventListener('click', function () {
     currentDate.setMonth(currentDate.getMonth() - 1);
@@ -41,27 +25,31 @@ window.initPartidasPage = function () {
     renderCalendar();
   });
 
-  loadEvents().then(function (loadedEvents) {
-    events = loadedEvents;
-    renderCalendar();
+  document.querySelectorAll('[data-partidas-modal-open]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      openModal(button.getAttribute('data-partidas-modal-open') === 'delete' ? 'deleteEventModal' : 'createEventModal');
+    });
   });
 
-  function loadEvents() {
-    return fetch('assets/data/events.json', { cache: 'no-store' })
-      .then(function (response) {
-        if (!response.ok) {
-          return [];
-        }
+  document.querySelectorAll('[data-partidas-modal-close]').forEach(function (button) {
+    button.addEventListener('click', closeModals);
+  });
 
-        return response.json();
-      })
-      .then(function (data) {
-        return Array.isArray(data) ? data : [];
-      })
-      .catch(function () {
-        return [];
-      });
-  }
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') {
+      closeModals();
+    }
+  });
+
+  document.querySelectorAll('[data-confirm-delete]').forEach(function (button) {
+    button.addEventListener('click', function (event) {
+      if (!confirm('Eliminar este evento?')) {
+        event.preventDefault();
+      }
+    });
+  });
+
+  renderCalendar();
 
   function renderCalendar() {
     var year = currentDate.getFullYear();
@@ -82,8 +70,6 @@ window.initPartidasPage = function () {
     for (var day = 1; day <= daysInMonth; day++) {
       grid.appendChild(createDayCell(year, month, day));
     }
-
-    renderEventList(year, month);
   }
 
   function createDayCell(year, month, day) {
@@ -106,9 +92,8 @@ window.initPartidasPage = function () {
         eventButton.className = 'partidas-event-slice is-' + normalizeTime(event.time);
         eventButton.type = 'button';
         eventButton.textContent = event.title;
-        eventButton.setAttribute('aria-label', day + ' de ' + monthNames[month] + ': ' + event.title + '. Abrir registro');
         eventButton.addEventListener('click', function () {
-          openEvent(event.url || 'registro.html');
+          openEditModal(event);
         });
         stack.appendChild(eventButton);
       });
@@ -117,43 +102,6 @@ window.initPartidasPage = function () {
     }
 
     return cell;
-  }
-
-  function renderEventList(year, month) {
-    var monthEvents = events.filter(function (event) {
-      var parts = event.date.split('-');
-      return Number(parts[0]) === year && Number(parts[1]) === month + 1;
-    }).sort(compareEvents);
-
-    eventList.innerHTML = '';
-
-    if (!monthEvents.length) {
-      var empty = document.createElement('p');
-      empty.className = 'partidas-empty';
-      empty.textContent = 'No hay partidas programadas este mes.';
-      eventList.appendChild(empty);
-      return;
-    }
-
-    monthEvents.forEach(function (event) {
-      var card = document.createElement('button');
-      card.className = 'partidas-event-card';
-      card.type = 'button';
-
-      var eventTitle = document.createElement('strong');
-      eventTitle.textContent = event.title;
-
-      var time = document.createElement('span');
-      time.textContent = event.time;
-
-      card.appendChild(eventTitle);
-      card.appendChild(time);
-      card.addEventListener('click', function () {
-        openEvent(event.url || 'registro.html');
-      });
-
-      eventList.appendChild(card);
-    });
   }
 
   function getEventsByDate(dateKey) {
@@ -189,23 +137,63 @@ window.initPartidasPage = function () {
   }
 
   function formatDate(year, month, day) {
-    return [
-      year,
-      String(month + 1).padStart(2, '0'),
-      String(day).padStart(2, '0')
-    ].join('-');
+    return [year, String(month + 1).padStart(2, '0'), String(day).padStart(2, '0')].join('-');
   }
 
-  function openEvent(url) {
-    if (typeof window.BurnoutNavigate === 'function') {
-      window.BurnoutNavigate(url);
+  function openModal(id) {
+    var modal = document.getElementById(id);
+
+    if (!modal) {
       return;
     }
 
-    window.location.href = url;
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('admin-gallery-modal-open');
+  }
+
+  function openEditModal(event) {
+    var index = document.getElementById('editEventIndex');
+    var date = document.getElementById('editDate');
+    var title = document.getElementById('editTitle');
+    var time = normalizeTime(event.time);
+
+    if (index) {
+      index.value = event._index;
+    }
+
+    if (date) {
+      date.value = event.date || '';
+    }
+
+    if (title) {
+      title.value = event.title || '';
+    }
+
+    document.querySelectorAll('#editEventModal input[name="time"]').forEach(function (input) {
+      input.checked = input.value === time;
+    });
+
+    if (!document.querySelector('#editEventModal input[name="time"]:checked')) {
+      var defaultTime = document.querySelector('#editEventModal input[name="time"][value="manana"]');
+
+      if (defaultTime) {
+        defaultTime.checked = true;
+      }
+    }
+
+    openModal('editEventModal');
+  }
+
+  function closeModals() {
+    document.querySelectorAll('.admin-gallery-modal.is-open').forEach(function (modal) {
+      modal.classList.remove('is-open');
+      modal.setAttribute('aria-hidden', 'true');
+    });
+    document.body.classList.remove('admin-gallery-modal-open');
   }
 };
 
 if (!window.__burnoutLoadingPageScript) {
-  document.addEventListener('DOMContentLoaded', window.initPartidasPage);
+  document.addEventListener('DOMContentLoaded', window.initAdminPartidasPage);
 }

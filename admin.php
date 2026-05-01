@@ -106,13 +106,14 @@ $csrfToken = burnout_csrf_token();
       <main class="ms-container admin-page">
         <div class="ms-section__block">
           <div class="admin-header">
-            <span class="admin-kicker">Burnout Airsoft</span>
-            <h1>Administracion</h1>
+            <div class="admin-header__title">
+              <span class="admin-kicker">Burnout Airsoft</span>
+              <h1>Administracion</h1>
+            </div>
             <?php if ($adminUser): ?>
               <form class="admin-logout" method="post" action="admin.php">
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                 <input type="hidden" name="action" value="logout">
-                <span><?= htmlspecialchars($adminUser['display_name'] ?: $adminUser['username'], ENT_QUOTES, 'UTF-8') ?></span>
                 <button type="submit">Cerrar sesion</button>
               </form>
               <p>Resumen rapido de registros, galeria y enlaces de gestion de la web.</p>
