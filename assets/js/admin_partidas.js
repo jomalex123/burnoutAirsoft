@@ -41,14 +41,6 @@ window.initAdminPartidasPage = function () {
     }
   });
 
-  document.querySelectorAll('[data-confirm-delete]').forEach(function (button) {
-    button.addEventListener('click', function (event) {
-      if (!confirm('Eliminar este evento?')) {
-        event.preventDefault();
-      }
-    });
-  });
-
   renderCalendar();
 
   function renderCalendar() {
