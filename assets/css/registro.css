@@ -60,6 +60,10 @@
   padding: 28px;
 }
 
+#registroFormSection.is-hidden {
+  display: none;
+}
+
 .registro-field {
   display: grid;
   gap: 8px;
@@ -298,6 +302,32 @@
   height: 100%;
   min-height: 55vh;
   width: min(100%, 980px);
+}
+
+.registro-confirmation-modal__dialog {
+  grid-template-rows: auto auto auto;
+  max-width: 680px;
+}
+
+.registro-confirmation-modal__body {
+  align-items: stretch;
+  background: #fff;
+  color: #333;
+  display: grid;
+  gap: 14px;
+  justify-content: stretch;
+  min-height: auto;
+  padding: 24px;
+}
+
+.registro-confirmation-modal__body p {
+  margin: 0;
+}
+
+.registro-confirmation-modal__body a {
+  color: #df1f29;
+  overflow-wrap: anywhere;
+  text-decoration: underline;
 }
 
 .registro-modal__actions {

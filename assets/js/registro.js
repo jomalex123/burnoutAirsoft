@@ -122,7 +122,7 @@ window.initRegistroPage = function () {
     var normalized = String(value || '').toLowerCase();
 
     if (normalized === 'maã±ana' || normalized === 'mañana') {
-      return 'manana';
+      return 'Mañana';
     }
 
     return normalized;

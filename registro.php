@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/config/mail.php';
 
 function registro_param(string $key, string $source = 'get'): string
 {
@@ -108,6 +109,27 @@ function registro_set_message(string $html, string $message, bool $success): str
     ) ?? $html;
 }
 
+function registro_set_confirmation_modal(string $html, bool $success): string
+{
+    if (!$success) {
+        return $html;
+    }
+
+    $html = preg_replace(
+        '/<section class="ms-section__block registro-form" id="registroFormSection">/',
+        '<section class="ms-section__block registro-form is-hidden" id="registroFormSection" aria-hidden="true">',
+        $html,
+        1
+    ) ?? $html;
+
+    return preg_replace(
+        '/<div class="registro-modal registro-confirmation-modal" id="registroConfirmationModal" aria-hidden="true">/',
+        '<div class="registro-modal registro-confirmation-modal is-open" id="registroConfirmationModal" aria-hidden="false" data-registration-success="true">',
+        $html,
+        1
+    ) ?? $html;
+}
+
 function registro_clean_list(array $values): array
 {
     return array_map(static function ($value): string {
@@ -115,7 +137,48 @@ function registro_clean_list(array $values): array
     }, $values);
 }
 
-function registro_save_submission(): int
+function registro_build_confirmation_email(array $registration): string
+{
+    $attendees = $registration['attendees'] ?? [];
+    $attendeeLines = array_map(static function (array $attendee): string {
+        return sprintf('%s %s', $attendee['name'], $attendee['document']);
+    }, $attendees);
+
+    return sprintf(
+        "Tu inscripción se ha registrado correctamente.\n\n" .
+        "Recuerda que el horario de apertura de puertas será a las 8:00 AM y el \n" .
+        "cierre de ellas a las 9:00 AM\n\n" .
+        "Resumen de los datos enviados:\n" .
+        "• Número de asistentes: %d\n" .
+        "• Lista de asistentes:\n%s\n\n" .
+        "• Teléfono de contacto: %s\n" .
+        "• Correo electrónico: %s\n" .
+        "• Equipo: %s\n\n" .
+        "Normativa:\n" .
+        "https://drive.google.com/file/d/104gDRmUVKkp6AtADIaEomPMzdUN7tZVT/\n\n" .
+        "Por favor, asegúrate de leer la normativa. Su incumplimiento podrá ser \n" .
+        "sancionado por la organización, incluyendo la expulsión del terreno de \n" .
+        "juego.\n\n" .
+        "Gracias por tu inscripción.\n" .
+        "Un saludo.",
+        count($attendees),
+        implode("\n", $attendeeLines),
+        $registration['phone'],
+        $registration['email'],
+        $registration['team'] !== '' ? $registration['team'] : '-'
+    );
+}
+
+function registro_send_confirmation_email(array $registration): void
+{
+    burnout_send_plain_mail(
+        $registration['email'],
+        'Confirmacion de inscripcion - Burnout Airsoft',
+        registro_build_confirmation_email($registration)
+    );
+}
+
+function registro_save_submission(): array
 {
     $eventId = filter_input(INPUT_POST, 'event_id', FILTER_VALIDATE_INT);
 
@@ -193,7 +256,18 @@ function registro_save_submission(): int
 
         $pdo->commit();
 
-        return $registrationId;
+        return [
+            'id' => $registrationId,
+            'email' => $email,
+            'phone' => $phone,
+            'team' => $team,
+            'attendees' => array_map(static function (string $name, string $document): array {
+                return [
+                    'name' => $name,
+                    'document' => $document,
+                ];
+            }, $attendeeNames, $attendeeDocuments),
+        ];
     } catch (Throwable $exception) {
         $pdo->rollBack();
         throw $exception;
@@ -205,8 +279,15 @@ $messageSuccess = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        $registrationId = registro_save_submission();
-        $message = sprintf('Registro guardado correctamente. Numero de registro: %d.', $registrationId);
+        $registration = registro_save_submission();
+
+        try {
+            registro_send_confirmation_email($registration);
+        } catch (Throwable $emailException) {
+            error_log('No se ha podido enviar el correo de confirmacion del registro ' . $registration['id'] . ': ' . $emailException->getMessage());
+        }
+
+        $message = sprintf('Registro guardado correctamente. Numero de registro: %d.', $registration['id']);
         $messageSuccess = true;
         $_POST = [];
     } catch (Throwable $exception) {
@@ -241,7 +322,8 @@ $html = registro_replace_between_id($html, 'registroEventoTitulo', 'INSCRIPCION 
 $html = registro_replace_between_id($html, 'registroEventoFecha', registro_format_date($date));
 $html = registro_replace_between_id($html, 'registroEventoTurno', registro_format_turn($turn));
 $html = registro_set_input_value($html, 'eventId', $event ? (string) $event['id'] : (string) ($eventId ?: ''));
-$html = registro_set_message($html, $message, $messageSuccess);
+$html = $messageSuccess ? $html : registro_set_message($html, $message, false);
+$html = registro_set_confirmation_modal($html, $messageSuccess);
 $html = preg_replace('/<title>.*?<\/title>/s', '<title>Inscripcion - ' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '</title>', $html, 1) ?? $html;
 
 echo $html;

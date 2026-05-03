@@ -188,7 +188,6 @@ $csrfToken = burnout_csrf_token();
                 <button type="submit">Cerrar sesion</button>
               </form>
             <?php endif; ?>
-            <p>Anade o elimina entradas del fichero assets/data/gallery.json.</p>
           </div>
         </div>
         <div class="ms-section__block">
