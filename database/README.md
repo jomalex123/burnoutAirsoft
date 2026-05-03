@@ -14,10 +14,10 @@ Copia `config/env.example.php` a `config/env.php` y rellena las contrasenas real
 
 Ejecuta `database/schema.sql` en cada base de datos: Local, PRE y PRO.
 
-Para local, si lo lanzas desde consola sin seleccionar antes la base de datos, usa:
+Para local, si lo lanzas desde consola, selecciona antes la base de datos o anade el `USE` manualmente:
 
 ```bash
-D:\xampp\mysql\bin\mysql.exe -u root < database\schema.local.sql
+D:\xampp\mysql\bin\mysql.exe -u root 11364681_burnoutairsoft < database\schema.sql
 ```
 
 El nombre `11364681_burnoutairsoft` debe ir entre backticks si escribes el `USE` manualmente:

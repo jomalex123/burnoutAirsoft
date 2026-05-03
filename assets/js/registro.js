@@ -53,14 +53,11 @@ window.initRegistroPage = function () {
   });
 
   $form.off('submit.registro').on('submit.registro', function (event) {
-    event.preventDefault();
-
     if (!validateForm()) {
+      event.preventDefault();
       updateSubmitState();
       return;
     }
-
-    alert('Registro preparado. Mas adelante se conectara con la base de datos.');
   });
 
   function openModal() {
@@ -80,6 +77,11 @@ window.initRegistroPage = function () {
     var title = params.get('titulo');
     var date = params.get('fecha');
     var turn = params.get('turno');
+    var eventId = params.get('event_id') || params.get('id');
+
+    if (eventId) {
+      $('#eventId').val(eventId);
+    }
 
     if (title) {
       $('#registroEventoTitulo').text('INSCRIPCION ' + title);
@@ -159,8 +161,12 @@ window.initRegistroPage = function () {
       message = 'Introduce un telefono valido.';
     }
 
-    if (!message && isNombreDocumentoField(id) && value.length < 6) {
-      message = 'Introduce el nombre completo y el documento.';
+    if (!message && isAttendeeNameField(id) && value.length < 3) {
+      message = 'Introduce el nombre completo.';
+    }
+
+    if (!message && isAttendeeDocumentField(id) && value.length < 5) {
+      message = 'Introduce un DNI, NIE o pasaporte valido.';
     }
 
     if (!message && id === 'asistentes' && !value) {
@@ -176,7 +182,7 @@ window.initRegistroPage = function () {
     var existingValues = {};
 
     $asistentesFields.find('input').each(function () {
-      existingValues[this.name] = this.value;
+      existingValues[this.id] = this.value;
     });
 
     $asistentesFields.empty();
@@ -186,22 +192,40 @@ window.initRegistroPage = function () {
     }
 
     for (var index = 1; index <= total; index++) {
-      var fieldId = 'nombreDocumento' + index;
-      var $field = $('<div class="registro-field registro-asistente-field"></div>');
-      var $label = $('<label></label>').attr('for', fieldId).text('Nombre completo y documento asistente ' + index + ' *');
-      var $input = $('<input>')
+      var nameId = 'asistenteNombre' + index;
+      var documentId = 'asistenteDocumento' + index;
+      var $field = $('<div class="registro-asistente-field"></div>');
+      var $title = $('<h3></h3>').text('Asistente ' + index);
+      var $nameField = $('<div class="registro-field"></div>');
+      var $nameLabel = $('<label></label>').attr('for', nameId).text('Nombre completo *');
+      var $nameInput = $('<input>')
         .attr({
-          id: fieldId,
-          name: fieldId,
+          id: nameId,
+          name: 'attendee_name[]',
           type: 'text',
           autocomplete: 'name',
           required: true,
-          placeholder: 'Nombre Apellidos - DNI/NIE/Pasaporte'
+          placeholder: 'Nombre y apellidos'
         })
-        .val(existingValues[fieldId] || '');
-      var $error = $('<span class="registro-error"></span>').attr('data-error-for', fieldId);
+        .val(existingValues[nameId] || '');
+      var $nameError = $('<span class="registro-error"></span>').attr('data-error-for', nameId);
+      var $documentField = $('<div class="registro-field"></div>');
+      var $documentLabel = $('<label></label>').attr('for', documentId).text('DNI/NIE/Pasaporte *');
+      var $documentInput = $('<input>')
+        .attr({
+          id: documentId,
+          name: 'attendee_document[]',
+          type: 'text',
+          autocomplete: 'off',
+          required: true,
+          placeholder: 'DNI, NIE o pasaporte'
+        })
+        .val(existingValues[documentId] || '');
+      var $documentError = $('<span class="registro-error"></span>').attr('data-error-for', documentId);
 
-      $field.append($label, $input, $error);
+      $nameField.append($nameLabel, $nameInput, $nameError);
+      $documentField.append($documentLabel, $documentInput, $documentError);
+      $field.append($title, $nameField, $documentField);
       $asistentesFields.append($field);
     }
   }
@@ -232,8 +256,12 @@ window.initRegistroPage = function () {
     return /^(\+?\d[\d\s-]{7,18})$/.test(value);
   }
 
-  function isNombreDocumentoField(id) {
-    return /^nombreDocumento\d+$/.test(id);
+  function isAttendeeNameField(id) {
+    return /^asistenteNombre\d+$/.test(id);
+  }
+
+  function isAttendeeDocumentField(id) {
+    return /^asistenteDocumento\d+$/.test(id);
   }
 };
 
