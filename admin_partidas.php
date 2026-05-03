@@ -24,7 +24,7 @@ if (!$setupError && !$adminUser) {
 function burnout_event_time_to_label(string $timeSlot): string
 {
     return [
-        'M' => 'Manana',
+        'M' => 'Mañana',
         'T' => 'Tarde',
         'N' => 'Noche',
     ][$timeSlot] ?? $timeSlot;
@@ -35,7 +35,7 @@ function burnout_normalize_event_time(string $value): string
     $time = strtolower(trim($value));
     $map = [
         'm' => 'M',
-        'manana' => 'M',
+        'Mañana' => 'M',
         'mañana' => 'M',
         't' => 'T',
         'tarde' => 'T',
@@ -247,7 +247,6 @@ $csrfToken = burnout_csrf_token();
                 <button type="submit">Cerrar sesion</button>
               </form>
             <?php endif; ?>
-            <p>Crea o elimina partidas del calendario publico.</p>
           </div>
         </div>
         <div class="ms-section__block">
@@ -308,7 +307,7 @@ $csrfToken = burnout_csrf_token();
                     <div class="admin-time-options" role="radiogroup" aria-label="Horario">
                       <label>
                           <input type="radio" name="time" value="M" required checked>
-                        <span>Manana</span>
+                        <span>Mañana</span>
                       </label>
                       <label>
                           <input type="radio" name="time" value="T" required>
@@ -376,11 +375,11 @@ $csrfToken = burnout_csrf_token();
                     <input id="editTitle" name="title" type="text" required>
                   </div>
                   <div class="admin-login-field">
-                    <label for="editTimeManana">Horario</label>
+                    <label for="editTimeMañana">Horario</label>
                     <div class="admin-time-options" role="radiogroup" aria-label="Horario">
                       <label>
-                        <input id="editTimeManana" type="radio" name="time" value="M" required>
-                        <span>Manana</span>
+                        <input id="editTimeMañana" type="radio" name="time" value="M" required>
+                        <span>Mañana</span>
                       </label>
                       <label>
                         <input id="editTimeTarde" type="radio" name="time" value="T" required>

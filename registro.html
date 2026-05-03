@@ -78,7 +78,7 @@
           </div>
         </section>
 
-        <section class="ms-section__block registro-form">
+        <section class="ms-section__block registro-form" id="registroFormSection">
           <form id="registroForm" class="registro-form" method="post" action="registro.php" novalidate>
             <input id="eventId" name="event_id" type="hidden" value="">
             <div id="registroMessage" class="registro-message" hidden></div>
@@ -148,6 +148,27 @@
             <div class="registro-modal__actions">
               <button class="registro-clear" type="button" data-close-modal>Cancelar</button>
               <button class="registro-submit" type="button" id="aceptarNormativa">Aceptar normativa</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="registro-modal registro-confirmation-modal" id="registroConfirmationModal" aria-hidden="true">
+          <div class="registro-modal__overlay"></div>
+          <div class="registro-modal__dialog registro-confirmation-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="registroConfirmationTitle">
+            <div class="registro-modal__header">
+              <h2 id="registroConfirmationTitle">Inscripción recibida</h2>
+            </div>
+            <div class="registro-modal__body registro-confirmation-modal__body">
+              <p>Hemos recibido tu inscripción para la partida.</p>
+              <p>Recuerda que el horario de apertura de puertas seró a las 8:00 AM y el cierre de ellas a las 9:00 AM.</p>
+              <p>
+                Por favor, revisa la normativa en el siguiente enlace:<br>
+                <a href="https://drive.google.com/file/d/104gDRmUVKkp6AtADIaEomPMzdUN7tZVT" target="_blank" rel="noopener noreferrer">Normativa</a>
+              </p>
+              <p>Su incumplimiento podrá ser sancionado por la organización, incluyendo la expulsión del terreno de juego.</p>
+            </div>
+            <div class="registro-modal__actions">
+              <a class="registro-submit" href="partidas.html">Volver a partidas</a>
             </div>
           </div>
         </div>

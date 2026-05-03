@@ -7,7 +7,7 @@ require_once __DIR__ . '/config/database.php';
 function burnout_public_event_time_to_label(string $timeSlot): string
 {
     return [
-        'M' => 'Manana',
+        'M' => 'Mañana',
         'T' => 'Tarde',
         'N' => 'Noche',
     ][$timeSlot] ?? $timeSlot;

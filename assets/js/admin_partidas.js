@@ -111,7 +111,7 @@ window.initAdminPartidasPage = function () {
     var value = String(time || '').toLowerCase();
 
     if (value === 'm' || value === 'mañana' || value === 'maã±ana') {
-      return 'manana';
+      return 'Mañana';
     }
 
     if (value === 't') {
@@ -127,7 +127,7 @@ window.initAdminPartidasPage = function () {
 
   function timeOrder(time) {
     return {
-      manana: 1,
+      Mañana: 1,
       tarde: 2,
       noche: 3
     }[normalizeTime(time)] || 99;

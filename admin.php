@@ -7,6 +7,58 @@ require_once __DIR__ . '/config/auth.php';
 $error = '';
 $setupError = '';
 $adminUser = null;
+$latestRegistrations = [];
+
+function admin_event_time_to_label(string $timeSlot): string
+{
+    return [
+        'M' => 'Mañana',
+        'T' => 'Tarde',
+        'N' => 'Noche',
+    ][$timeSlot] ?? $timeSlot;
+}
+
+function admin_format_event_date(string $value): string
+{
+    $date = DateTime::createFromFormat('Y-m-d', $value);
+
+    if (!$date || $date->format('Y-m-d') !== $value) {
+        return $value;
+    }
+
+    return $date->format('d/m/Y');
+}
+
+function admin_latest_registrations(int $limit = 10): array
+{
+    $statement = burnout_pdo()->prepare(
+        'SELECT
+            r.id,
+            r.email,
+            r.created_at,
+            e.title AS event_title,
+            e.event_date,
+            e.time_slot,
+            COUNT(ra.id) AS attendee_count
+         FROM registrations r
+         INNER JOIN events e ON e.id = r.event_id
+         LEFT JOIN registration_attendees ra ON ra.registration_id = r.id
+         GROUP BY r.id, r.email, r.created_at, e.title, e.event_date, e.time_slot
+         ORDER BY r.created_at DESC, r.id DESC
+         LIMIT :limit'
+    );
+    $statement->bindValue('limit', $limit, PDO::PARAM_INT);
+    $statement->execute();
+
+    return array_map(static function (array $registration): array {
+        return [
+            'title' => (string) $registration['event_title'],
+            'date' => admin_format_event_date((string) $registration['event_date']) . ' - ' . admin_event_time_to_label((string) $registration['time_slot']),
+            'email' => (string) $registration['email'],
+            'attendees' => (int) $registration['attendee_count'],
+        ];
+    }, $statement->fetchAll());
+}
 
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -32,6 +84,10 @@ try {
     }
 
     $adminUser = burnout_current_admin();
+
+    if ($adminUser) {
+        $latestRegistrations = admin_latest_registrations();
+    }
 } catch (Throwable $exception) {
     error_log($exception->getMessage());
     $setupError = 'No se ha podido conectar con la base de datos o faltan las tablas de administracion.';
@@ -116,7 +172,6 @@ $csrfToken = burnout_csrf_token();
                 <input type="hidden" name="action" value="logout">
                 <button type="submit">Cerrar sesion</button>
               </form>
-              <p>Resumen rapido de registros, galeria y enlaces de gestion de la web.</p>
             <?php else: ?>
               <p>Acceso restringido al panel de administracion.</p>
             <?php endif; ?>
@@ -129,7 +184,43 @@ $csrfToken = burnout_csrf_token();
             </section>
           <?php elseif ($adminUser): ?>
             <section id="admin" class="admin-panel" aria-live="polite">
-              <div class="admin-state">Cargando panel...</div>
+              <div class="admin-grid">
+                <div class="admin-table-wrap">
+                  <h2>Ultimos registros</h2>
+                  <?php if (!$latestRegistrations): ?>
+                    <div class="admin-empty">No hay registros guardados.</div>
+                  <?php else: ?>
+                    <div class="admin-table-scroll">
+                      <table class="admin-table">
+                        <thead>
+                          <tr>
+                            <th>Evento</th>
+                            <th>Fecha</th>
+                            <th>Email</th>
+                            <th>N. asistentes</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <?php foreach ($latestRegistrations as $registration): ?>
+                            <tr>
+                              <td><?= htmlspecialchars($registration['title'], ENT_QUOTES, 'UTF-8') ?></td>
+                              <td><?= htmlspecialchars($registration['date'], ENT_QUOTES, 'UTF-8') ?></td>
+                              <td><?= htmlspecialchars($registration['email'], ENT_QUOTES, 'UTF-8') ?></td>
+                              <td><?= (int) $registration['attendees'] ?></td>
+                            </tr>
+                          <?php endforeach; ?>
+                        </tbody>
+                      </table>
+                    </div>
+                  <?php endif; ?>
+                </div>
+                <aside class="admin-actions">
+                  <h2>Gestion</h2>
+                  <a href="galeria.html">Ver Galeria <span>-></span></a>
+                  <a href="admin_gallery.php">Modificar Galeria <span>-></span></a>
+                  <a href="admin_partidas.php">Gestionar Partidas <span>-></span></a>
+                </aside>
+              </div>
             </section>
           <?php else: ?>
             <section class="admin-login-panel">
@@ -166,8 +257,5 @@ $csrfToken = burnout_csrf_token();
     <script type="text/javascript" src='assets/js/jquery-3.2.1.min.js'></script>
     <script type="text/javascript" src='assets/js/plugins.min.js'></script>
     <script type="text/javascript" src="assets/js/main.js"></script>
-    <?php if ($adminUser): ?>
-      <script type="text/javascript" src="assets/js/admin.js"></script>
-    <?php endif; ?>
   </body>
 </html>
