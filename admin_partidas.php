@@ -8,7 +8,6 @@ $adminUser = null;
 $setupError = '';
 $message = '';
 $error = '';
-$eventsFile = __DIR__ . '/assets/data/events.json';
 
 try {
     $adminUser = burnout_current_admin();
@@ -22,46 +21,81 @@ if (!$setupError && !$adminUser) {
     exit;
 }
 
-function burnout_read_events(string $eventsFile): array
+function burnout_event_time_to_label(string $timeSlot): string
 {
-    if (!is_file($eventsFile)) {
-        return [];
-    }
-
-    $content = file_get_contents($eventsFile);
-
-    if ($content === false || trim($content) === '') {
-        return [];
-    }
-
-    $data = json_decode($content, true);
-
-    if (!is_array($data)) {
-        throw new RuntimeException('El fichero events.json no contiene un JSON valido.');
-    }
-
-    return array_values(array_filter($data, static function ($item): bool {
-        return is_array($item);
-    }));
+    return [
+        'M' => 'Manana',
+        'T' => 'Tarde',
+        'N' => 'Noche',
+    ][$timeSlot] ?? $timeSlot;
 }
 
-function burnout_write_events(string $eventsFile, array $events): void
+function burnout_normalize_event_time(string $value): string
 {
-    usort($events, static function (array $a, array $b): int {
-        return strcmp((string) ($a['date'] ?? ''), (string) ($b['date'] ?? ''));
-    });
+    $time = strtolower(trim($value));
+    $map = [
+        'm' => 'M',
+        'manana' => 'M',
+        'mañana' => 'M',
+        't' => 'T',
+        'tarde' => 'T',
+        'n' => 'N',
+        'noche' => 'N',
+    ];
 
-    $json = json_encode(array_values($events), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-
-    if ($json === false) {
-        throw new RuntimeException('No se ha podido generar el JSON de partidas.');
+    if (!isset($map[$time])) {
+        throw new RuntimeException('Selecciona un horario valido.');
     }
 
-    $result = file_put_contents($eventsFile, $json . PHP_EOL, LOCK_EX);
+    return $map[$time];
+}
 
-    if ($result === false) {
-        throw new RuntimeException('No se ha podido guardar assets/data/events.json.');
+function burnout_read_events(): array
+{
+    $statement = burnout_pdo()->query(
+        'SELECT id, event_date, title, time_slot
+         FROM events
+         ORDER BY event_date ASC, FIELD(time_slot, "M", "T", "N"), id ASC'
+    );
+
+    return array_map(static function (array $event): array {
+        return [
+            'id' => (int) $event['id'],
+            'date' => (string) $event['event_date'],
+            'title' => (string) $event['title'],
+            'time' => burnout_event_time_to_label((string) $event['time_slot']),
+            'timeSlot' => (string) $event['time_slot'],
+            'url' => 'registro.php',
+        ];
+    }, $statement->fetchAll());
+}
+
+function burnout_find_event(int $id): ?array
+{
+    $statement = burnout_pdo()->prepare('SELECT id FROM events WHERE id = :id LIMIT 1');
+    $statement->execute(['id' => $id]);
+    $event = $statement->fetch();
+
+    return $event ?: null;
+}
+
+function burnout_validate_event_data(string $date, string $title, string $time): array
+{
+    if ($date === '' || $title === '' || $time === '') {
+        throw new RuntimeException('La fecha, el titulo y el horario son obligatorios.');
     }
+
+    $dateTime = DateTime::createFromFormat('Y-m-d', $date);
+
+    if (!$dateTime || $dateTime->format('Y-m-d') !== $date) {
+        throw new RuntimeException('La fecha debe tener formato YYYY-MM-DD.');
+    }
+
+    return [
+        'date' => $date,
+        'title' => $title,
+        'time_slot' => burnout_normalize_event_time($time),
+    ];
 }
 
 if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -70,59 +104,54 @@ if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new RuntimeException('Sesion caducada. Recarga la pagina e intentalo de nuevo.');
         }
 
-        $events = burnout_read_events($eventsFile);
         $action = $_POST['action'] ?? '';
 
         if ($action === 'add' || $action === 'update') {
             $date = trim((string) ($_POST['date'] ?? ''));
             $title = trim((string) ($_POST['title'] ?? ''));
             $time = trim((string) ($_POST['time'] ?? ''));
-            $allowedTimes = ['manana', 'tarde', 'noche'];
-            $eventData = [
-                'date' => $date,
-                'title' => $title,
-                'time' => ucfirst($time),
-                'url' => 'registro.php',
-            ];
-
-            if ($date === '' || $title === '' || $time === '') {
-                throw new RuntimeException('La fecha, el titulo y el horario son obligatorios.');
-            }
-
-            if (!in_array($time, $allowedTimes, true)) {
-                throw new RuntimeException('Selecciona un horario valido.');
-            }
-
-            $dateTime = DateTime::createFromFormat('Y-m-d', $date);
-
-            if (!$dateTime || $dateTime->format('Y-m-d') !== $date) {
-                throw new RuntimeException('La fecha debe tener formato YYYY-MM-DD.');
-            }
+            $eventData = burnout_validate_event_data($date, $title, $time);
 
             if ($action === 'update') {
-                $index = filter_input(INPUT_POST, 'index', FILTER_VALIDATE_INT);
+                $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
 
-                if ($index === false || $index === null || !isset($events[$index])) {
+                if ($id === false || $id === null || !burnout_find_event((int) $id)) {
                     throw new RuntimeException('El evento seleccionado no existe.');
                 }
 
-                $events[$index] = $eventData;
+                $statement = burnout_pdo()->prepare(
+                    'UPDATE events
+                     SET event_date = :event_date, title = :title, time_slot = :time_slot
+                     WHERE id = :id'
+                );
+                $statement->execute([
+                    'event_date' => $eventData['date'],
+                    'title' => $eventData['title'],
+                    'time_slot' => $eventData['time_slot'],
+                    'id' => $id,
+                ]);
                 $message = 'Evento actualizado correctamente.';
             } else {
-                $events[] = $eventData;
+                $statement = burnout_pdo()->prepare(
+                    'INSERT INTO events (event_date, title, time_slot)
+                     VALUES (:event_date, :title, :time_slot)'
+                );
+                $statement->execute([
+                    'event_date' => $eventData['date'],
+                    'title' => $eventData['title'],
+                    'time_slot' => $eventData['time_slot'],
+                ]);
                 $message = 'Evento creado correctamente.';
             }
-
-            burnout_write_events($eventsFile, $events);
         } elseif ($action === 'delete') {
-            $index = filter_input(INPUT_POST, 'index', FILTER_VALIDATE_INT);
+            $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
 
-            if ($index === false || $index === null || !isset($events[$index])) {
+            if ($id === false || $id === null || !burnout_find_event((int) $id)) {
                 throw new RuntimeException('El evento seleccionado no existe.');
             }
 
-            array_splice($events, $index, 1);
-            burnout_write_events($eventsFile, $events);
+            $statement = burnout_pdo()->prepare('DELETE FROM events WHERE id = :id');
+            $statement->execute(['id' => $id]);
             $message = 'Evento eliminado correctamente.';
         }
     } catch (Throwable $exception) {
@@ -131,7 +160,7 @@ if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 try {
-    $events = $setupError ? [] : burnout_read_events($eventsFile);
+    $events = $setupError ? [] : burnout_read_events();
 } catch (Throwable $exception) {
     $events = [];
     $error = $exception->getMessage();
@@ -278,15 +307,15 @@ $csrfToken = burnout_csrf_token();
                     <label for="time">Horario</label>
                     <div class="admin-time-options" role="radiogroup" aria-label="Horario">
                       <label>
-                        <input type="radio" name="time" value="manana" required checked>
+                          <input type="radio" name="time" value="M" required checked>
                         <span>Manana</span>
                       </label>
                       <label>
-                        <input type="radio" name="time" value="tarde" required>
+                          <input type="radio" name="time" value="T" required>
                         <span>Tarde</span>
                       </label>
                       <label>
-                        <input type="radio" name="time" value="noche" required>
+                          <input type="radio" name="time" value="N" required>
                         <span>Noche</span>
                       </label>
                     </div>
@@ -309,7 +338,7 @@ $csrfToken = burnout_csrf_token();
                   <div class="admin-empty">No hay eventos creados.</div>
                 <?php else: ?>
                   <div class="admin-partidas-delete-list">
-                    <?php foreach ($events as $index => $event): ?>
+                    <?php foreach ($events as $event): ?>
                       <article class="admin-partidas-delete-item">
                         <div>
                           <strong><?= htmlspecialchars((string) ($event['title'] ?? 'Sin titulo'), ENT_QUOTES, 'UTF-8') ?></strong>
@@ -318,7 +347,7 @@ $csrfToken = burnout_csrf_token();
                         <form method="post" action="admin_partidas.php">
                           <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                           <input type="hidden" name="action" value="delete">
-                          <input type="hidden" name="index" value="<?= (int) $index ?>">
+                          <input type="hidden" name="id" value="<?= (int) ($event['id'] ?? 0) ?>">
                           <button type="submit">Borrar</button>
                         </form>
                       </article>
@@ -337,7 +366,7 @@ $csrfToken = burnout_csrf_token();
                 </div>
                 <form class="admin-gallery-form" method="post" action="admin_partidas.php" id="editEventForm">
                   <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
-                  <input type="hidden" name="index" id="editEventIndex" value="">
+                  <input type="hidden" name="id" id="editEventId" value="">
                   <div class="admin-login-field">
                     <label for="editDate">Fecha</label>
                     <input id="editDate" name="date" type="date" required>
@@ -350,15 +379,15 @@ $csrfToken = burnout_csrf_token();
                     <label for="editTimeManana">Horario</label>
                     <div class="admin-time-options" role="radiogroup" aria-label="Horario">
                       <label>
-                        <input id="editTimeManana" type="radio" name="time" value="manana" required>
+                        <input id="editTimeManana" type="radio" name="time" value="M" required>
                         <span>Manana</span>
                       </label>
                       <label>
-                        <input id="editTimeTarde" type="radio" name="time" value="tarde" required>
+                        <input id="editTimeTarde" type="radio" name="time" value="T" required>
                         <span>Tarde</span>
                       </label>
                       <label>
-                        <input id="editTimeNoche" type="radio" name="time" value="noche" required>
+                        <input id="editTimeNoche" type="radio" name="time" value="N" required>
                         <span>Noche</span>
                       </label>
                     </div>

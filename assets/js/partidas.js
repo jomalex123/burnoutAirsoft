@@ -47,7 +47,7 @@ window.initPartidasPage = function () {
   });
 
   function loadEvents() {
-    return fetch('assets/data/events.json', { cache: 'no-store' })
+    return fetch('events.php', { cache: 'no-store' })
       .then(function (response) {
         if (!response.ok) {
           return [];
@@ -173,8 +173,16 @@ window.initPartidasPage = function () {
   function normalizeTime(time) {
     var value = String(time || '').toLowerCase();
 
-    if (value === 'mañana' || value === 'maã±ana') {
+    if (value === 'm' || value === 'mañana' || value === 'maã±ana') {
       return 'manana';
+    }
+
+    if (value === 't') {
+      return 'tarde';
+    }
+
+    if (value === 'n') {
+      return 'noche';
     }
 
     return value;
@@ -215,6 +223,7 @@ window.initPartidasPage = function () {
     }
     var separator = url.indexOf('?') === -1 ? '?' : '&';
     var params = [
+      'event_id=' + encodeURIComponent(event.id || ''),
       'titulo=' + encodeURIComponent(event.title || ''),
       'fecha=' + encodeURIComponent(event.date || ''),
       'turno=' + encodeURIComponent(event.time || '')

@@ -79,7 +79,9 @@
         </section>
 
         <section class="ms-section__block registro-form">
-          <form id="registroForm" class="registro-form" novalidate>
+          <form id="registroForm" class="registro-form" method="post" action="registro.php" novalidate>
+            <input id="eventId" name="event_id" type="hidden" value="">
+            <div id="registroMessage" class="registro-message" hidden></div>
             <div class="registro-field">
               <label for="email">Direccion electronica *</label>
               <input id="email" name="email" type="email" autocomplete="email" required placeholder="nombre@dominio.com">

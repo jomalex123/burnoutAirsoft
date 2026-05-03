@@ -1,8 +1,5 @@
 window.initAdminPartidasPage = function () {
   var events = Array.isArray(window.BurnoutAdminEvents) ? window.BurnoutAdminEvents : [];
-  events.forEach(function (event, index) {
-    event._index = index;
-  });
 
   var currentDate = new Date(2026, 4, 1);
   var monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -113,8 +110,16 @@ window.initAdminPartidasPage = function () {
   function normalizeTime(time) {
     var value = String(time || '').toLowerCase();
 
-    if (value === 'mañana' || value === 'maã±ana') {
+    if (value === 'm' || value === 'mañana' || value === 'maã±ana') {
       return 'manana';
+    }
+
+    if (value === 't') {
+      return 'tarde';
+    }
+
+    if (value === 'n') {
+      return 'noche';
     }
 
     return value;
@@ -145,13 +150,13 @@ window.initAdminPartidasPage = function () {
   }
 
   function openEditModal(event) {
-    var index = document.getElementById('editEventIndex');
+    var id = document.getElementById('editEventId');
     var date = document.getElementById('editDate');
     var title = document.getElementById('editTitle');
-    var time = normalizeTime(event.time);
+    var time = normalizeTime(event.timeSlot || event.time);
 
-    if (index) {
-      index.value = event._index;
+    if (id) {
+      id.value = event.id || '';
     }
 
     if (date) {
@@ -163,11 +168,11 @@ window.initAdminPartidasPage = function () {
     }
 
     document.querySelectorAll('#editEventModal input[name="time"]').forEach(function (input) {
-      input.checked = input.value === time;
+      input.checked = normalizeTime(input.value) === time;
     });
 
     if (!document.querySelector('#editEventModal input[name="time"]:checked')) {
-      var defaultTime = document.querySelector('#editEventModal input[name="time"][value="manana"]');
+      var defaultTime = document.querySelector('#editEventModal input[name="time"][value="M"]');
 
       if (defaultTime) {
         defaultTime.checked = true;

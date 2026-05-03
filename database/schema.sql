@@ -23,3 +23,47 @@ CREATE TABLE IF NOT EXISTS admin_login_audit (
   KEY admin_login_audit_username_index (username),
   KEY admin_login_audit_created_at_index (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS events (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  event_date DATE NOT NULL,
+  title VARCHAR(180) NOT NULL,
+  time_slot ENUM('M', 'T', 'N') NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY events_event_date_index (event_date),
+  KEY events_time_slot_index (time_slot)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS registrations (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  event_id INT UNSIGNED NOT NULL,
+  email VARCHAR(190) NOT NULL,
+  phone VARCHAR(40) NOT NULL,
+  team_name VARCHAR(120) DEFAULT NULL,
+  accepted_rules TINYINT(1) NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY registrations_event_id_index (event_id),
+  KEY registrations_email_index (email),
+  CONSTRAINT registrations_event_id_foreign
+    FOREIGN KEY (event_id) REFERENCES events (id)
+    ON UPDATE CASCADE
+    ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS registration_attendees (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  registration_id BIGINT UNSIGNED NOT NULL,
+  full_name VARCHAR(160) NOT NULL,
+  document VARCHAR(40) NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY registration_attendees_registration_id_index (registration_id),
+  CONSTRAINT registration_attendees_registration_id_foreign
+    FOREIGN KEY (registration_id) REFERENCES registrations (id)
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
