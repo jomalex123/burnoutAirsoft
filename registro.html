@@ -142,12 +142,12 @@
               <h2 id="normativaTitulo"> </h2>
               <button class="registro-modal__close" type="button" data-close-modal aria-label="Cerrar normativa">x</button>
             </div>
-            <div class="registro-modal__body">
-              <iframe src="normativa.html" title="Normativa Burnout Airsoft"></iframe>
+            <div class="registro-modal__body registro-normativa-body" id="normativaModalBody" data-normativa-source="normativa.html" tabindex="0">
+              <p class="registro-normativa-loading">Cargando normativa...</p>
             </div>
             <div class="registro-modal__actions">
               <button class="registro-clear" type="button" data-close-modal>Cancelar</button>
-              <button class="registro-submit" type="button" id="aceptarNormativa">Aceptar normativa</button>
+              <button class="registro-submit registro-rules-submit" type="button" id="aceptarNormativa" disabled>Aceptar normativa</button>
             </div>
           </div>
         </div>

@@ -6,12 +6,18 @@ window.initRegistroPage = function () {
   var $firstInput = $('#email');
   var $asistentes = $('#asistentes');
   var $asistentesFields = $('#asistentesFields');
+  var $acceptRules = $('#aceptarNormativa');
+  var $rulesBody = $('#normativaModalBody');
+  var rulesRead = false;
 
   if (!$form.length) {
     return;
   }
 
   renderEventData();
+  lockRulesButton();
+  loadRulesContent();
+  bindRulesScroll();
 
   $form.off('input.registro change.registro').on('input.registro change.registro', 'input, select', function () {
     if ($(this).attr('id') === 'asistentes') {
@@ -30,7 +36,11 @@ window.initRegistroPage = function () {
     closeModal();
   });
 
-  $('#aceptarNormativa').off('click.registro').on('click.registro', function () {
+  $acceptRules.off('click.registro').on('click.registro', function () {
+    if (!rulesRead) {
+      return;
+    }
+
     $terms.prop('disabled', false).prop('checked', true);
     closeModal();
     updateSubmitState();
@@ -45,6 +55,10 @@ window.initRegistroPage = function () {
   $form.off('reset.registro').on('reset.registro', function () {
     setTimeout(function () {
       $terms.prop('disabled', true).prop('checked', false);
+      rulesRead = false;
+      lockRulesButton();
+      $rulesBody.scrollTop(0);
+      bindRulesScroll();
       $asistentesFields.empty();
       clearErrors();
       updateSubmitState();
@@ -63,13 +77,91 @@ window.initRegistroPage = function () {
   function openModal() {
     $modal.addClass('is-open').attr('aria-hidden', 'false');
     $('body').addClass('registro-modal-open');
-    $('#aceptarNormativa').trigger('focus');
+
+    if (rulesRead) {
+      $acceptRules.trigger('focus');
+    } else {
+      bindRulesScroll();
+      $rulesBody.trigger('focus');
+    }
   }
 
   function closeModal() {
     $modal.removeClass('is-open').attr('aria-hidden', 'true');
     $('body').removeClass('registro-modal-open');
     $('#abrirNormativa').trigger('focus');
+  }
+
+  function lockRulesButton() {
+    if (rulesRead) {
+      return;
+    }
+
+    $acceptRules
+      .prop('disabled', true)
+      .text('Aceptar normativa');
+  }
+
+  function unlockRulesButton() {
+    rulesRead = true;
+    $acceptRules
+      .prop('disabled', false)
+      .text('Aceptar normativa');
+  }
+
+  function loadRulesContent() {
+    var source = $rulesBody.data('normativa-source');
+
+    if (!$rulesBody.length || !source || $rulesBody.data('normativa-loaded')) {
+      return;
+    }
+
+    fetch(source, { cache: 'no-store' })
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error('No se ha podido cargar la normativa.');
+        }
+
+        return response.text();
+      })
+      .then(function (html) {
+        var parser = new DOMParser();
+        var page = parser.parseFromString(html, 'text/html');
+        var content = page.querySelector('main.ms-container');
+
+        $rulesBody
+          .data('normativa-loaded', true)
+          .html('<div class="registro-normativa-content">' + (content ? content.innerHTML : page.body.innerHTML) + '</div>');
+        $rulesBody.scrollTop(0);
+        bindRulesScroll();
+      })
+      .catch(function () {
+        $rulesBody.html('<p class="registro-normativa-loading">No se ha podido cargar la normativa. Abre la normativa en una pestana nueva y vuelve a intentarlo.</p>');
+      });
+  }
+
+  function bindRulesScroll() {
+    if (!$rulesBody.length || rulesRead) {
+      return;
+    }
+
+    $rulesBody.off('scroll.registro').on('scroll.registro', updateRulesReadState);
+    updateRulesReadState();
+  }
+
+  function updateRulesReadState() {
+    var scrollingElement = $rulesBody.get(0);
+    var scrollTop = scrollingElement ? scrollingElement.scrollTop : 0;
+    var visibleHeight = scrollingElement ? scrollingElement.clientHeight : 0;
+    var scrollHeight = scrollingElement ? scrollingElement.scrollHeight : 0;
+
+    if (!visibleHeight || !scrollHeight) {
+      return;
+    }
+
+    if (scrollHeight <= visibleHeight || scrollTop + visibleHeight >= scrollHeight - 2) {
+      unlockRulesButton();
+    }
   }
 
   function renderEventData() {
