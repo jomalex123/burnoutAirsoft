@@ -36,6 +36,8 @@
 .admin-panel {
   display: grid;
   gap: 24px;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .admin-header-actions {
@@ -622,10 +624,15 @@
   display: grid;
   gap: 24px;
   grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  max-width: 100%;
+  min-width: 0;
 }
 
 .admin-table-wrap,
 .admin-actions {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
   padding: 24px;
 }
 
@@ -640,7 +647,9 @@
 }
 
 .admin-table-scroll {
+  max-width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .admin-table-controls {
@@ -889,6 +898,8 @@
   display: flex;
   justify-content: space-between;
   margin-bottom: 10px;
+  min-width: 0;
+  overflow-wrap: anywhere;
   padding: 14px 16px;
   transition: border-color .2s ease, color .2s ease;
 }
@@ -908,6 +919,15 @@
   .admin-grid,
   .admin-gallery-layout {
     grid-template-columns: 1fr;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .admin-panel,
+  .admin-table-wrap,
+  .admin-actions {
+    max-width: 100%;
+    min-width: 0;
   }
 
   .admin-gallery-item {
@@ -915,12 +935,23 @@
   }
 
   .admin-gallery-item form {
+    display: flex;
     grid-column: 1 / -1;
+    justify-content: center;
+  }
+
+  .admin-gallery-item button {
+    min-width: 120px;
   }
 
   .admin-gallery-toolbar {
-    align-items: flex-start;
-    flex-direction: column;
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .admin-add-image-button {
+    margin-left: auto;
   }
 
   .admin-table-controls {
@@ -945,7 +976,74 @@
   }
 
   .admin-header-actions {
-    align-items: flex-start;
-    flex-direction: column;
+    align-items: center;
+    flex-direction: row;
+    gap: 10px;
+    justify-content: space-between;
+  }
+
+  .admin-header-actions .admin-logout,
+  .admin-back-link,
+  .admin-add-image-button,
+  .admin-filter-button {
+    flex: 0 0 auto;
+  }
+
+  .admin-logout button,
+  .admin-back-link,
+  .admin-add-image-button,
+  .admin-filter-button {
+    font-size: 12px;
+    min-height: 40px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .admin-gallery-toolbar h2 {
+    flex: 1 1 auto;
+    line-height: 1.1;
+    min-width: 0;
+  }
+
+  .admin-toolbar-actions {
+    flex: 0 0 auto;
+    justify-content: flex-end;
+    margin-left: auto;
+  }
+}
+
+@media only screen and (max-width: 700px) {
+  .admin-page .ms-section__block {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .admin-table-wrap,
+  .admin-actions,
+  .admin-gallery-list-wrap {
+    padding: 16px;
+  }
+
+  .admin-table {
+    min-width: 620px;
+  }
+
+  .admin-table--wide {
+    min-width: 960px;
+  }
+
+  .admin-table th,
+  .admin-table td {
+    padding: 11px 10px;
+  }
+
+  .admin-table td {
+    font-size: 14px;
+  }
+
+  .admin-actions a {
+    gap: 10px;
+    padding: 12px;
+    width: 100%;
   }
 }

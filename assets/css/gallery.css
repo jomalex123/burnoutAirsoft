@@ -1,21 +1,36 @@
+.gallery-section {
+  margin-left: 0;
+  margin-right: 0;
+  max-width: none;
+  padding-left: 0;
+  padding-right: 0;
+  width: 100%;
+}
+
 #galeria {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  padding: 20px;
+  gap: 2px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  margin: 0 auto;
+  max-width: none;
+  padding: 2px;
+  width: 100%;
 }
 
 #galeria img {
+  aspect-ratio: 1;
+  background: #111;
+  display: block;
   width: 100%;
-  height: 100%;
+  height: auto;
   object-fit: cover;
   cursor: pointer;
-  border-radius: 6px;
-  transition: transform 0.2s ease;
+  border-radius: 0;
+  transition: filter 0.2s ease;
 }
 
 #galeria img:hover {
-  transform: scale(1.03);
+  filter: brightness(.86);
 } 
 
 #galeria > * {
@@ -51,29 +66,35 @@
 .gallery-modal-button {
   position: absolute;
   z-index: 3;
-  display: block;
+  align-items: center;
   border: 0;
   padding: 0;
   background-color: transparent;
-  background-repeat: no-repeat;
-  background-position: 0 0;
   cursor: pointer;
+  display: flex;
+  justify-content: center;
   opacity: 0.88;
 }
 
 .gallery-modal-button:hover,
 .gallery-modal-button:focus-visible {
   opacity: 1;
-  background-position: 0 100%;
   outline: none;
 }
 
+.gallery-modal-button img {
+  display: block;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  width: 100%;
+}
+
 .gallery-modal-close {
-  top: 14px;
-  right: 14px;
+  top: 8px;
+  right: 8px;
   width: 36px;
   height: 36px;
-  background-image: url('../images/gallery/lightbox-icon-close.png');
 }
 
 .gallery-modal-prev,
@@ -85,13 +106,11 @@
 }
 
 .gallery-modal-prev {
-  left: 14px;
-  background-image: url('../images/gallery/lightbox-arrow-left.png');
+  left: 6px;
 }
 
 .gallery-modal-next {
-  right: 14px;
-  background-image: url('../images/gallery/lightbox-arrow-right.png');
+  right: calc(40% + 6px);
 }
 
 .modal-body {
@@ -127,8 +146,18 @@
 }
 
 @media (max-width: 768px) {
+  .ms-container .gallery-section {
+    margin: 18px 0 3em;
+    padding-left: 0;
+    padding-right: 0;
+    width: 100%;
+  }
+
   #galeria {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    max-width: none;
+    padding: 0;
+    width: 100%;
   }
 
   .modal-content {
@@ -152,11 +181,21 @@
     max-height: 58vh;
   }
 
+  .gallery-modal-close {
+    top: 8px;
+    right: 8px;
+  }
+
+  .gallery-modal-prev,
+  .gallery-modal-next {
+    top: 29vh;
+  }
+
   .gallery-modal-prev {
-    left: 8px;
+    left: 4px;
   }
 
   .gallery-modal-next {
-    right: 8px;
+    right: 4px;
   }
 }
