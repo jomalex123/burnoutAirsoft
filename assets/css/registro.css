@@ -216,6 +216,10 @@
   opacity: .45;
 }
 
+.registro-submit:disabled:hover {
+  cursor: not-allowed;
+}
+
 .registro-clear {
   background: #fff;
   border: 1px solid rgba(21, 21, 21, .22);
@@ -296,12 +300,78 @@
   min-height: 55vh;
 }
 
-.registro-modal__body iframe {
-  border: 0;
+.registro-normativa-body {
+  color: #252525;
   display: block;
-  height: 100%;
-  min-height: 55vh;
-  width: min(100%, 980px);
+  max-height: 58vh;
+  overflow-y: auto;
+  padding: 24px;
+  scroll-behavior: smooth;
+}
+
+.registro-normativa-body:focus {
+  outline: none;
+}
+
+.registro-normativa-loading {
+  margin: 0;
+}
+
+.registro-normativa-content {
+  margin: 0 auto;
+  max-width: 880px;
+}
+
+.registro-normativa-content .ms-section__block {
+  margin: 0 0 24px;
+  max-width: none;
+  padding: 0;
+  width: 100%;
+}
+
+.registro-normativa-content .ms-page-title {
+  text-align: center;
+}
+
+.registro-normativa-content .page-header {
+  color: #151515;
+  font-size: 30px;
+  line-height: 1.1;
+  margin-bottom: 22px;
+}
+
+.registro-normativa-content h3,
+.registro-normativa-content h4 {
+  color: #151515;
+  font-weight: 700;
+  margin-top: 0;
+}
+
+.registro-normativa-content p,
+.registro-normativa-content li {
+  color: #333;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.registro-normativa-content table {
+  border-collapse: collapse;
+  color: #333;
+  width: 100%;
+}
+
+.registro-normativa-content th,
+.registro-normativa-content td {
+  border: 1px solid rgba(21, 21, 21, .18);
+  padding: 10px;
+}
+
+.registro-rules-submit:disabled {
+  background: #8f8f8f;
+  border-color: #8f8f8f;
+  color: #fff;
+  cursor: not-allowed;
+  opacity: .65;
 }
 
 .registro-confirmation-modal__dialog {
