@@ -144,7 +144,7 @@ window.initPartidasPage = function () {
       eventTitle.textContent = event.title;
 
       var time = document.createElement('span');
-      time.textContent = event.time;
+      time.textContent = formatEventListDate(event.date) + ' - ' + event.time;
 
       card.appendChild(eventTitle);
       card.appendChild(time);
@@ -202,6 +202,25 @@ window.initPartidasPage = function () {
       String(month + 1).padStart(2, '0'),
       String(day).padStart(2, '0')
     ].join('-');
+  }
+
+  function formatEventListDate(value) {
+    var parts = String(value || '').split('-');
+
+    if (parts.length !== 3) {
+      return value || '';
+    }
+
+    var date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+
+    if (isNaN(date.getTime())) {
+      return value;
+    }
+
+    return date.toLocaleDateString('es-ES', {
+      day: 'numeric',
+      month: 'long'
+    }).replace(' de ', ' ');
   }
 
   function openEvent(event) {
