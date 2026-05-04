@@ -21,6 +21,16 @@ if (!$setupError && !$adminUser) {
     exit;
 }
 
+$flash = burnout_pull_admin_flash();
+
+if ($flash) {
+    if ($flash['type'] === 'error') {
+        $error = $flash['message'];
+    } else {
+        $message = $flash['message'];
+    }
+}
+
 function burnout_event_time_to_label(string $timeSlot): string
 {
     return [
@@ -130,7 +140,7 @@ if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     'time_slot' => $eventData['time_slot'],
                     'id' => $id,
                 ]);
-                $message = 'Evento actualizado correctamente.';
+                burnout_set_admin_flash('success', 'Evento actualizado correctamente.');
             } else {
                 $statement = burnout_pdo()->prepare(
                     'INSERT INTO events (event_date, title, time_slot)
@@ -141,7 +151,7 @@ if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     'title' => $eventData['title'],
                     'time_slot' => $eventData['time_slot'],
                 ]);
-                $message = 'Evento creado correctamente.';
+                burnout_set_admin_flash('success', 'Evento creado correctamente.');
             }
         } elseif ($action === 'delete') {
             $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
@@ -152,11 +162,14 @@ if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $statement = burnout_pdo()->prepare('DELETE FROM events WHERE id = :id');
             $statement->execute(['id' => $id]);
-            $message = 'Evento eliminado correctamente.';
+            burnout_set_admin_flash('success', 'Evento eliminado correctamente.');
         }
     } catch (Throwable $exception) {
-        $error = $exception->getMessage();
+        burnout_set_admin_flash('error', $exception->getMessage());
     }
+
+    header('Location: admin_partidas.php');
+    exit;
 }
 
 try {
@@ -174,7 +187,7 @@ $csrfToken = burnout_csrf_token();
     <title>Gestion Partidas - Burnout Airsoft</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" type="image/png" href="resources/logoBurnout-3.png" />
+    <link rel="icon" type="image/png" href="images/resources/logoBurnout-3.png" />
     <link rel="stylesheet" href="assets/css/plugins.min.css">
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/partidas.css">
@@ -187,8 +200,8 @@ $csrfToken = burnout_csrf_token();
         <nav class="ms-nav">
           <div class="ms-logo">
             <a class="logonav" href="./" data-type="page-transition">
-              <div class="logo-dark"><img src="resources/logoBurnout-2.png" alt="logo image"></div>
-              <div class="logo-light current"><img src="resources/logoBurnout-2.png" alt="logo image"></div>
+              <div class="logo-dark"><img src="images/resources/logoBurnout-2.png" alt="logo image"></div>
+              <div class="logo-light current"><img src="images/resources/logoBurnout-2.png" alt="logo image"></div>
             </a>
           </div>
           <button class="hamburger" type="button" data-toggle="navigation">

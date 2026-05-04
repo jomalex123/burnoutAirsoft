@@ -9,6 +9,12 @@ $setupError = '';
 $adminUser = null;
 $latestRegistrations = [];
 
+$flash = burnout_pull_admin_flash();
+
+if ($flash && $flash['type'] === 'error') {
+    $error = $flash['message'];
+}
+
 function admin_event_time_to_label(string $timeSlot): string
 {
     return [
@@ -65,7 +71,9 @@ try {
         $action = $_POST['action'] ?? 'login';
 
         if (!burnout_check_csrf($_POST['csrf_token'] ?? null)) {
-            $error = 'Sesion caducada. Recarga la pagina e intentalo de nuevo.';
+            burnout_set_admin_flash('error', 'Sesion caducada. Recarga la pagina e intentalo de nuevo.');
+            header('Location: admin.php');
+            exit;
         } elseif ($action === 'logout') {
             burnout_logout();
             header('Location: admin.php');
@@ -75,7 +83,9 @@ try {
             $password = (string) ($_POST['password'] ?? '');
 
             if ($username === '' || $password === '' || !burnout_login($username, $password)) {
-                $error = 'Usuario o contrasena incorrectos.';
+                burnout_set_admin_flash('error', 'Usuario o contrasena incorrectos.');
+                header('Location: admin.php');
+                exit;
             } else {
                 header('Location: admin.php');
                 exit;
@@ -101,7 +111,7 @@ $csrfToken = burnout_csrf_token();
     <title>Administracion - Burnout Airsoft</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" type="image/png" href="resources/logoBurnout-3.png" />
+    <link rel="icon" type="image/png" href="images/resources/logoBurnout-3.png" />
     <link rel="stylesheet" href="assets/css/plugins.min.css">
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/admin.css">
@@ -113,8 +123,8 @@ $csrfToken = burnout_csrf_token();
         <nav class="ms-nav">
           <div class="ms-logo">
             <a class="logonav" href="./" data-type="page-transition">
-              <div class="logo-dark"><img src="resources/logoBurnout-2.png" alt="logo image"></div>
-              <div class="logo-light current"><img src="resources/logoBurnout-2.png" alt="logo image"></div>
+              <div class="logo-dark"><img src="images/resources/logoBurnout-2.png" alt="logo image"></div>
+              <div class="logo-light current"><img src="images/resources/logoBurnout-2.png" alt="logo image"></div>
             </a>
           </div>
           <button class="hamburger" type="button" data-toggle="navigation">
