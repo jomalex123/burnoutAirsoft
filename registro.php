@@ -61,6 +61,19 @@ function registro_format_date(string $value): string
     ));
 }
 
+function registro_format_short_date(string $value): string
+{
+    $date = DateTime::createFromFormat('Y-m-d', $value);
+
+    if (!$date || $date->format('Y-m-d') !== $value) {
+        return $value;
+    }
+
+    $months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+    return sprintf('%d %s', (int) $date->format('j'), $months[(int) $date->format('n') - 1]);
+}
+
 function registro_format_turn(string $value): string
 {
     $turn = strtolower($value);
@@ -70,6 +83,42 @@ function registro_format_turn(string $value): string
     }
 
     return strtoupper($turn);
+}
+
+function registro_normalize_turn(string $value): string
+{
+    $turn = strtolower(trim($value));
+    $turn = str_replace(['á', 'é', 'í', 'ó', 'ú', 'ñ'], ['a', 'e', 'i', 'o', 'u', 'n'], $turn);
+
+    if ($turn === 'maã£â±ana' || $turn === 'maã±ana') {
+        return 'manana';
+    }
+
+    return $turn;
+}
+
+function registro_turn_hours(string $turn): array
+{
+    return [
+        'manana' => ['open' => '8:00 AM', 'close' => '9:00 AM'],
+        'm' => ['open' => '8:00 AM', 'close' => '9:00 AM'],
+        'tarde' => ['open' => '15:00 PM', 'close' => '16:00 PM'],
+        't' => ['open' => '15:00 PM', 'close' => '16:00 PM'],
+        'noche' => ['open' => '19:00 PM', 'close' => '20:00 PM'],
+        'n' => ['open' => '19:00 PM', 'close' => '20:00 PM'],
+    ][registro_normalize_turn($turn)] ?? ['open' => '8:00 AM', 'close' => '9:00 AM'];
+}
+
+function registro_confirmation_schedule(string $turn): string
+{
+    return [
+        'manana' => 'Recuerda que el horario de apertura de puertas será a las 8:00 AM y el cierre de ellas a las 9:00 AM.',
+        'm' => 'Recuerda que el horario de apertura de puertas será a las 8:00 AM y el cierre de ellas a las 9:00 AM.',
+        'tarde' => 'Recuerda que el horario de apertura de puertas será a las 15:00 PM y el cierre de ellas a las 16:00 PM.',
+        't' => 'Recuerda que el horario de apertura de puertas será a las 15:00 PM y el cierre de ellas a las 16:00 PM.',
+        'noche' => 'Recuerda que el horario de apertura de puertas será a las 19:00 PM y el cierre de ellas a las 20:00 PM.',
+        'n' => 'Recuerda que el horario de apertura de puertas será a las 19:00 PM y el cierre de ellas a las 20:00 PM.',
+    ][registro_normalize_turn($turn)] ?? 'Recuerda que el horario de apertura de puertas será a las 8:00 AM y el cierre de ellas a las 9:00 AM.';
 }
 
 function registro_replace_between_id(string $html, string $id, string $value): string
@@ -109,6 +158,17 @@ function registro_set_message(string $html, string $message, bool $success): str
     ) ?? $html;
 }
 
+function registro_set_confirmation_texts(string $html, string $date, string $turn): string
+{
+    $html = registro_replace_between_id(
+        $html,
+        'registroConfirmationIntro',
+        'Hemos recibido tu inscripción para la partida del ' . registro_format_short_date($date) . '.'
+    );
+
+    return registro_replace_between_id($html, 'registroConfirmationSchedule', registro_confirmation_schedule($turn));
+}
+
 function registro_set_confirmation_modal(string $html, bool $success): string
 {
     if (!$success) {
@@ -137,17 +197,41 @@ function registro_clean_list(array $values): array
     }, $values);
 }
 
+function registro_email_event_title(array $registration): string
+{
+    $event = is_array($registration['event'] ?? null) ? $registration['event'] : [];
+    $title = trim((string) ($event['title'] ?? ''));
+
+    return $title !== '' ? $title : 'Burnout Airsoft';
+}
+
+function registro_email_event_label(array $registration): string
+{
+    $event = is_array($registration['event'] ?? null) ? $registration['event'] : [];
+    $parts = [
+        registro_email_event_title($registration),
+        !empty($event['date']) ? registro_format_short_date((string) $event['date']) : '',
+        trim((string) ($event['turn'] ?? '')),
+    ];
+
+    return implode(' - ', array_values(array_filter($parts, static function (string $part): bool {
+        return trim($part) !== '';
+    })));
+}
+
 function registro_build_confirmation_email(array $registration): string
 {
     $attendees = $registration['attendees'] ?? [];
     $attendeeLines = array_map(static function (array $attendee): string {
         return sprintf('%s %s', $attendee['name'], $attendee['document']);
     }, $attendees);
+    $event = is_array($registration['event'] ?? null) ? $registration['event'] : [];
+    $hours = registro_turn_hours((string) ($event['turn'] ?? ''));
 
     return sprintf(
-        "Tu inscripción se ha registrado correctamente.\n\n" .
-        "Recuerda que el horario de apertura de puertas será a las 8:00 AM y el \n" .
-        "cierre de ellas a las 9:00 AM\n\n" .
+        "Tu inscripción para el evento \"%s\" se ha registrado correctamente.\n\n" .
+        "Recuerda que el horario de apertura de puertas será a las %s y el \n" .
+        "cierre de ellas a las %s\n\n" .
         "Resumen de los datos enviados:\n" .
         "• Número de asistentes: %d\n" .
         "• Lista de asistentes:\n%s\n\n" .
@@ -161,6 +245,9 @@ function registro_build_confirmation_email(array $registration): string
         "juego.\n\n" .
         "Gracias por tu inscripción.\n" .
         "Un saludo.",
+        registro_email_event_label($registration),
+        $hours['open'],
+        $hours['close'],
         count($attendees),
         implode("\n", $attendeeLines),
         $registration['phone'],
@@ -173,7 +260,7 @@ function registro_send_confirmation_email(array $registration): void
 {
     burnout_send_plain_mail(
         $registration['email'],
-        'Confirmacion de inscripcion - Burnout Airsoft',
+        'Confirmación de inscripcion - ' . registro_email_event_title($registration),
         registro_build_confirmation_email($registration)
     );
 }
@@ -186,7 +273,9 @@ function registro_save_submission(): array
         throw new RuntimeException('No se ha recibido el ID de la partida.');
     }
 
-    if (!registro_find_event((int) $eventId)) {
+    $event = registro_find_event((int) $eventId);
+
+    if (!$event) {
         throw new RuntimeException('La partida seleccionada no existe.');
     }
 
@@ -261,6 +350,7 @@ function registro_save_submission(): array
             'email' => $email,
             'phone' => $phone,
             'team' => $team,
+            'event' => $event,
             'attendees' => array_map(static function (string $name, string $document): array {
                 return [
                     'name' => $name,
@@ -276,10 +366,12 @@ function registro_save_submission(): array
 
 $message = '';
 $messageSuccess = false;
+$submittedEvent = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $registration = registro_save_submission();
+        $submittedEvent = $registration['event'] ?? null;
 
         try {
             registro_send_confirmation_email($registration);
@@ -295,17 +387,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$eventId = filter_input(INPUT_POST, 'event_id', FILTER_VALIDATE_INT);
+$event = $submittedEvent;
+$eventId = $event ? (int) $event['id'] : filter_input(INPUT_POST, 'event_id', FILTER_VALIDATE_INT);
 
-if ($eventId === false || $eventId === null) {
+if (!$event && ($eventId === false || $eventId === null)) {
     $eventId = filter_input(INPUT_GET, 'event_id', FILTER_VALIDATE_INT);
 }
 
-if ($eventId === false || $eventId === null) {
+if (!$event && ($eventId === false || $eventId === null)) {
     $eventId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 }
 
-$event = $eventId ? registro_find_event((int) $eventId) : null;
+if (!$event) {
+    $event = $eventId ? registro_find_event((int) $eventId) : null;
+}
 $title = $event['title'] ?? (registro_param('titulo') ?: 'CURSO INICIACION 4 EDICION');
 $date = $event['date'] ?? (registro_param('fecha') ?: '2026-05-16');
 $turn = $event['turn'] ?? (registro_param('turno') ?: 'Tarde');
@@ -323,6 +418,7 @@ $html = registro_replace_between_id($html, 'registroEventoFecha', registro_forma
 $html = registro_replace_between_id($html, 'registroEventoTurno', registro_format_turn($turn));
 $html = registro_set_input_value($html, 'eventId', $event ? (string) $event['id'] : (string) ($eventId ?: ''));
 $html = $messageSuccess ? $html : registro_set_message($html, $message, false);
+$html = $messageSuccess ? registro_set_confirmation_texts($html, $date, $turn) : $html;
 $html = registro_set_confirmation_modal($html, $messageSuccess);
 $html = preg_replace('/<title>.*?<\/title>/s', '<title>Inscripcion - ' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '</title>', $html, 1) ?? $html;
 
