@@ -592,7 +592,7 @@ nav a:hover {
 .ms-section__block {
     width: 85%;
     max-width: 88em;
-    margin: 0 auto 6em;
+    margin: 0 auto 3em;
 }
 .ms-page-title span {
     text-transform: uppercase;

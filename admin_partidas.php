@@ -241,11 +241,14 @@ $csrfToken = burnout_csrf_token();
               <h1>Gestion Partidas</h1>
             </div>
             <?php if ($adminUser): ?>
-              <form class="admin-logout" method="post" action="admin.php">
-                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
-                <input type="hidden" name="action" value="logout">
-                <button type="submit">Cerrar sesion</button>
-              </form>
+              <div class="admin-header-actions">
+                <form class="admin-logout" method="post" action="admin.php">
+                  <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+                  <input type="hidden" name="action" value="logout">
+                  <button type="submit">Cerrar sesion</button>
+                </form>
+                <a class="admin-back-link" href="admin.php">Volver al panel</a>
+              </div>
             <?php endif; ?>
           </div>
         </div>
