@@ -15,7 +15,7 @@ function registro_param(string $key, string $source = 'get'): string
 function registro_event_time_to_label(string $timeSlot): string
 {
     return [
-        'M' => 'Manana',
+        'M' => 'Mañana',
         'T' => 'Tarde',
         'N' => 'Noche',
     ][$timeSlot] ?? $timeSlot;
@@ -79,7 +79,7 @@ function registro_format_turn(string $value): string
     $turn = strtolower($value);
 
     if ($turn === 'maã±ana' || $turn === 'mañana') {
-        $turn = 'manana';
+        $turn = 'mañana';
     }
 
     return strtoupper($turn);
@@ -91,7 +91,7 @@ function registro_normalize_turn(string $value): string
     $turn = str_replace(['á', 'é', 'í', 'ó', 'ú', 'ñ'], ['a', 'e', 'i', 'o', 'u', 'n'], $turn);
 
     if ($turn === 'maã£â±ana' || $turn === 'maã±ana') {
-        return 'manana';
+        return 'mañana';
     }
 
     return $turn;
@@ -100,7 +100,7 @@ function registro_normalize_turn(string $value): string
 function registro_turn_hours(string $turn): array
 {
     return [
-        'manana' => ['open' => '8:00 AM', 'close' => '9:00 AM'],
+        'mañana' => ['open' => '8:00 AM', 'close' => '9:00 AM'],
         'm' => ['open' => '8:00 AM', 'close' => '9:00 AM'],
         'tarde' => ['open' => '15:00 PM', 'close' => '16:00 PM'],
         't' => ['open' => '15:00 PM', 'close' => '16:00 PM'],
@@ -112,7 +112,7 @@ function registro_turn_hours(string $turn): array
 function registro_confirmation_schedule(string $turn): string
 {
     return [
-        'manana' => 'Recuerda que el horario de apertura de puertas será a las 8:00 AM y el cierre de ellas a las 9:00 AM.',
+        'mañana' => 'Recuerda que el horario de apertura de puertas será a las 8:00 AM y el cierre de ellas a las 9:00 AM.',
         'm' => 'Recuerda que el horario de apertura de puertas será a las 8:00 AM y el cierre de ellas a las 9:00 AM.',
         'tarde' => 'Recuerda que el horario de apertura de puertas será a las 15:00 PM y el cierre de ellas a las 16:00 PM.',
         't' => 'Recuerda que el horario de apertura de puertas será a las 15:00 PM y el cierre de ellas a las 16:00 PM.',
@@ -229,7 +229,7 @@ function registro_build_confirmation_email(array $registration): string
     $hours = registro_turn_hours((string) ($event['turn'] ?? ''));
 
     return sprintf(
-        "Tu inscripción para el evento \"%s\" se ha registrado correctamente.\n\n" .
+        "Tu inscripción para el evento \%s\ se ha registrado correctamente.\n\n" .
         "Recuerda que el horario de apertura de puertas será a las %s y el \n" .
         "cierre de ellas a las %s\n\n" .
         "Resumen de los datos enviados:\n" .
