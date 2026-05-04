@@ -110,3 +110,30 @@ function burnout_check_csrf(?string $token): bool
 
     return is_string($token) && isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
 }
+
+function burnout_set_admin_flash(string $type, string $message): void
+{
+    burnout_start_session();
+
+    $_SESSION['admin_flash'] = [
+        'type' => $type,
+        'message' => $message,
+    ];
+}
+
+function burnout_pull_admin_flash(): ?array
+{
+    burnout_start_session();
+
+    $flash = $_SESSION['admin_flash'] ?? null;
+    unset($_SESSION['admin_flash']);
+
+    if (!is_array($flash) || empty($flash['type']) || empty($flash['message'])) {
+        return null;
+    }
+
+    return [
+        'type' => (string) $flash['type'],
+        'message' => (string) $flash['message'],
+    ];
+}

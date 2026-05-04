@@ -3,12 +3,12 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/config/auth.php';
+require_once __DIR__ . '/config/gallery.php';
 
 $adminUser = null;
 $setupError = '';
 $message = '';
 $error = '';
-$galleryFile = __DIR__ . '/assets/data/gallery.json';
 
 try {
     $adminUser = burnout_current_admin();
@@ -22,41 +22,13 @@ if (!$setupError && !$adminUser) {
     exit;
 }
 
-function burnout_read_gallery(string $galleryFile): array
-{
-    if (!is_file($galleryFile)) {
-        return [];
-    }
+$flash = burnout_pull_admin_flash();
 
-    $content = file_get_contents($galleryFile);
-
-    if ($content === false || trim($content) === '') {
-        return [];
-    }
-
-    $data = json_decode($content, true);
-
-    if (!is_array($data)) {
-        throw new RuntimeException('El fichero gallery.json no contiene un JSON valido.');
-    }
-
-    return array_values(array_filter($data, static function ($item): bool {
-        return is_array($item);
-    }));
-}
-
-function burnout_write_gallery(string $galleryFile, array $gallery): void
-{
-    $json = json_encode(array_values($gallery), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-
-    if ($json === false) {
-        throw new RuntimeException('No se ha podido generar el JSON de galeria.');
-    }
-
-    $result = file_put_contents($galleryFile, $json . PHP_EOL, LOCK_EX);
-
-    if ($result === false) {
-        throw new RuntimeException('No se ha podido guardar assets/data/gallery.json.');
+if ($flash) {
+    if ($flash['type'] === 'error') {
+        $error = $flash['message'];
+    } else {
+        $message = $flash['message'];
     }
 }
 
@@ -66,7 +38,6 @@ if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new RuntimeException('Sesion caducada. Recarga la pagina e intentalo de nuevo.');
         }
 
-        $gallery = burnout_read_gallery($galleryFile);
         $action = $_POST['action'] ?? '';
 
         if ($action === 'add') {
@@ -78,31 +49,28 @@ if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new RuntimeException('La ruta de imagen y el texto alternativo son obligatorios.');
             }
 
-            $gallery[] = [
-                'src' => $src,
-                'alt' => $alt,
-                'description' => $description,
-            ];
-            burnout_write_gallery($galleryFile, $gallery);
-            $message = 'Imagen anadida a la galeria.';
+            burnout_gallery_add($src, $alt, $description);
+            burnout_set_admin_flash('success', 'Imagen anadida a la galeria.');
         } elseif ($action === 'delete') {
-            $index = filter_input(INPUT_POST, 'index', FILTER_VALIDATE_INT);
+            $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
 
-            if ($index === false || $index === null || !isset($gallery[$index])) {
+            if ($id === false || $id === null) {
                 throw new RuntimeException('La imagen seleccionada no existe.');
             }
 
-            array_splice($gallery, $index, 1);
-            burnout_write_gallery($galleryFile, $gallery);
-            $message = 'Imagen eliminada de la galeria.';
+            burnout_gallery_delete((int) $id);
+            burnout_set_admin_flash('success', 'Imagen eliminada de la galeria.');
         }
     } catch (Throwable $exception) {
-        $error = $exception->getMessage();
+        burnout_set_admin_flash('error', $exception->getMessage());
     }
+
+    header('Location: admin_gallery.php');
+    exit;
 }
 
 try {
-    $gallery = $setupError ? [] : burnout_read_gallery($galleryFile);
+    $gallery = $setupError ? [] : burnout_gallery_all();
 } catch (Throwable $exception) {
     $gallery = [];
     $error = $exception->getMessage();
@@ -116,7 +84,7 @@ $csrfToken = burnout_csrf_token();
     <title>Gestion Galeria - Burnout Airsoft</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" type="image/png" href="resources/logoBurnout-3.png" />
+    <link rel="icon" type="image/png" href="images/resources/logoBurnout-3.png" />
     <link rel="stylesheet" href="assets/css/plugins.min.css">
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/admin.css">
@@ -128,8 +96,8 @@ $csrfToken = burnout_csrf_token();
         <nav class="ms-nav">
           <div class="ms-logo">
             <a class="logonav" href="./" data-type="page-transition">
-              <div class="logo-dark"><img src="resources/logoBurnout-2.png" alt="logo image"></div>
-              <div class="logo-light current"><img src="resources/logoBurnout-2.png" alt="logo image"></div>
+              <div class="logo-dark"><img src="images/resources/logoBurnout-2.png" alt="logo image"></div>
+              <div class="logo-light current"><img src="images/resources/logoBurnout-2.png" alt="logo image"></div>
             </a>
           </div>
           <button class="hamburger" type="button" data-toggle="navigation">
@@ -213,10 +181,10 @@ $csrfToken = burnout_csrf_token();
                   </button>
                 </div>
                 <?php if (!$gallery): ?>
-                  <div class="admin-empty">No hay imagenes en gallery.json.</div>
+                  <div class="admin-empty">No hay imagenes guardadas.</div>
                 <?php else: ?>
                   <div class="admin-gallery-list" id="galleryList">
-                    <?php foreach ($gallery as $index => $item): ?>
+                    <?php foreach ($gallery as $item): ?>
                       <article class="admin-gallery-item">
                         <img src="<?= htmlspecialchars((string) ($item['src'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" alt="<?= htmlspecialchars((string) ($item['alt'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                         <div class="admin-gallery-item__body">
@@ -227,7 +195,7 @@ $csrfToken = burnout_csrf_token();
                         <form method="post" action="admin_gallery.php" onsubmit="return confirm('Eliminar esta imagen de la galeria?');">
                           <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                           <input type="hidden" name="action" value="delete">
-                          <input type="hidden" name="index" value="<?= (int) $index ?>">
+                          <input type="hidden" name="id" value="<?= (int) ($item['id'] ?? 0) ?>">
                           <button type="submit">Borrar</button>
                         </form>
                       </article>
@@ -291,100 +259,6 @@ $csrfToken = burnout_csrf_token();
     <script type="text/javascript" src='assets/js/jquery-3.2.1.min.js'></script>
     <script type="text/javascript" src='assets/js/plugins.min.js'></script>
     <script type="text/javascript" src="assets/js/main.js"></script>
-    <script>
-      (function () {
-        var modal = document.getElementById('galleryModal');
-        var firstInput = document.getElementById('src');
-
-        if (!modal) {
-          return;
-        }
-
-        function openModal() {
-          modal.classList.add('is-open');
-          modal.setAttribute('aria-hidden', 'false');
-          document.body.classList.add('admin-gallery-modal-open');
-
-          if (firstInput) {
-            firstInput.focus();
-          }
-        }
-
-        function closeModal() {
-          modal.classList.remove('is-open');
-          modal.setAttribute('aria-hidden', 'true');
-          document.body.classList.remove('admin-gallery-modal-open');
-        }
-
-        document.querySelectorAll('[data-gallery-modal-open]').forEach(function (button) {
-          button.addEventListener('click', openModal);
-        });
-
-        document.querySelectorAll('[data-gallery-modal-close]').forEach(function (button) {
-          button.addEventListener('click', closeModal);
-        });
-
-        document.addEventListener('keydown', function (event) {
-          if (event.key === 'Escape' && modal.classList.contains('is-open')) {
-            closeModal();
-          }
-        });
-      }());
-
-      (function () {
-        var list = document.getElementById('galleryList');
-        var pages = document.getElementById('galleryPages');
-        var pageSizeSelect = document.getElementById('galleryPageSize');
-
-        if (!list || !pages || !pageSizeSelect) {
-          return;
-        }
-
-        var items = Array.prototype.slice.call(list.querySelectorAll('.admin-gallery-item'));
-        var currentPage = 1;
-
-        function renderPagination() {
-          var pageSize = parseInt(pageSizeSelect.value, 10) || 5;
-          var totalPages = Math.max(1, Math.ceil(items.length / pageSize));
-
-          if (currentPage > totalPages) {
-            currentPage = totalPages;
-          }
-
-          items.forEach(function (item, index) {
-            var start = (currentPage - 1) * pageSize;
-            var end = start + pageSize;
-            var isVisible = index >= start && index < end;
-
-            item.classList.toggle('is-hidden', !isVisible);
-            item.style.display = isVisible ? '' : 'none';
-            item.setAttribute('aria-hidden', isVisible ? 'false' : 'true');
-          });
-
-          pages.innerHTML = '';
-
-          for (var page = 1; page <= totalPages; page++) {
-            var button = document.createElement('button');
-            button.type = 'button';
-            button.textContent = String(page);
-            button.className = page === currentPage ? 'is-active' : '';
-            button.setAttribute('aria-label', 'Pagina ' + page);
-            button.setAttribute('aria-current', page === currentPage ? 'page' : 'false');
-            button.addEventListener('click', function () {
-              currentPage = parseInt(this.textContent, 10);
-              renderPagination();
-            });
-            pages.appendChild(button);
-          }
-        }
-
-        pageSizeSelect.addEventListener('change', function () {
-          currentPage = 1;
-          renderPagination();
-        });
-
-        renderPagination();
-      }());
-    </script>
+    <script type="text/javascript" src="assets/js/admin_gallery.js"></script>
   </body>
 </html>

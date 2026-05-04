@@ -4,7 +4,7 @@
     <title>Burnout Airsoft</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" type="image/png" href="resources/logoBurnout-3.png" />
+    <link rel="icon" type="image/png" href="images/resources/logoBurnout-3.png" />
     <link rel="stylesheet" href="assets/css/plugins.min.css">
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/gallery.css">
@@ -15,8 +15,8 @@
         <nav class="ms-nav">
           <div class="ms-logo">
             <a class="logonav" href="./" data-type="page-transition">
-              <div class="logo-dark"><img src="resources/logoBurnout-2.png" alt="logo image"></div>
-              <div class="logo-light current"><img src="resources/logoBurnout-2.png" alt="logo image"></div>
+              <div class="logo-dark"><img src="images/resources/logoBurnout-2.png" alt="logo image"></div>
+              <div class="logo-light current"><img src="images/resources/logoBurnout-2.png" alt="logo image"></div>
             </a>
           </div>
           <button class="hamburger" type="button" data-toggle="navigation">
@@ -74,7 +74,7 @@
           </div>
         </div>-->
         <div class="ms-section__block">
-          <div id="galeria"></div>
+          <div id="galeria" data-gallery-source="gallery_items.php"></div>
         </div>
       </main>
       <footer>
@@ -89,7 +89,9 @@
     </div>
     <div id="modal" class="modal" style="display:none;">
       <div class="modal-content">
-        <span class="close">&times;</span>
+        <button class="gallery-modal-button gallery-modal-close close" type="button" aria-label="Cerrar imagen"></button>
+        <button class="gallery-modal-button gallery-modal-prev" type="button" aria-label="Imagen anterior"></button>
+        <button class="gallery-modal-button gallery-modal-next" type="button" aria-label="Imagen siguiente"></button>
         <div class="modal-body">
           <img id="modal-img" src="" alt="">
           <div class="modal-desc">
