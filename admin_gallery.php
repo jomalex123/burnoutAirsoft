@@ -177,7 +177,7 @@ $csrfToken = burnout_csrf_token();
                   <h2>Imagenes actuales</h2>
                   <button class="admin-add-image-button" type="button" data-gallery-modal-open>
                     <span>+</span>
-                    Anadir imagen
+                    Añadir imagen
                   </button>
                 </div>
                 <?php if (!$gallery): ?>
@@ -189,7 +189,6 @@ $csrfToken = burnout_csrf_token();
                         <img src="<?= htmlspecialchars((string) ($item['src'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" alt="<?= htmlspecialchars((string) ($item['alt'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                         <div class="admin-gallery-item__body">
                           <h3><?= htmlspecialchars((string) ($item['alt'] ?? 'Sin titulo'), ENT_QUOTES, 'UTF-8') ?></h3>
-                          <p><?= htmlspecialchars((string) ($item['src'] ?? ''), ENT_QUOTES, 'UTF-8') ?></p>
                           <span><?= htmlspecialchars((string) ($item['description'] ?? ''), ENT_QUOTES, 'UTF-8') ?></span>
                         </div>
                         <form method="post" action="admin_gallery.php" onsubmit="return confirm('Eliminar esta imagen de la galeria?');">
@@ -219,19 +218,19 @@ $csrfToken = burnout_csrf_token();
               <div class="admin-gallery-modal__overlay" data-gallery-modal-close></div>
               <div class="admin-gallery-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="galleryModalTitle">
                 <div class="admin-gallery-modal__header">
-                  <h2 id="galleryModalTitle">Anadir imagen</h2>
+                  <h2 id="galleryModalTitle">Añadir imagen</h2>
                   <button type="button" data-gallery-modal-close aria-label="Cerrar ventana">x</button>
                 </div>
                 <form class="admin-gallery-form" method="post" action="admin_gallery.php">
                   <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                   <input type="hidden" name="action" value="add">
                   <div class="admin-login-field">
-                    <label for="src">Ruta imagen</label>
-                    <input id="src" name="src" type="text" required placeholder="assets/images/gallery/foto13.jpg">
+                    <label for="src">URL imagen</label>
+                    <input id="src" name="src" type="text" required placeholder="url">
                   </div>
                   <div class="admin-login-field">
                     <label for="alt">Titulo / Alt</label>
-                    <input id="alt" name="alt" type="text" required placeholder="Operacion tactica 13">
+                    <input id="alt" name="alt" type="text" required placeholder="Titulo">
                   </div>
                   <div class="admin-login-field">
                     <label for="description">Descripcion</label>

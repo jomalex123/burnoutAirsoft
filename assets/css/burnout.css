@@ -1,0 +1,88 @@
+.burnout-page {
+  background: #f4f4f4;
+  color: #151515;
+  min-height: calc(100vh - 90px);
+}
+
+.burnout-header {
+  max-width: 980px;
+}
+
+.burnout-kicker {
+  color: #df1f29;
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.burnout-header h1 {
+  font-size: 52px;
+  line-height: 1;
+  margin-bottom: 0;
+}
+
+.burnout-about {
+  align-items: stretch;
+  background: #fff;
+  border: 1px solid rgba(21, 21, 21, .1);
+  border-radius: 8px;
+  box-shadow: 0 18px 40px rgba(21, 21, 21, .08);
+  display: grid;
+  gap: 0;
+  grid-template-columns: minmax(280px, .85fr) minmax(0, 1.15fr);
+  max-width: 1100px;
+  overflow: hidden;
+}
+
+.burnout-about__media {
+  background: #151515;
+  min-height: 100%;
+}
+
+.burnout-about__media img {
+  display: block;
+  height: 100%;
+  min-height: 420px;
+  object-fit: cover;
+  width: 100%;
+}
+
+.burnout-about__content {
+  display: grid;
+  gap: 16px;
+  padding: 34px;
+}
+
+.burnout-about__content p {
+  color: #333;
+  font-size: 17px;
+  line-height: 1.75;
+  margin: 0;
+}
+
+@media only screen and (max-width: 900px) {
+  .burnout-header h1 {
+    font-size: 38px;
+  }
+
+  .burnout-about {
+    grid-template-columns: 1fr;
+  }
+
+  .burnout-about__media img {
+    min-height: 280px;
+  }
+}
+
+@media only screen and (max-width: 700px) {
+  .burnout-about__content {
+    padding: 22px;
+  }
+
+  .burnout-about__content p {
+    font-size: 16px;
+  }
+}
