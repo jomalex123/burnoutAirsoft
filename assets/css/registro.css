@@ -178,16 +178,22 @@
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+  justify-content: space-between;
 }
 
 .registro-actions .registro-clear {
+  margin-left: 0;
+  order: 1;
+}
+
+.registro-actions .registro-submit {
   margin-left: auto;
+  order: 2;
 }
 
 .registro-submit,
 .registro-clear {
   align-items: center;
-  border-radius: 6px;
   cursor: pointer;
   display: inline-flex;
   font-size: 14px;
@@ -282,15 +288,20 @@
 }
 
 .registro-modal__close {
-  background: #151515;
-  border: 0;
-  border-radius: 6px;
-  color: #fff;
+  background: #fff;
+  border: 1px solid rgba(21, 21, 21, .18);
+  border-radius: 50%;
+  color: #151515;
   cursor: pointer;
+  font-family: Arial, sans-serif;
   font-size: 18px;
-  height: 38px;
+  height: 34px;
   line-height: 1;
-  width: 38px;
+  width: 34px;
+}
+
+#normativaModal .registro-modal__actions .registro-clear {
+  margin-right: auto;
 }
 
 .registro-modal__body {
@@ -428,14 +439,27 @@ body.registro-modal-open {
     max-height: 94vh;
   }
 
-  .registro-modal__actions,
-  .registro-actions {
+  .registro-modal__actions {
     align-items: stretch;
     flex-direction: column;
   }
 
+  .registro-actions {
+    align-items: center;
+    flex-direction: row;
+  }
+
+  #normativaModal .registro-modal__actions {
+    align-items: center;
+    flex-direction: row;
+  }
+
   .registro-actions .registro-clear {
     margin-left: 0;
+  }
+
+  .registro-actions .registro-submit {
+    margin-left: auto;
   }
 
   .registro-asistente-field {

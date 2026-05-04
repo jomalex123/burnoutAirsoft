@@ -191,11 +191,19 @@ $csrfToken = burnout_csrf_token();
                           <h3><?= htmlspecialchars((string) ($item['alt'] ?? 'Sin titulo'), ENT_QUOTES, 'UTF-8') ?></h3>
                           <span><?= htmlspecialchars((string) ($item['description'] ?? ''), ENT_QUOTES, 'UTF-8') ?></span>
                         </div>
-                        <form method="post" action="admin_gallery.php" onsubmit="return confirm('Eliminar esta imagen de la galeria?');">
+                        <form class="admin-gallery-delete-form" method="post" action="admin_gallery.php" onsubmit="return confirm('Eliminar esta imagen de la galeria?');">
                           <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                           <input type="hidden" name="action" value="delete">
                           <input type="hidden" name="id" value="<?= (int) ($item['id'] ?? 0) ?>">
-                          <button type="submit">Borrar</button>
+                          <button class="admin-delete-icon-button" type="submit" aria-label="Eliminar imagen">
+                            <svg aria-hidden="true" viewBox="0 0 24 24">
+                              <path d="M3 6h18"></path>
+                              <path d="M8 6V4h8v2"></path>
+                              <path d="M19 6l-1 14H6L5 6"></path>
+                              <path d="M10 11v5"></path>
+                              <path d="M14 11v5"></path>
+                            </svg>
+                          </button>
                         </form>
                       </article>
                     <?php endforeach; ?>

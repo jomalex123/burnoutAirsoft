@@ -89,6 +89,14 @@ function burnout_find_event(int $id): ?array
     return $event ?: null;
 }
 
+function burnout_event_has_registrations(int $id): bool
+{
+    $statement = burnout_pdo()->prepare('SELECT COUNT(*) FROM registrations WHERE event_id = :id');
+    $statement->execute(['id' => $id]);
+
+    return (int) $statement->fetchColumn() > 0;
+}
+
 function burnout_validate_event_data(string $date, string $title, string $time): array
 {
     if ($date === '' || $title === '' || $time === '') {
@@ -158,6 +166,10 @@ if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($id === false || $id === null || !burnout_find_event((int) $id)) {
                 throw new RuntimeException('El evento seleccionado no existe.');
+            }
+
+            if (burnout_event_has_registrations((int) $id)) {
+                throw new RuntimeException('No se pueden eliminar eventos con asistentes, eliminar los registros primero.');
             }
 
             $statement = burnout_pdo()->prepare('DELETE FROM events WHERE id = :id');
@@ -295,8 +307,23 @@ $csrfToken = burnout_csrf_token();
               </div>
               <aside class="partidas-panel admin-partidas-panel">
                 <h2>Gestionar partidas</h2>
-                <button class="admin-partidas-action" type="button" data-partidas-modal-open="create">Crear evento</button>
-                <button class="admin-partidas-action" type="button" data-partidas-modal-open="delete">Borrar evento</button>
+                <button class="admin-partidas-action" type="button" data-partidas-modal-open="create">
+                  <span>Crear evento</span>
+                  <svg aria-hidden="true" viewBox="0 0 24 24">
+                    <path d="M12 5v14"></path>
+                    <path d="M5 12h14"></path>
+                  </svg>
+                </button>
+                <button class="admin-partidas-action" type="button" data-partidas-modal-open="delete">
+                  <span>Borrar evento</span>
+                  <svg aria-hidden="true" viewBox="0 0 24 24">
+                    <path d="M3 6h18"></path>
+                    <path d="M8 6V4h8v2"></path>
+                    <path d="M19 6l-1 14H6L5 6"></path>
+                    <path d="M10 11v5"></path>
+                    <path d="M14 11v5"></path>
+                  </svg>
+                </button>
               </aside>
             </div>
 
@@ -363,7 +390,15 @@ $csrfToken = burnout_csrf_token();
                           <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                           <input type="hidden" name="action" value="delete">
                           <input type="hidden" name="id" value="<?= (int) ($event['id'] ?? 0) ?>">
-                          <button type="submit">Borrar</button>
+                          <button class="admin-delete-icon-button" type="submit" aria-label="Eliminar evento">
+                            <svg aria-hidden="true" viewBox="0 0 24 24">
+                              <path d="M3 6h18"></path>
+                              <path d="M8 6V4h8v2"></path>
+                              <path d="M19 6l-1 14H6L5 6"></path>
+                              <path d="M10 11v5"></path>
+                              <path d="M14 11v5"></path>
+                            </svg>
+                          </button>
                         </form>
                       </article>
                     <?php endforeach; ?>
