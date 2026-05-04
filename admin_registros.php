@@ -6,7 +6,9 @@ require_once __DIR__ . '/config/auth.php';
 
 $adminUser = null;
 $setupError = '';
+$message = '';
 $error = '';
+$loadError = '';
 $registrations = [];
 
 try {
@@ -19,6 +21,16 @@ try {
 if (!$setupError && !$adminUser) {
     header('Location: admin.php');
     exit;
+}
+
+$flash = burnout_pull_admin_flash();
+
+if ($flash) {
+    if ($flash['type'] === 'error') {
+        $error = $flash['message'];
+    } else {
+        $message = $flash['message'];
+    }
 }
 
 function admin_registros_event_time_to_label(string $timeSlot): string
@@ -120,13 +132,68 @@ function admin_registros_attendee_documents(array $attendees): string
     }, $attendees));
 }
 
+function admin_registros_delete(int $registrationId): void
+{
+    $pdo = burnout_pdo();
+    $pdo->beginTransaction();
+
+    try {
+        $statement = $pdo->prepare('SELECT id FROM registrations WHERE id = :id LIMIT 1');
+        $statement->execute(['id' => $registrationId]);
+
+        if (!$statement->fetch()) {
+            throw new RuntimeException('El registro seleccionado no existe.');
+        }
+
+        $attendees = $pdo->prepare('DELETE FROM registration_attendees WHERE registration_id = :id');
+        $attendees->execute(['id' => $registrationId]);
+
+        $registration = $pdo->prepare('DELETE FROM registrations WHERE id = :id');
+        $registration->execute(['id' => $registrationId]);
+
+        $pdo->commit();
+    } catch (Throwable $exception) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+
+        throw $exception;
+    }
+}
+
+if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    try {
+        if (!burnout_check_csrf($_POST['csrf_token'] ?? null)) {
+            throw new RuntimeException('Sesion caducada. Recarga la pagina e intentalo de nuevo.');
+        }
+
+        $action = $_POST['action'] ?? '';
+
+        if ($action === 'delete') {
+            $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
+
+            if ($id === false || $id === null) {
+                throw new RuntimeException('El registro seleccionado no existe.');
+            }
+
+            admin_registros_delete((int) $id);
+            burnout_set_admin_flash('success', 'Registro eliminado correctamente.');
+        }
+    } catch (Throwable $exception) {
+        burnout_set_admin_flash('error', $exception->getMessage());
+    }
+
+    header('Location: admin_registros.php');
+    exit;
+}
+
 try {
     if (!$setupError) {
         $registrations = admin_registros_read_all();
     }
 } catch (Throwable $exception) {
     error_log($exception->getMessage());
-    $error = 'No se han podido cargar los registros.';
+    $loadError = 'No se han podido cargar los registros.';
 }
 
 $csrfToken = burnout_csrf_token();
@@ -217,9 +284,15 @@ $csrfToken = burnout_csrf_token();
         <div class="ms-section__block">
           <?php if ($setupError): ?>
             <div class="admin-login-error" role="alert"><?= htmlspecialchars($setupError, ENT_QUOTES, 'UTF-8') ?></div>
-          <?php elseif ($error): ?>
-            <div class="admin-message admin-message--error" role="alert"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
+          <?php elseif ($loadError): ?>
+            <div class="admin-message admin-message--error" role="alert"><?= htmlspecialchars($loadError, ENT_QUOTES, 'UTF-8') ?></div>
           <?php else: ?>
+            <?php if ($message): ?>
+              <div class="admin-message admin-message--success" role="status"><?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8') ?></div>
+            <?php endif; ?>
+            <?php if ($error): ?>
+              <div class="admin-message admin-message--error" role="alert"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
+            <?php endif; ?>
             <section class="admin-table-wrap admin-table-wrap--full">
               <div class="admin-gallery-toolbar">
                 <h2>Todos los registros</h2>
@@ -260,6 +333,7 @@ $csrfToken = burnout_csrf_token();
                         <th>Equipo</th>
                         <th>Asistentes</th>
                         <th><button class="admin-sort-button" type="button" data-sort-key="created" aria-label="Ordenar por fecha de registro">Registro</button></th>
+                        <th class="admin-table-delete-column" aria-label="Eliminar"></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -288,6 +362,22 @@ $csrfToken = burnout_csrf_token();
                             </button>
                           </td>
                           <td><?= htmlspecialchars($registration['created_at'], ENT_QUOTES, 'UTF-8') ?></td>
+                          <td class="admin-table-delete-column">
+                            <form class="admin-delete-registration-form" method="post" action="admin_registros.php" data-registration-delete-form>
+                              <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+                              <input type="hidden" name="action" value="delete">
+                              <input type="hidden" name="id" value="<?= (int) $registration['id'] ?>">
+                              <button class="admin-delete-icon-button" type="submit" aria-label="Eliminar registro">
+                                <svg aria-hidden="true" viewBox="0 0 24 24">
+                                  <path d="M3 6h18"></path>
+                                  <path d="M8 6V4h8v2"></path>
+                                  <path d="M19 6l-1 14H6L5 6"></path>
+                                  <path d="M10 11v5"></path>
+                                  <path d="M14 11v5"></path>
+                                </svg>
+                              </button>
+                            </form>
+                          </td>
                         </tr>
                       <?php endforeach; ?>
                     </tbody>
