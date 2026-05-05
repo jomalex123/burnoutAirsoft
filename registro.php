@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/config/mail.php';
+require_once __DIR__ . '/config/rate_limit.php';
 
 function registro_param(string $key, string $source = 'get'): string
 {
@@ -76,13 +77,9 @@ function registro_format_short_date(string $value): string
 
 function registro_format_turn(string $value): string
 {
-    $turn = strtolower($value);
+    $turn = registro_normalize_turn($value);
 
-    if ($turn === 'maã±ana' || $turn === 'mañana') {
-        $turn = 'mañana';
-    }
-
-    return strtoupper($turn);
+    return strtoupper($turn === 'manana' ? 'mañana' : $turn);
 }
 
 function registro_normalize_turn(string $value): string
@@ -90,17 +87,13 @@ function registro_normalize_turn(string $value): string
     $turn = strtolower(trim($value));
     $turn = str_replace(['á', 'é', 'í', 'ó', 'ú', 'ñ'], ['a', 'e', 'i', 'o', 'u', 'n'], $turn);
 
-    if ($turn === 'maã£â±ana' || $turn === 'maã±ana') {
-        return 'mañana';
-    }
-
     return $turn;
 }
 
 function registro_turn_hours(string $turn): array
 {
     return [
-        'mañana' => ['open' => '8:00 AM', 'close' => '9:00 AM'],
+        'manana' => ['open' => '8:00 AM', 'close' => '9:00 AM'],
         'm' => ['open' => '8:00 AM', 'close' => '9:00 AM'],
         'tarde' => ['open' => '15:00 PM', 'close' => '16:00 PM'],
         't' => ['open' => '15:00 PM', 'close' => '16:00 PM'],
@@ -112,7 +105,7 @@ function registro_turn_hours(string $turn): array
 function registro_confirmation_schedule(string $turn): string
 {
     return [
-        'mañana' => 'Recuerda que el horario de apertura de puertas será a las 8:00 AM y el cierre de ellas a las 9:00 AM.',
+        'manana' => 'Recuerda que el horario de apertura de puertas será a las 8:00 AM y el cierre de ellas a las 9:00 AM.',
         'm' => 'Recuerda que el horario de apertura de puertas será a las 8:00 AM y el cierre de ellas a las 9:00 AM.',
         'tarde' => 'Recuerda que el horario de apertura de puertas será a las 15:00 PM y el cierre de ellas a las 16:00 PM.',
         't' => 'Recuerda que el horario de apertura de puertas será a las 15:00 PM y el cierre de ellas a las 16:00 PM.',
@@ -197,6 +190,23 @@ function registro_clean_list(array $values): array
     }, $values);
 }
 
+function registro_assert_rate_limit(string $email): void
+{
+    $ipBlock = burnout_rate_limit_hit('public_registration_ip', burnout_client_ip(), 5, 60 * 60, 60 * 60);
+
+    if ($ipBlock > 0) {
+        throw new RuntimeException('Demasiados intentos de registro. Espera ' . max(1, (int) ceil($ipBlock / 60)) . ' minutos e intentalo de nuevo.');
+    }
+
+    if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $emailBlock = burnout_rate_limit_hit('public_registration_email', $email, 3, 60 * 60, 60 * 60);
+
+        if ($emailBlock > 0) {
+            throw new RuntimeException('Se han enviado demasiados registros con este correo. Espera ' . max(1, (int) ceil($emailBlock / 60)) . ' minutos e intentalo de nuevo.');
+        }
+    }
+}
+
 function registro_email_event_title(array $registration): string
 {
     $event = is_array($registration['event'] ?? null) ? $registration['event'] : [];
@@ -229,7 +239,7 @@ function registro_build_confirmation_email(array $registration): string
     $hours = registro_turn_hours((string) ($event['turn'] ?? ''));
 
     return sprintf(
-        "Tu inscripción para el evento \%s\ se ha registrado correctamente.\n\n" .
+        "Tu inscripción para el evento \"%s\" se ha registrado correctamente.\n\n" .
         "Recuerda que el horario de apertura de puertas será a las %s y el \n" .
         "cierre de ellas a las %s\n\n" .
         "Resumen de los datos enviados:\n" .
@@ -285,6 +295,8 @@ function registro_save_submission(): array
     $acceptedRules = isset($_POST['normativaAceptada']);
     $attendeeNames = registro_clean_list(is_array($_POST['attendee_name'] ?? null) ? $_POST['attendee_name'] : []);
     $attendeeDocuments = registro_clean_list(is_array($_POST['attendee_document'] ?? null) ? $_POST['attendee_document'] : []);
+
+    registro_assert_rate_limit($email);
 
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         throw new RuntimeException('Introduce una direccion electronica valida.');

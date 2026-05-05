@@ -352,7 +352,7 @@ nav a {
   }
   
 nav a:hover {
-  background-color: #34495e;
+  background-color: transparent;
 }
 
 .ms-nav {
@@ -587,7 +587,7 @@ nav a:hover {
     width: 100%;
     height: 100%;
     position: relative;
-    padding-top: 12em;
+    padding: 12em 0em 1em 0em;
 }
 .ms-section__block {
     width: 85%;
@@ -1254,6 +1254,7 @@ footer {
     max-width: 88em;
     margin: 0 auto;
     display: flex;
+    flex-wrap: wrap;
     font-size: 16px;
     align-items: center;
 }
@@ -1261,6 +1262,23 @@ footer {
     padding: 1.2em 0;
     margin-left: 0;
     margin-right: auto;
+}
+.ms-footer .footer-links {
+    display: flex;
+    gap: 16px;
+    order: -1;
+    padding-top: 1.2em;
+    width: 100%;
+}
+.ms-footer .footer-links a {
+    color: #df1f29;
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+}
+.ms-footer .footer-links a:hover {
+    color: #151515;
 }
 .ms-footer .socials {
     padding: 0;
@@ -1408,7 +1426,14 @@ footer {
         margin-bottom: 30px;
     }
     .ms-footer .copyright {
+        margin-right: 0;
         margin-left: auto;
+        text-align: center;
+        width: 100%;
+    }
+    .ms-footer .footer-links {
+        margin: 0 auto;
+        padding-bottom: 1.2em;
     }
     .ms-footer .socials {
         display: none;

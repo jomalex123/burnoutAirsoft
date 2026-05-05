@@ -326,7 +326,7 @@ function syncDetachedPageElements(detachedPageElements) {
 
 function loadPageScripts(page, done) {
     var baseScripts = [
-        'assets/js/jquery-3.2.1.min.js',
+        'assets/js/jquery-3.7.1.min.js',
         'assets/js/plugins.min.js',
         'assets/js/main.js'
     ];

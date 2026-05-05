@@ -173,7 +173,7 @@ window.initPartidasPage = function () {
   function normalizeTime(time) {
     var value = String(time || '').toLowerCase();
 
-    if (value === 'm' || value === 'mañana' || value === 'maã±ana') {
+    if (value === 'm' || value === 'mañana') {
       return 'Mañana';
     }
 

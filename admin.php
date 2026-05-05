@@ -81,12 +81,22 @@ try {
         } else {
             $username = trim((string) ($_POST['username'] ?? ''));
             $password = (string) ($_POST['password'] ?? '');
+            $blockedSeconds = $username !== '' ? burnout_admin_login_block_seconds($username) : 0;
 
-            if ($username === '' || $password === '' || !burnout_login($username, $password)) {
+            if ($blockedSeconds > 0) {
+                burnout_set_admin_flash('error', 'Demasiados intentos de acceso. Espera ' . max(1, (int) ceil($blockedSeconds / 60)) . ' minutos e intentalo de nuevo.');
+                header('Location: admin.php');
+                exit;
+            } elseif ($username === '' || $password === '' || !burnout_login($username, $password)) {
+                if ($username !== '') {
+                    burnout_admin_login_register_failure($username);
+                }
+
                 burnout_set_admin_flash('error', 'Usuario o contrasena incorrectos.');
                 header('Location: admin.php');
                 exit;
             } else {
+                burnout_admin_login_clear_failures($username);
                 header('Location: admin.php');
                 exit;
             }
@@ -257,6 +267,9 @@ $csrfToken = burnout_csrf_token();
       <footer>
         <div class="ms-footer">
           <div class="copyright">Copyright © 2025. Design by Alex Serret</div>
+          <span class="footer-links">
+            <a href="privacidad.html" data-type="page-transition">Politica de Privacidad de datos</a>
+          </span>
           <ul class="socials">
             <li><a href="#" class="socicon-instagram"></a></li>
             <li><a href="#" class="socicon-youtube"></a></li>
@@ -264,7 +277,7 @@ $csrfToken = burnout_csrf_token();
         </div>
       </footer>
     </div>
-    <script type="text/javascript" src='assets/js/jquery-3.2.1.min.js'></script>
+    <script type="text/javascript" src="assets/js/jquery-3.7.1.min.js"></script>
     <script type="text/javascript" src='assets/js/plugins.min.js'></script>
     <script type="text/javascript" src="assets/js/main.js"></script>
   </body>

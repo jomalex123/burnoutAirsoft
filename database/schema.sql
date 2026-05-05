@@ -24,6 +24,20 @@ CREATE TABLE IF NOT EXISTS admin_login_audit (
   KEY admin_login_audit_created_at_index (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS rate_limits (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  scope VARCHAR(80) NOT NULL,
+  identifier_hash CHAR(64) NOT NULL,
+  attempts INT UNSIGNED NOT NULL DEFAULT 0,
+  window_started_at DATETIME NOT NULL,
+  blocked_until DATETIME DEFAULT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY rate_limits_scope_identifier_unique (scope, identifier_hash),
+  KEY rate_limits_blocked_until_index (blocked_until)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS events (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   event_date DATE NOT NULL,
