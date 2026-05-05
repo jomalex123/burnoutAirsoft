@@ -11,18 +11,19 @@ La aplicacion lee el entorno desde la variable `BURNOUT_ENV`. Valores esperados:
 En PRE y produccion, guarda las credenciales fuera del directorio publico:
 
 ```text
-Directorio principal/private/burnoutairsoft/env.php
+PRE:        Directorio principal/private/env.php
+Produccion: Directorio principal/private/burnoutairsoft/env.php
 ```
 
 La aplicacion busca el fichero en este orden:
 
 1. Ruta definida por la variable `BURNOUT_ENV_FILE`, si existe.
-2. `../private/burnoutairsoft/env.php`, subiendo desde el directorio publico del sitio.
-3. `../private/env.php`.
+2. Si corre desde `httpdocs`, usa `../private/env.php`.
+3. Si corre desde `burnoutairsoft.com`, usa `../private/burnoutairsoft/env.php`.
 4. `config/env.php`, solo como fallback local o transitorio.
 5. `config/env.example.php`, solo como plantilla sin credenciales reales.
 
-Si mantienes temporalmente `config/env.php` en PRE o produccion, no sera visible por navegador porque `.htaccess` bloquea tanto `env.php` como el directorio `config/`. Aun asi, la opcion recomendada es mover el fichero real a `private/burnoutairsoft/env.php`.
+Si mantienes temporalmente `config/env.php` en PRE o produccion, no sera visible por navegador porque `.htaccess` bloquea tanto `env.php` como el directorio `config/`. Aun asi, la opcion recomendada es mover los ficheros reales a las rutas privadas anteriores.
 
 Para desarrollo local puedes copiar `config/env.example.php` a `config/env.php` y rellenar tus credenciales locales. `config/env.php` esta ignorado por Git.
 
