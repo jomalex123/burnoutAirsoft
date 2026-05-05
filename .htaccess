@@ -13,4 +13,4 @@ Options -Indexes
   Require all denied
 </FilesMatch>
 
-RedirectMatch 404 "(^|/)(\.git|\.idea|scripts|BurnoutTheme|prueba_piloto)(/|$)"
+RedirectMatch 404 "(^|/)(\.git|\.idea|config|database|scripts|BurnoutTheme|prueba_piloto)(/|$)"

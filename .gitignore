@@ -1,2 +1,4 @@
 .idea/
 config/env.php
+private/
+*.env

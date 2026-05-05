@@ -2,10 +2,11 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/env_loader.php';
+
 function burnout_mail_config(): array
 {
-    $configFile = __DIR__ . '/env.php';
-    $config = is_file($configFile) ? require $configFile : [];
+    $config = burnout_env_config();
     $environment = getenv('BURNOUT_ENV') ?: ($config['default'] ?? 'local');
     $mailConfig = $config['mail'][$environment] ?? $config['mail']['default'] ?? [];
 
