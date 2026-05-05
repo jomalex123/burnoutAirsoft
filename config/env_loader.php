@@ -13,9 +13,17 @@ function burnout_env_file(): string
 
     $projectRoot = dirname(__DIR__);
     $accountRoot = dirname($projectRoot);
+    $projectDirectory = basename($projectRoot);
 
-    $candidates[] = $accountRoot . '/private/burnoutairsoft/env.php';
-    $candidates[] = $accountRoot . '/private/env.php';
+    if ($projectDirectory === 'httpdocs') {
+        $candidates[] = $accountRoot . '/private/env.php';
+    } elseif ($projectDirectory === 'burnoutairsoft.com') {
+        $candidates[] = $accountRoot . '/private/burnoutairsoft/env.php';
+    } else {
+        $candidates[] = $accountRoot . '/private/burnoutairsoft/env.php';
+        $candidates[] = $accountRoot . '/private/env.php';
+    }
+
     $candidates[] = __DIR__ . '/env.php';
     $candidates[] = __DIR__ . '/env.example.php';
 
