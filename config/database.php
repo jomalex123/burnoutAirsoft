@@ -2,15 +2,11 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/env_loader.php';
+
 function burnout_database_config(): array
 {
-    $configFile = __DIR__ . '/env.php';
-
-    if (!is_file($configFile)) {
-        $configFile = __DIR__ . '/env.example.php';
-    }
-
-    $config = require $configFile;
+    $config = burnout_env_config();
     $environment = getenv('BURNOUT_ENV') ?: ($config['default'] ?? 'local');
 
     if (!isset($config['connections'][$environment])) {
