@@ -478,6 +478,9 @@ $csrfToken = burnout_csrf_token();
       <footer>
         <div class="ms-footer">
           <div class="copyright">Copyright &copy; 2025. Design by Alex Serret</div>
+          <span class="footer-links">
+            <a href="privacidad.html" data-type="page-transition">Politica de Privacidad de datos</a>
+          </span>
           <ul class="socials">
             <li><a href="#" class="socicon-instagram"></a></li>
             <li><a href="#" class="socicon-youtube"></a></li>
@@ -485,7 +488,7 @@ $csrfToken = burnout_csrf_token();
         </div>
       </footer>
     </div>
-    <script type="text/javascript" src='assets/js/jquery-3.2.1.min.js'></script>
+    <script type="text/javascript" src="assets/js/jquery-3.7.1.min.js"></script>
     <script type="text/javascript" src='assets/js/plugins.min.js'></script>
     <script type="text/javascript" src="assets/js/main.js"></script>
     <script type="text/javascript" src="assets/js/admin_registros.js"></script>

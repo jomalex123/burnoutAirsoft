@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/database.php';
+require_once __DIR__ . '/rate_limit.php';
 
 function burnout_start_session(): void
 {
@@ -60,6 +61,26 @@ function burnout_login(string $username, string $password): bool
     burnout_record_login_attempt($username, true);
 
     return true;
+}
+
+function burnout_admin_login_rate_identifier(string $username): string
+{
+    return burnout_client_ip() . '|' . strtolower(trim($username));
+}
+
+function burnout_admin_login_block_seconds(string $username): int
+{
+    return burnout_rate_limit_block_seconds('admin_login', burnout_admin_login_rate_identifier($username));
+}
+
+function burnout_admin_login_register_failure(string $username): int
+{
+    return burnout_rate_limit_hit('admin_login', burnout_admin_login_rate_identifier($username), 5, 15 * 60, 15 * 60);
+}
+
+function burnout_admin_login_clear_failures(string $username): void
+{
+    burnout_rate_limit_clear('admin_login', burnout_admin_login_rate_identifier($username));
 }
 
 function burnout_record_login_attempt(string $username, bool $success): void

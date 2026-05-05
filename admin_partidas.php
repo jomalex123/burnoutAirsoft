@@ -455,6 +455,9 @@ $csrfToken = burnout_csrf_token();
       <footer>
         <div class="ms-footer">
           <div class="copyright">Copyright © 2025. Design by Alex Serret</div>
+          <span class="footer-links">
+            <a href="privacidad.html" data-type="page-transition">Politica de Privacidad de datos</a>
+          </span>
           <ul class="socials">
             <li><a href="#" class="socicon-instagram"></a></li>
             <li><a href="#" class="socicon-youtube"></a></li>
@@ -463,9 +466,9 @@ $csrfToken = burnout_csrf_token();
       </footer>
     </div>
     <script>
-      window.BurnoutAdminEvents = <?= json_encode($events, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '[]' ?>;
+      window.BurnoutAdminEvents = <?= json_encode($events, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?: '[]' ?>;
     </script>
-    <script type="text/javascript" src='assets/js/jquery-3.2.1.min.js'></script>
+    <script type="text/javascript" src="assets/js/jquery-3.7.1.min.js"></script>
     <script type="text/javascript" src='assets/js/plugins.min.js'></script>
     <script type="text/javascript" src="assets/js/main.js"></script>
     <script type="text/javascript" src="assets/js/admin_partidas.js"></script>
