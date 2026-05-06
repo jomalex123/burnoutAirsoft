@@ -25,6 +25,7 @@
 })(window);
 
 function InitPage() {
+    UpdateCopyrightYear();
     ms_home_slider();
     Sort();
     UniteGallery();
@@ -61,6 +62,17 @@ function InitPage() {
     if (typeof window.initTemplatePage === 'function') {
         window.initTemplatePage();
     }
+}
+
+function UpdateCopyrightYear() {
+    $('[data-copyright-start]').each(function() {
+        var $copyright = $(this);
+        var startYear = parseInt($copyright.data('copyright-start'), 10);
+        var currentYear = new Date().getFullYear();
+        var yearText = currentYear > startYear ? startYear + '-' + currentYear : String(startYear);
+
+        $copyright.text('Copyright \u00a9 ' + yearText + '. Designed by Alex Serret');
+    });
 }
 
 /*--------------------

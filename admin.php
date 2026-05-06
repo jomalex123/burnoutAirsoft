@@ -266,7 +266,7 @@ $csrfToken = burnout_csrf_token();
       </main>
       <footer>
         <div class="ms-footer">
-          <div class="copyright">Copyright © 2025. Design by Alex Serret</div>
+          <div class="copyright" data-copyright-start="2025">Copyright © 2025-2026. Designed by Alex Serret</div>
           <span class="footer-links">
             <a href="privacidad.html" data-type="page-transition">Politica de Privacidad de datos</a>
           </span>

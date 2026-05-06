@@ -1426,13 +1426,14 @@ footer {
         margin-bottom: 30px;
     }
     .ms-footer .copyright {
+        margin-left: 0;
         margin-right: 0;
-        margin-left: auto;
-        text-align: center;
+        text-align: left;
         width: 100%;
     }
     .ms-footer .footer-links {
-        margin: 0 auto;
+        justify-content: flex-start;
+        margin: 0;
         padding-bottom: 1.2em;
     }
     .ms-footer .socials {
