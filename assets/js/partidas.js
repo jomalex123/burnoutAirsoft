@@ -109,16 +109,10 @@ window.initPartidasPage = function () {
 
       dayEvents.forEach(function (event) {
         var eventButton = document.createElement('button');
-        var eventTitle = document.createElement('span');
-        var eventCapacity = document.createElement('small');
         eventButton.className = 'partidas-event-slice is-' + normalizeTime(event.time);
         eventButton.type = 'button';
-        eventTitle.textContent = event.title;
-        eventCapacity.textContent = formatCapacity(event);
-        eventButton.appendChild(eventTitle);
-        eventButton.appendChild(eventCapacity);
-        eventButton.classList.toggle('is-full', isFull(event));
-        eventButton.setAttribute('aria-label', day + ' de ' + monthNames[month] + ': ' + event.title + '. Aforo ' + formatCapacity(event) + '. Abrir registro');
+        eventButton.textContent = event.title;
+        eventButton.setAttribute('aria-label', day + ' de ' + monthNames[month] + ': ' + event.title + '. Abrir registro');
         eventButton.addEventListener('click', function () {
           openEvent(event);
         });
@@ -158,13 +152,8 @@ window.initPartidasPage = function () {
       var time = document.createElement('span');
       time.textContent = formatEventListDate(event.date) + ' - ' + event.time;
 
-      var capacity = document.createElement('span');
-      capacity.className = isFull(event) ? 'partidas-event-capacity is-full' : 'partidas-event-capacity';
-      capacity.textContent = formatCapacity(event);
-
       card.appendChild(eventTitle);
       card.appendChild(time);
-      card.appendChild(capacity);
       card.addEventListener('click', function () {
         openEvent(event);
       });
@@ -244,28 +233,6 @@ window.initPartidasPage = function () {
       day: 'numeric',
       month: 'long'
     }).replace(' de ', ' ');
-  }
-
-  function formatCapacity(event) {
-    var current = parseInt(event.attendeeCount, 10);
-    var max = parseInt(event.maxAttendees, 10);
-
-    if (isNaN(current)) {
-      current = 0;
-    }
-
-    if (isNaN(max) || max < 1) {
-      max = 40;
-    }
-
-    return current + '/' + max;
-  }
-
-  function isFull(event) {
-    var current = parseInt(event.attendeeCount, 10);
-    var max = parseInt(event.maxAttendees, 10);
-
-    return !isNaN(max) && max > 0 && !isNaN(current) && current >= max;
   }
 
   function openEvent(event) {

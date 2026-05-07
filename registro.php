@@ -306,11 +306,13 @@ function registro_set_intro_message(string $html, string $message): string
     ) ?? $html;
 }
 
-function registro_set_closed_message(string $html): string
+function registro_set_closed_message(string $html, string $message = 'Inscripción cerrada'): string
 {
+    $escaped = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
+
     return preg_replace(
         '/<div id="registroClosedMessage" class="registro-closed-message" hidden>.*?<\/div>/s',
-        '<div id="registroClosedMessage" class="registro-closed-message" role="alert">Inscripción cerrada</div>',
+        '<div id="registroClosedMessage" class="registro-closed-message" role="alert">' . $escaped . '</div>',
         $html,
         1
     ) ?? $html;
@@ -632,7 +634,6 @@ if ($html === false) {
 $html = registro_replace_between_id($html, 'registroEventoTitulo', $hasEvent ? 'INSCRIPCIÓN ' . $title : $title);
 $html = registro_replace_between_id($html, 'registroEventoFecha', $hasEvent ? registro_format_date($date) : 'No seleccionada');
 $html = registro_replace_between_id($html, 'registroEventoTurno', $hasEvent ? registro_format_turn($turn) : 'No seleccionado');
-$html = registro_replace_between_id($html, 'registroEventoAforo', $hasEvent ? registro_capacity_label($event) : 'No seleccionado');
 $html = registro_set_input_value($html, 'eventId', $hasEvent ? (string) $event['id'] : '');
 $html = registro_set_capacity_data($html, $capacityRemaining, $maxAttendees);
 $html = $messageSuccess ? $html : registro_set_message($html, $message, false);
@@ -645,12 +646,7 @@ if (!$hasEvent && !$messageSuccess) {
 }
 
 if (($registrationClosed || $capacityFull) && !$messageSuccess) {
-    $html = registro_set_closed_message($html);
-
-    if ($capacityFull) {
-        $html = registro_set_intro_message($html, 'Inscripción cerrada: aforo completo. Ponte en contacto por Instagram con @burnoutairsoft para confirmar la inscripción.');
-    }
-
+    $html = registro_set_closed_message($html, $capacityFull ? 'Inscripción cerrada: aforo completo. Ponte en contacto por Instagram con @burnoutairsoft para confirmar la inscripción.' : 'Inscripción cerrada');
     $html = registro_disable_form_actions($html);
 }
 
