@@ -243,15 +243,15 @@ $csrfToken = burnout_csrf_token();
                 </a>
               </li>
               <li class="nav-item">
-                <a href="partidas.html" data-type="page-transition">
-                  <span class="ms-btn">Partidas</span>
-                  <span class="nav-item__label">Calendario de partidas</span>
+                <a href="campo.html" data-type="page-transition">
+                  <span class="ms-btn">Campo</span>
+                  <span class="nav-item__label">Descubre el terreno</span>
                 </a>
               </li>
               <li class="nav-item">
-                <a href="admin.php" data-type="page-transition">
-                  <span class="ms-btn">Admin</span>
-                  <span class="nav-item__label">Panel de administracion</span>
+                <a href="partidas.html" data-type="page-transition">
+                  <span class="ms-btn">Partidas</span>
+                  <span class="nav-item__label">Calendario de partidas</span>
                 </a>
               </li>
             </ul>
