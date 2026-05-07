@@ -198,11 +198,31 @@ window.initAdminRegistrosPage = function () {
       return 0;
     }
 
-    var firstValue = sortState.key === 'created' ? first.dataset.created : first.dataset.date;
-    var secondValue = sortState.key === 'created' ? second.dataset.created : second.dataset.date;
+    var firstValue = sortValue(first, sortState.key);
+    var secondValue = sortValue(second, sortState.key);
     var result = firstValue.localeCompare(secondValue);
 
     return sortState.direction === 'asc' ? result : -result;
+  }
+
+  function sortValue(row, key) {
+    if (key === 'created') {
+      return row.dataset.created || '';
+    }
+
+    if (key === 'date') {
+      return row.dataset.date || '';
+    }
+
+    if (key === 'turn') {
+      return {
+        M: '1',
+        T: '2',
+        N: '3'
+      }[row.dataset.turn] || row.dataset.turn || '';
+    }
+
+    return normalize(row.dataset[key]);
   }
 
   function updateSortButtons() {

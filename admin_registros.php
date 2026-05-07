@@ -405,12 +405,12 @@ $csrfToken = burnout_csrf_token();
                   <table class="admin-table admin-table--wide" id="registrationsTable">
                     <thead>
                       <tr>
-                        <th>Evento</th>
+                        <th><button class="admin-sort-button" type="button" data-sort-key="event" aria-label="Ordenar por evento">Evento</button></th>
                         <th><button class="admin-sort-button" type="button" data-sort-key="date" aria-label="Ordenar por fecha">Fecha</button></th>
-                        <th>Turno</th>
-                        <th>Email</th>
-                        <th>Teléfono</th>
-                        <th>Equipo</th>
+                        <th><button class="admin-sort-button" type="button" data-sort-key="turn" aria-label="Ordenar por turno">Turno</button></th>
+                        <th><button class="admin-sort-button" type="button" data-sort-key="email" aria-label="Ordenar por email">Email</button></th>
+                        <th><button class="admin-sort-button" type="button" data-sort-key="phone" aria-label="Ordenar por teléfono">Teléfono</button></th>
+                        <th><button class="admin-sort-button" type="button" data-sort-key="team" aria-label="Ordenar por equipo">Equipo</button></th>
                         <th>Asistentes</th>
                         <th><button class="admin-sort-button" type="button" data-sort-key="created" aria-label="Ordenar por fecha de registro">Registro</button></th>
                         <th class="admin-table-icon-column" aria-label="Notificación"></th>
