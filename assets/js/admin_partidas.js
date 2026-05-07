@@ -1,7 +1,8 @@
 window.initAdminPartidasPage = function () {
   var events = Array.isArray(window.BurnoutAdminEvents) ? window.BurnoutAdminEvents : [];
 
-  var currentDate = new Date(2026, 4, 1);
+  var today = new Date();
+  var currentDate = new Date(today.getFullYear(), today.getMonth(), 1);
   var monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
   var grid = document.getElementById('calendarGrid');
   var title = document.getElementById('calendarTitle');
@@ -68,6 +69,11 @@ window.initAdminPartidasPage = function () {
     var number = document.createElement('span');
 
     cell.className = dayEvents.length ? 'partidas-day has-event' : 'partidas-day';
+
+    if (isToday(year, month, day)) {
+      cell.className += ' is-today';
+    }
+
     number.className = 'partidas-day-number';
     number.textContent = day;
     cell.appendChild(number);
@@ -135,6 +141,12 @@ window.initAdminPartidasPage = function () {
 
   function formatDate(year, month, day) {
     return [year, String(month + 1).padStart(2, '0'), String(day).padStart(2, '0')].join('-');
+  }
+
+  function isToday(year, month, day) {
+    var now = new Date();
+
+    return now.getFullYear() === year && now.getMonth() === month && now.getDate() === day;
   }
 
   function openModal(id) {

@@ -872,6 +872,56 @@
   width: 52px;
 }
 
+.admin-table-icon-column {
+  text-align: center;
+  width: 58px;
+}
+
+.admin-notification-icon-button {
+  align-items: center;
+  background: #fff;
+  border: 1px solid rgba(21, 21, 21, .18);
+  color: #555;
+  cursor: pointer;
+  display: inline-flex;
+  height: 34px;
+  justify-content: center;
+  padding: 0;
+  transition: background .2s ease, border-color .2s ease, color .2s ease;
+  width: 34px;
+}
+
+.admin-notification-icon-button svg {
+  fill: none;
+  height: 18px;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+  width: 18px;
+}
+
+.admin-notification-icon-button.is-sent {
+  border-color: rgba(31, 128, 70, .42);
+  color: #1f8046;
+}
+
+.admin-notification-icon-button.is-failed {
+  border-color: rgba(223, 31, 41, .5);
+  color: #df1f29;
+}
+
+.admin-notification-icon-button.is-pending {
+  border-color: rgba(160, 110, 20, .45);
+  color: #9a650f;
+}
+
+.admin-notification-icon-button:hover {
+  background: #151515;
+  border-color: #151515;
+  color: #fff;
+}
+
 .admin-delete-registration-form {
   margin: 0;
 }
@@ -925,6 +975,47 @@
   gap: 4px;
   margin: 0 0 18px;
   padding: 0 0 16px;
+}
+
+.admin-registrations-modal__meta strong,
+.admin-notification-detail dt {
+  color: #151515;
+}
+
+.admin-notification-detail {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.admin-notification-detail div {
+  border-bottom: 1px solid rgba(21, 21, 21, .08);
+  display: grid;
+  gap: 4px;
+  padding-bottom: 12px;
+}
+
+.admin-notification-detail dt {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.admin-notification-detail dd {
+  color: #444;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-confirmation-text {
+  color: #444;
+  margin: 0 0 20px;
+}
+
+.admin-gallery-modal__actions .admin-back-link {
+  background: #fff;
+  cursor: pointer;
 }
 
 .admin-registrations-modal__meta strong,

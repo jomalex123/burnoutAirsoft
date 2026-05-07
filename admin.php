@@ -71,7 +71,7 @@ try {
         $action = $_POST['action'] ?? 'login';
 
         if (!burnout_check_csrf($_POST['csrf_token'] ?? null)) {
-            burnout_set_admin_flash('error', 'Sesion caducada. Recarga la pagina e intentalo de nuevo.');
+            burnout_set_admin_flash('error', 'Sesión caducada. Recarga la página e inténtalo de nuevo.');
             header('Location: admin.php');
             exit;
         } elseif ($action === 'logout') {
@@ -84,7 +84,7 @@ try {
             $blockedSeconds = $username !== '' ? burnout_admin_login_block_seconds($username) : 0;
 
             if ($blockedSeconds > 0) {
-                burnout_set_admin_flash('error', 'Demasiados intentos de acceso. Espera ' . max(1, (int) ceil($blockedSeconds / 60)) . ' minutos e intentalo de nuevo.');
+                burnout_set_admin_flash('error', 'Demasiados intentos de acceso. Espera ' . max(1, (int) ceil($blockedSeconds / 60)) . ' minutos e inténtalo de nuevo.');
                 header('Location: admin.php');
                 exit;
             } elseif ($username === '' || $password === '' || !burnout_login($username, $password)) {
@@ -92,7 +92,7 @@ try {
                     burnout_admin_login_register_failure($username);
                 }
 
-                burnout_set_admin_flash('error', 'Usuario o contrasena incorrectos.');
+                burnout_set_admin_flash('error', 'Usuario o contraseña incorrectos.');
                 header('Location: admin.php');
                 exit;
             } else {
@@ -110,7 +110,7 @@ try {
     }
 } catch (Throwable $exception) {
     error_log($exception->getMessage());
-    $setupError = 'No se ha podido conectar con la base de datos o faltan las tablas de administracion.';
+    $setupError = 'No se ha podido conectar con la base de datos o faltan las tablas de administración.';
 }
 
 $csrfToken = burnout_csrf_token();
@@ -118,7 +118,7 @@ $csrfToken = burnout_csrf_token();
 <!DOCTYPE html>
 <html lang="es">
   <head>
-    <title>Administracion - Burnout Airsoft</title>
+    <title>Administración - Burnout Airsoft</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/png" href="images/resources/logoBurnout-3.png" />
@@ -184,16 +184,16 @@ $csrfToken = burnout_csrf_token();
           <div class="admin-header">
             <div class="admin-header__title">
               <span class="admin-kicker">Burnout Airsoft</span>
-              <h1>Administracion</h1>
+              <h1>Administración</h1>
             </div>
             <?php if ($adminUser): ?>
               <form class="admin-logout" method="post" action="admin.php">
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                 <input type="hidden" name="action" value="logout">
-                <button type="submit">Cerrar sesion</button>
+                <button type="submit">Cerrar sesión</button>
               </form>
             <?php else: ?>
-              <p>Acceso restringido al panel de administracion.</p>
+              <p>Acceso restringido al panel de administración.</p>
             <?php endif; ?>
           </div>
         </div>
@@ -235,8 +235,8 @@ $csrfToken = burnout_csrf_token();
                   <?php endif; ?>
                 </div>
                 <aside class="admin-actions">
-                  <h2>Gestion</h2>
-                  <a href="admin_gallery.php">Gestionar Galeria</a>
+                  <h2>Gestión</h2>
+                  <a href="admin_gallery.php">Gestionar Galería</a>
                   <a href="admin_partidas.php">Gestionar Partidas</a>
                   <a href="admin_registros.php">Gestionar Registros</a>
                 </aside>
@@ -252,7 +252,7 @@ $csrfToken = burnout_csrf_token();
                   <input id="username" name="username" type="text" autocomplete="username" required autofocus>
                 </div>
                 <div class="admin-login-field">
-                  <label for="password">Contrasena</label>
+                  <label for="password">Contraseña</label>
                   <input id="password" name="password" type="password" autocomplete="current-password" required>
                 </div>
                 <?php if ($error): ?>
@@ -268,7 +268,7 @@ $csrfToken = burnout_csrf_token();
         <div class="ms-footer">
           <div class="copyright" data-copyright-start="2025">Copyright © 2025-2026. Designed by Alex Serret</div>
           <span class="footer-links">
-            <a href="privacidad.html" data-type="page-transition">Politica de Privacidad de datos</a>
+            <a href="privacidad.html" data-type="page-transition">Política de Privacidad de datos</a>
           </span>
           <ul class="socials">
             <li><a href="#" class="socicon-instagram"></a></li>

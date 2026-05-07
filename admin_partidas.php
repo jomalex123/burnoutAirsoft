@@ -13,7 +13,7 @@ try {
     $adminUser = burnout_current_admin();
 } catch (Throwable $exception) {
     error_log($exception->getMessage());
-    $setupError = 'No se ha podido validar la sesion de administracion.';
+    $setupError = 'No se ha podido validar la sesión de administración.';
 }
 
 if (!$setupError && !$adminUser) {
@@ -54,7 +54,7 @@ function burnout_normalize_event_time(string $value): string
     ];
 
     if (!isset($map[$time])) {
-        throw new RuntimeException('Selecciona un horario valido.');
+        throw new RuntimeException('Selecciona un horario válido.');
     }
 
     return $map[$time];
@@ -119,7 +119,7 @@ function burnout_validate_event_data(string $date, string $title, string $time):
 if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         if (!burnout_check_csrf($_POST['csrf_token'] ?? null)) {
-            throw new RuntimeException('Sesion caducada. Recarga la pagina e intentalo de nuevo.');
+            throw new RuntimeException('Sesión caducada. Recarga la página e inténtalo de nuevo.');
         }
 
         $action = $_POST['action'] ?? '';
@@ -196,7 +196,7 @@ $csrfToken = burnout_csrf_token();
 <!DOCTYPE html>
 <html lang="es">
   <head>
-    <title>Gestion Partidas - Burnout Airsoft</title>
+    <title>Gestión Partidas - Burnout Airsoft</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/png" href="images/resources/logoBurnout-3.png" />
@@ -263,14 +263,14 @@ $csrfToken = burnout_csrf_token();
           <div class="admin-header">
             <div class="admin-header__title">
               <span class="admin-kicker">Burnout Airsoft</span>
-              <h1>Gestion Partidas</h1>
+              <h1>Gestión Partidas</h1>
             </div>
             <?php if ($adminUser): ?>
               <div class="admin-header-actions">
                 <form class="admin-logout" method="post" action="admin.php">
                   <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                   <input type="hidden" name="action" value="logout">
-                  <button type="submit">Cerrar sesion</button>
+                  <button type="submit">Cerrar sesión</button>
                 </form>
                 <a class="admin-back-link" href="admin.php">Volver al panel</a>
               </div>
@@ -456,7 +456,7 @@ $csrfToken = burnout_csrf_token();
         <div class="ms-footer">
           <div class="copyright" data-copyright-start="2025">Copyright © 2025-2026. Designed by Alex Serret</div>
           <span class="footer-links">
-            <a href="privacidad.html" data-type="page-transition">Politica de Privacidad de datos</a>
+            <a href="privacidad.html" data-type="page-transition">Política de Privacidad de datos</a>
           </span>
           <ul class="socials">
             <li><a href="#" class="socicon-instagram"></a></li>

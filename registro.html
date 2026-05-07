@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
   <head>
-    <title>Inscripcion - Burnout Airsoft</title>
+    <title>Inscripción - Burnout Airsoft</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/png" href="images/resources/logoBurnout-3.png" />
@@ -52,12 +52,6 @@
                   <span class="nav-item__label">Calendario de partidas</span>
                 </a>
               </li>
-              <li class="nav-item">
-                <a href="admin.php" data-type="page-transition">
-                  <span class="ms-btn">Admin</span>
-                  <span class="nav-item__label">Panel de administracion</span>
-                </a>
-              </li>
             </ul>
           </div>
         </nav>
@@ -67,14 +61,15 @@
         <section class="ms-section__block registro-intro">
           <span class="registro-kicker">Burnout Airsoft</span>
           <h2 id="registroEventoTitulo"></h2>
+          <div id="registroClosedMessage" class="registro-closed-message" hidden>Inscripción cerrada</div>
           <div class="registro-event-data">
             <p><strong>Fecha:</strong> <span id="registroEventoFecha"></span></p>
             <p><strong>Turno:</strong> <span id="registroEventoTurno"></span></p>
-            <p><strong>Direccion:</strong> BV-2421, Carr. Corbera, Km 1, 08756, La Palma de Cervello (Barcelona)</p>
+          <p><strong>Dirección:</strong> BV-2421, Carr. Corbera, Km 1, 08756, La Palma de Cervello (Barcelona)</p>
           </div>
           <div class="registro-copy">
-            <p>Los datos solicitados a continuacion seran usados para el registro en las instalaciones y el seguro correspondiente. No seran facilitados a terceros.</p>
-            <p>El formulario recoge nombre, DNI/documento, telefono y email para gestionar la inscripcion. Consulta la <a href="privacidad.html" data-type="page-transition">politica de privacidad</a>.</p>
+            <p>Los datos solicitados a continuación serán usados para el registro en las instalaciones y el seguro correspondiente. No serán facilitados a terceros.</p>
+            <p>El formulario recoge nombre, DNI/documento, teléfono y email para gestionar la inscripción. Consulta la <a href="privacidad.html" data-type="page-transition">política de privacidad</a>.</p>
             <p>Para cualquier duda puede ponerse en contacto por Instagram <strong>@burnoutairsoft</strong>.</p>
           </div>
         </section>
@@ -84,13 +79,13 @@
             <input id="eventId" name="event_id" type="hidden" value="">
             <div id="registroMessage" class="registro-message" hidden></div>
             <div class="registro-field">
-              <label for="email">Direccion electronica *</label>
+              <label for="email">Dirección electrónica *</label>
               <input id="email" name="email" type="email" autocomplete="email" required placeholder="nombre@dominio.com">
               <span class="registro-error" data-error-for="email"></span>
             </div>
 
             <div class="registro-field">
-              <label for="telefono">Telefono de contacto *</label>
+              <label for="telefono">Teléfono de contacto *</label>
               <input id="telefono" name="telefono" type="tel" autocomplete="tel" inputmode="tel" required placeholder="600000000">
               <span class="registro-error" data-error-for="telefono"></span>
             </div>
@@ -161,7 +156,7 @@
             </div>
             <div class="registro-modal__body registro-confirmation-modal__body">
               <p id="registroConfirmationIntro">Hemos recibido tu inscripción para la partida.</p>
-              <p id="registroConfirmationSchedule">Recuerda que el horario de apertura de puertas seró a las 8:00 AM y el cierre de ellas a las 9:00 AM.</p>
+              <p id="registroConfirmationSchedule">Recuerda que el horario de apertura de puertas será a las 8:00 AM y el cierre de ellas a las 9:00 AM.</p>
               <p>
                 Por favor, revisa la normativa en el siguiente enlace:<br>
                 <a href="https://drive.google.com/file/d/104gDRmUVKkp6AtADIaEomPMzdUN7tZVT" target="_blank" rel="noopener noreferrer">Normativa</a>
@@ -179,7 +174,7 @@
         <div class="ms-footer">
           <div class="copyright" data-copyright-start="2025">Copyright © 2025-2026. Designed by Alex Serret</div>
           <span class="footer-links">
-            <a href="privacidad.html" data-type="page-transition">Politica de Privacidad de datos</a>
+            <a href="privacidad.html" data-type="page-transition">Política de Privacidad de datos</a>
           </span>
           <ul class="socials">
             <li><a href="#" class="socicon-instagram"></a></li>

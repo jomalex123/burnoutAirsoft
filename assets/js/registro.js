@@ -8,13 +8,19 @@ window.initRegistroPage = function () {
   var $asistentesFields = $('#asistentesFields');
   var $acceptRules = $('#aceptarNormativa');
   var $rulesBody = $('#normativaModalBody');
+  var $reset = $form.find('button[type="reset"]');
+  var registrationClosed = $form.attr('data-registration-closed') === 'true';
   var rulesRead = false;
 
   if (!$form.length) {
     return;
   }
 
-  renderEventData();
+  if (registrationClosed) {
+    $submit.prop('disabled', true);
+    $reset.prop('disabled', true);
+  }
+
   lockRulesButton();
   loadRulesContent();
   bindRulesScroll();
@@ -53,6 +59,10 @@ window.initRegistroPage = function () {
   });
 
   $form.off('reset.registro').on('reset.registro', function () {
+    if (registrationClosed) {
+      return false;
+    }
+
     setTimeout(function () {
       $terms.prop('disabled', true).prop('checked', false);
       rulesRead = false;
@@ -67,6 +77,11 @@ window.initRegistroPage = function () {
   });
 
   $form.off('submit.registro').on('submit.registro', function (event) {
+    if (registrationClosed) {
+      event.preventDefault();
+      return;
+    }
+
     if (!validateForm()) {
       event.preventDefault();
       updateSubmitState();
@@ -136,7 +151,7 @@ window.initRegistroPage = function () {
         bindRulesScroll();
       })
       .catch(function () {
-        $rulesBody.html('<p class="registro-normativa-loading">No se ha podido cargar la normativa. Abre la normativa en una pestana nueva y vuelve a intentarlo.</p>');
+        $rulesBody.html('<p class="registro-normativa-loading">No se ha podido cargar la normativa. Abre la normativa en una pestaña nueva y vuelve a intentarlo.</p>');
       });
   }
 
@@ -162,62 +177,6 @@ window.initRegistroPage = function () {
     if (scrollHeight <= visibleHeight || scrollTop + visibleHeight >= scrollHeight - 2) {
       unlockRulesButton();
     }
-  }
-
-  function renderEventData() {
-    var params = new URLSearchParams(window.location.search);
-    var title = params.get('titulo');
-    var date = params.get('fecha');
-    var turn = params.get('turno');
-    var eventId = params.get('event_id') || params.get('id');
-
-    if (eventId) {
-      $('#eventId').val(eventId);
-    }
-
-    if (title) {
-      $('#registroEventoTitulo').text('INSCRIPCION ' + title);
-      document.title = 'Inscripcion - ' + title;
-    }
-
-    if (date) {
-      $('#registroEventoFecha').text(formatEventDate(date));
-    }
-
-    if (turn) {
-      $('#registroEventoTurno').text(normalizeTurn(turn).toUpperCase());
-    }
-  }
-
-  function formatEventDate(value) {
-    var parts = value.split('-');
-
-    if (parts.length !== 3) {
-      return value.toUpperCase();
-    }
-
-    var date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-
-    if (isNaN(date.getTime())) {
-      return value.toUpperCase();
-    }
-
-    return date.toLocaleDateString('es-ES', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    }).toUpperCase();
-  }
-
-  function normalizeTurn(value) {
-    var normalized = String(value || '').toLowerCase();
-
-    if (normalized === 'mañana') {
-      return 'Mañana';
-    }
-
-    return normalized;
   }
 
   function validateForm() {
@@ -246,11 +205,11 @@ window.initRegistroPage = function () {
     }
 
     if (!message && id === 'email' && !isValidEmail(value)) {
-      message = 'Introduce una direccion electronica valida.';
+      message = 'Introduce una dirección electrónica válida.';
     }
 
     if (!message && id === 'telefono' && !isValidPhone(value)) {
-      message = 'Introduce un telefono valido.';
+      message = 'Introduce un teléfono válido.';
     }
 
     if (!message && isAttendeeNameField(id) && value.length < 3) {
@@ -258,11 +217,11 @@ window.initRegistroPage = function () {
     }
 
     if (!message && isAttendeeDocumentField(id) && value.length < 5) {
-      message = 'Introduce un DNI, NIE o pasaporte valido.';
+      message = 'Introduce un DNI, NIE o pasaporte válido.';
     }
 
     if (!message && id === 'asistentes' && !value) {
-      message = 'Selecciona el numero de asistentes.';
+      message = 'Selecciona el número de asistentes.';
     }
 
     setFieldError($field, message);
@@ -323,6 +282,12 @@ window.initRegistroPage = function () {
   }
 
   function updateSubmitState() {
+    if (registrationClosed) {
+      $submit.prop('disabled', true);
+      $reset.prop('disabled', true);
+      return;
+    }
+
     $submit.prop('disabled', !$terms.is(':checked'));
   }
 

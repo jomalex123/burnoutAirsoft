@@ -5,7 +5,7 @@ window.initTemplatePage = function () {
     return;
   }
 
-  mount.innerHTML = '<div class="template-empty">Configura aqui el contenido de la pagina.</div>';
+  mount.innerHTML = '<div class="template-empty">Configura aquí el contenido de la página.</div>';
 };
 
 if (!window.__burnoutLoadingPageScript) {

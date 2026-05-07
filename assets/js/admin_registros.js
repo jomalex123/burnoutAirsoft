@@ -6,8 +6,11 @@ window.initAdminRegistrosPage = function () {
   var exportOptions = document.getElementById('registrationExportOptions');
   var exportCsvButton = document.getElementById('exportRegistrationsCsv');
   var exportPdfButton = document.getElementById('exportRegistrationsPdf');
+  var deleteConfirmModal = document.getElementById('registrationDeleteConfirmModal');
+  var deleteConfirmButton = document.getElementById('confirmRegistrationDelete');
   var sortButtons = Array.prototype.slice.call(document.querySelectorAll('[data-sort-key]'));
   var rows = table ? Array.prototype.slice.call(table.querySelectorAll('tbody tr')) : [];
+  var pendingDeleteForm = null;
   var activeFilters = {
     event: '',
     date: '',
@@ -106,8 +109,35 @@ window.initAdminRegistrosPage = function () {
     button.addEventListener('click', closeModals);
   });
 
+  document.querySelectorAll('[data-registration-delete-form]').forEach(function (form) {
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      pendingDeleteForm = form;
+      openDeleteConfirmModal();
+    });
+  });
+
+  document.querySelectorAll('[data-registration-delete-cancel]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      pendingDeleteForm = null;
+      closeModals();
+    });
+  });
+
+  if (deleteConfirmButton) {
+    deleteConfirmButton.addEventListener('click', function () {
+      if (!pendingDeleteForm) {
+        closeModals();
+        return;
+      }
+
+      pendingDeleteForm.submit();
+    });
+  }
+
   document.addEventListener('keydown', function (event) {
     if (event.key === 'Escape') {
+      pendingDeleteForm = null;
       closeExportMenu();
       closeModals();
     }
@@ -251,7 +281,7 @@ window.initAdminRegistrosPage = function () {
       return;
     }
 
-    var headers = ['Evento', 'Fecha', 'Turno', 'Email', 'Telefono', 'Equipo', 'N. asistente', 'Nombre completo', 'Documento', 'Fecha registro'];
+    var headers = ['Evento', 'Fecha', 'Turno', 'Email', 'Teléfono', 'Equipo', 'N. asistente', 'Nombre completo', 'Documento', 'Fecha registro'];
     var lines = [headers.map(csvEscape).join(';')];
 
     rowsToExport.forEach(function (row) {
@@ -341,7 +371,7 @@ window.initAdminRegistrosPage = function () {
       '<body>',
         '<h1>Asistentes registros</h1>',
         '<table>',
-          '<thead><tr><th>Evento</th><th>Fecha</th><th>Turno</th><th>Email</th><th>Telefono</th><th>Equipo</th><th>N. asistente</th><th>Nombre completo</th><th>Documento</th><th>Fecha registro</th></tr></thead>',
+          '<thead><tr><th>Evento</th><th>Fecha</th><th>Turno</th><th>Email</th><th>Teléfono</th><th>Equipo</th><th>N. asistente</th><th>Nombre completo</th><th>Documento</th><th>Fecha registro</th></tr></thead>',
           '<tbody>' + tableRows + '</tbody>',
         '</table>',
         '<script>window.onload=function(){window.print();};<\/script>',
@@ -358,6 +388,19 @@ window.initAdminRegistrosPage = function () {
 
     exportOptions.hidden = true;
     exportToggle.setAttribute('aria-expanded', 'false');
+  }
+
+  function openDeleteConfirmModal() {
+    if (!deleteConfirmModal) {
+      if (pendingDeleteForm) {
+        pendingDeleteForm.submit();
+      }
+      return;
+    }
+
+    deleteConfirmModal.classList.add('is-open');
+    deleteConfirmModal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('admin-gallery-modal-open');
   }
 
   function closeModals() {

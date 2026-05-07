@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/config/mail.php';
 require_once __DIR__ . '/config/rate_limit.php';
+require_once __DIR__ . '/config/registration_notifications.php';
 
 function registro_param(string $key, string $source = 'get'): string
 {
@@ -80,6 +81,22 @@ function registro_format_turn(string $value): string
     $turn = registro_normalize_turn($value);
 
     return strtoupper($turn === 'manana' ? 'mañana' : $turn);
+}
+
+function registro_timezone(): DateTimeZone
+{
+    return new DateTimeZone('Europe/Madrid');
+}
+
+function registro_event_registration_closed(array $event): bool
+{
+    $date = DateTimeImmutable::createFromFormat('!Y-m-d', (string) ($event['date'] ?? ''), registro_timezone());
+
+    if (!$date || $date->format('Y-m-d') !== (string) ($event['date'] ?? '')) {
+        return false;
+    }
+
+    return new DateTimeImmutable('now', registro_timezone()) >= $date->modify('-24 hours');
 }
 
 function registro_normalize_turn(string $value): string
@@ -183,6 +200,66 @@ function registro_set_confirmation_modal(string $html, bool $success): string
     ) ?? $html;
 }
 
+function registro_hide_form(string $html): string
+{
+    return preg_replace(
+        '/<section class="ms-section__block registro-form" id="registroFormSection">/',
+        '<section class="ms-section__block registro-form is-hidden" id="registroFormSection" aria-hidden="true">',
+        $html,
+        1
+    ) ?? $html;
+}
+
+function registro_set_intro_message(string $html, string $message): string
+{
+    if ($message === '') {
+        return $html;
+    }
+
+    $escaped = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
+
+    return preg_replace(
+        '/(<section class="ms-section__block registro-form\b)/',
+        '<div class="ms-section__block registro-message registro-message--error" role="alert">' . $escaped . '</div>' . "\n\n        " . '$1',
+        $html,
+        1
+    ) ?? $html;
+}
+
+function registro_set_closed_message(string $html): string
+{
+    return preg_replace(
+        '/<div id="registroClosedMessage" class="registro-closed-message" hidden>.*?<\/div>/s',
+        '<div id="registroClosedMessage" class="registro-closed-message" role="alert">Inscripción cerrada</div>',
+        $html,
+        1
+    ) ?? $html;
+}
+
+function registro_disable_form_actions(string $html): string
+{
+    $html = preg_replace(
+        '/<form id="registroForm" class="registro-form" method="post" action="registro.php" novalidate>/',
+        '<form id="registroForm" class="registro-form" method="post" action="registro.php" novalidate data-registration-closed="true">',
+        $html,
+        1
+    ) ?? $html;
+
+    $html = preg_replace(
+        '/<button class="registro-submit" id="enviarRegistro" type="submit"[^>]*>/',
+        '<button class="registro-submit" id="enviarRegistro" type="submit" disabled>',
+        $html,
+        1
+    ) ?? $html;
+
+    return preg_replace(
+        '/<button class="registro-clear" type="reset">/',
+        '<button class="registro-clear" type="reset" disabled>',
+        $html,
+        1
+    ) ?? $html;
+}
+
 function registro_clean_list(array $values): array
 {
     return array_map(static function ($value): string {
@@ -195,14 +272,14 @@ function registro_assert_rate_limit(string $email): void
     $ipBlock = burnout_rate_limit_hit('public_registration_ip', burnout_client_ip(), 5, 60 * 60, 60 * 60);
 
     if ($ipBlock > 0) {
-        throw new RuntimeException('Demasiados intentos de registro. Espera ' . max(1, (int) ceil($ipBlock / 60)) . ' minutos e intentalo de nuevo.');
+        throw new RuntimeException('Demasiados intentos de registro. Espera ' . max(1, (int) ceil($ipBlock / 60)) . ' minutos e inténtalo de nuevo.');
     }
 
     if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $emailBlock = burnout_rate_limit_hit('public_registration_email', $email, 3, 60 * 60, 60 * 60);
 
         if ($emailBlock > 0) {
-            throw new RuntimeException('Se han enviado demasiados registros con este correo. Espera ' . max(1, (int) ceil($emailBlock / 60)) . ' minutos e intentalo de nuevo.');
+            throw new RuntimeException('Se han enviado demasiados registros con este correo. Espera ' . max(1, (int) ceil($emailBlock / 60)) . ' minutos e inténtalo de nuevo.');
         }
     }
 }
@@ -268,11 +345,16 @@ function registro_build_confirmation_email(array $registration): string
 
 function registro_send_confirmation_email(array $registration): void
 {
-    burnout_send_plain_mail(
-        $registration['email'],
-        'Confirmación de inscripcion - ' . registro_email_event_title($registration),
-        registro_build_confirmation_email($registration)
+    $subject = 'Confirmación de inscripción - ' . registro_email_event_title($registration);
+    $body = registro_build_confirmation_email($registration);
+    $notificationId = burnout_registration_notification_create(
+        (int) $registration['id'],
+        (string) $registration['email'],
+        $subject,
+        $body
     );
+
+    burnout_registration_notification_send($notificationId);
 }
 
 function registro_save_submission(): array
@@ -289,6 +371,10 @@ function registro_save_submission(): array
         throw new RuntimeException('La partida seleccionada no existe.');
     }
 
+    if (registro_event_registration_closed($event)) {
+        throw new RuntimeException('La inscripción está cerrada. No se admiten registros durante las 24 horas previas al evento.');
+    }
+
     $email = registro_param('email', 'post');
     $phone = registro_param('telefono', 'post');
     $team = registro_param('equipo', 'post');
@@ -299,11 +385,11 @@ function registro_save_submission(): array
     registro_assert_rate_limit($email);
 
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        throw new RuntimeException('Introduce una direccion electronica valida.');
+        throw new RuntimeException('Introduce una dirección electrónica válida.');
     }
 
     if (!preg_match('/^\+?\d[\d\s-]{7,18}$/', $phone)) {
-        throw new RuntimeException('Introduce un telefono de contacto valido.');
+        throw new RuntimeException('Introduce un teléfono de contacto válido.');
     }
 
     if (!$acceptedRules) {
@@ -315,7 +401,7 @@ function registro_save_submission(): array
     }
 
     if (count($attendeeNames) > 10) {
-        throw new RuntimeException('No se pueden registrar mas de 10 asistentes en el mismo formulario.');
+        throw new RuntimeException('No se pueden registrar más de 10 asistentes en el mismo formulario.');
     }
 
     foreach ($attendeeNames as $index => $name) {
@@ -391,7 +477,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             error_log('No se ha podido enviar el correo de confirmacion del registro ' . $registration['id'] . ': ' . $emailException->getMessage());
         }
 
-        $message = sprintf('Registro guardado correctamente. Numero de registro: %d.', $registration['id']);
+        $message = sprintf('Registro guardado correctamente. Número de registro: %d.', $registration['id']);
         $messageSuccess = true;
         $_POST = [];
     } catch (Throwable $exception) {
@@ -413,9 +499,11 @@ if (!$event && ($eventId === false || $eventId === null)) {
 if (!$event) {
     $event = $eventId ? registro_find_event((int) $eventId) : null;
 }
-$title = $event['title'] ?? (registro_param('titulo') ?: 'CURSO INICIACION 4 EDICION');
-$date = $event['date'] ?? (registro_param('fecha') ?: '2026-05-16');
-$turn = $event['turn'] ?? (registro_param('turno') ?: 'Tarde');
+$hasEvent = is_array($event);
+$title = $hasEvent ? (string) $event['title'] : 'Selecciona una partida';
+$date = $hasEvent ? (string) $event['date'] : '';
+$turn = $hasEvent ? (string) $event['turn'] : '';
+$registrationClosed = $hasEvent && registro_event_registration_closed($event);
 
 $html = file_get_contents(__DIR__ . '/registro.html');
 
@@ -425,13 +513,24 @@ if ($html === false) {
     exit;
 }
 
-$html = registro_replace_between_id($html, 'registroEventoTitulo', 'INSCRIPCION ' . $title);
-$html = registro_replace_between_id($html, 'registroEventoFecha', registro_format_date($date));
-$html = registro_replace_between_id($html, 'registroEventoTurno', registro_format_turn($turn));
-$html = registro_set_input_value($html, 'eventId', $event ? (string) $event['id'] : (string) ($eventId ?: ''));
+$html = registro_replace_between_id($html, 'registroEventoTitulo', $hasEvent ? 'INSCRIPCIÓN ' . $title : $title);
+$html = registro_replace_between_id($html, 'registroEventoFecha', $hasEvent ? registro_format_date($date) : 'No seleccionada');
+$html = registro_replace_between_id($html, 'registroEventoTurno', $hasEvent ? registro_format_turn($turn) : 'No seleccionado');
+$html = registro_set_input_value($html, 'eventId', $hasEvent ? (string) $event['id'] : '');
 $html = $messageSuccess ? $html : registro_set_message($html, $message, false);
 $html = $messageSuccess ? registro_set_confirmation_texts($html, $date, $turn) : $html;
 $html = registro_set_confirmation_modal($html, $messageSuccess);
-$html = preg_replace('/<title>.*?<\/title>/s', '<title>Inscripcion - ' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '</title>', $html, 1) ?? $html;
+
+if (!$hasEvent && !$messageSuccess) {
+    $html = registro_set_intro_message($html, 'No se ha seleccionado ninguna partida. Vuelve al calendario y abre el registro desde una partida disponible.');
+    $html = registro_hide_form($html);
+}
+
+if ($registrationClosed && !$messageSuccess) {
+    $html = registro_set_closed_message($html);
+    $html = registro_disable_form_actions($html);
+}
+
+$html = preg_replace('/<title>.*?<\/title>/s', '<title>Inscripción - ' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '</title>', $html, 1) ?? $html;
 
 echo $html;

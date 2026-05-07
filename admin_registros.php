@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/config/auth.php';
+require_once __DIR__ . '/config/registration_notifications.php';
 
 $adminUser = null;
 $setupError = '';
@@ -15,7 +16,7 @@ try {
     $adminUser = burnout_current_admin();
 } catch (Throwable $exception) {
     error_log($exception->getMessage());
-    $setupError = 'No se ha podido validar la sesion de administracion.';
+    $setupError = 'No se ha podido validar la sesión de administración.';
 }
 
 if (!$setupError && !$adminUser) {
@@ -75,8 +76,9 @@ function admin_registros_read_all(): array
     );
     $registrations = $statement->fetchAll();
     $attendeesByRegistration = admin_registros_read_attendees($pdo, array_column($registrations, 'id'));
+    $notificationsByRegistration = admin_registros_read_notifications($pdo, array_column($registrations, 'id'));
 
-    return array_map(static function (array $registration) use ($attendeesByRegistration): array {
+    return array_map(static function (array $registration) use ($attendeesByRegistration, $notificationsByRegistration): array {
         $registrationId = (int) $registration['id'];
 
         return [
@@ -92,6 +94,7 @@ function admin_registros_read_all(): array
             'team' => (string) ($registration['team_name'] ?? ''),
             'attendee_count' => (int) $registration['attendee_count'],
             'attendees' => $attendeesByRegistration[$registrationId] ?? [],
+            'notification' => $notificationsByRegistration[$registrationId] ?? admin_registros_empty_notification(),
         ];
     }, $registrations);
 }
@@ -132,6 +135,74 @@ function admin_registros_attendee_documents(array $attendees): string
     }, $attendees));
 }
 
+function admin_registros_empty_notification(): array
+{
+    return [
+        'id' => null,
+        'status' => 'missing',
+        'recipient_email' => '',
+        'subject' => '',
+        'sent_at' => '',
+        'created_at' => '',
+        'updated_at' => '',
+        'error_message' => '',
+        'attempts' => 0,
+    ];
+}
+
+function admin_registros_read_notifications(PDO $pdo, array $registrationIds): array
+{
+    burnout_registration_notifications_table();
+
+    $ids = array_values(array_unique(array_map('intval', $registrationIds)));
+
+    if (!$ids) {
+        return [];
+    }
+
+    $placeholders = implode(', ', array_fill(0, count($ids), '?'));
+    $statement = $pdo->prepare(
+        'SELECT id, registration_id, recipient_email, subject, status, error_message, sent_at, created_at, updated_at
+         FROM registration_email_notifications
+         WHERE registration_id IN (' . $placeholders . ')
+         ORDER BY registration_id ASC, id DESC'
+    );
+    $statement->execute($ids);
+    $notifications = [];
+
+    foreach ($statement->fetchAll() as $notification) {
+        $registrationId = (int) $notification['registration_id'];
+
+        if (!isset($notifications[$registrationId])) {
+            $notifications[$registrationId] = [
+                'id' => (int) $notification['id'],
+                'status' => (string) $notification['status'],
+                'recipient_email' => (string) $notification['recipient_email'],
+                'subject' => (string) $notification['subject'],
+                'sent_at' => (string) ($notification['sent_at'] ?? ''),
+                'created_at' => (string) $notification['created_at'],
+                'updated_at' => (string) $notification['updated_at'],
+                'error_message' => (string) ($notification['error_message'] ?? ''),
+                'attempts' => 0,
+            ];
+        }
+
+        $notifications[$registrationId]['attempts']++;
+    }
+
+    return $notifications;
+}
+
+function admin_registros_notification_status_label(string $status): string
+{
+    return [
+        'sent' => 'Enviada',
+        'failed' => 'Errónea',
+        'pending' => 'Pendiente',
+        'missing' => 'Sin registro',
+    ][$status] ?? $status;
+}
+
 function admin_registros_delete(int $registrationId): void
 {
     $pdo = burnout_pdo();
@@ -164,7 +235,7 @@ function admin_registros_delete(int $registrationId): void
 if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         if (!burnout_check_csrf($_POST['csrf_token'] ?? null)) {
-            throw new RuntimeException('Sesion caducada. Recarga la pagina e intentalo de nuevo.');
+            throw new RuntimeException('Sesión caducada. Recarga la página e inténtalo de nuevo.');
         }
 
         $action = $_POST['action'] ?? '';
@@ -178,6 +249,15 @@ if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
             admin_registros_delete((int) $id);
             burnout_set_admin_flash('success', 'Registro eliminado correctamente.');
+        } elseif ($action === 'resend_notification') {
+            $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
+
+            if ($id === false || $id === null) {
+                throw new RuntimeException('El registro seleccionado no existe.');
+            }
+
+            burnout_registration_notification_resend_latest((int) $id);
+            burnout_set_admin_flash('success', 'Notificación reenviada correctamente.');
         }
     } catch (Throwable $exception) {
         burnout_set_admin_flash('error', $exception->getMessage());
@@ -201,7 +281,7 @@ $csrfToken = burnout_csrf_token();
 <!DOCTYPE html>
 <html lang="es">
   <head>
-    <title>Gestion Registros - Burnout Airsoft</title>
+    <title>Gestión Registros - Burnout Airsoft</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/png" href="images/resources/logoBurnout-3.png" />
@@ -267,14 +347,14 @@ $csrfToken = burnout_csrf_token();
           <div class="admin-header">
             <div class="admin-header__title">
               <span class="admin-kicker">Burnout Airsoft</span>
-              <h1>Gestion Registros</h1>
+              <h1>Gestión Registros</h1>
             </div>
             <?php if ($adminUser): ?>
               <div class="admin-header-actions">
                 <form class="admin-logout" method="post" action="admin.php">
                   <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                   <input type="hidden" name="action" value="logout">
-                  <button type="submit">Cerrar sesion</button>
+                  <button type="submit">Cerrar sesión</button>
                 </form>
                 <a class="admin-back-link" href="admin.php">Volver al panel</a>
               </div>
@@ -329,10 +409,11 @@ $csrfToken = burnout_csrf_token();
                         <th><button class="admin-sort-button" type="button" data-sort-key="date" aria-label="Ordenar por fecha">Fecha</button></th>
                         <th>Turno</th>
                         <th>Email</th>
-                        <th>Telefono</th>
+                        <th>Teléfono</th>
                         <th>Equipo</th>
                         <th>Asistentes</th>
                         <th><button class="admin-sort-button" type="button" data-sort-key="created" aria-label="Ordenar por fecha de registro">Registro</button></th>
+                        <th class="admin-table-icon-column" aria-label="Notificación"></th>
                         <th class="admin-table-delete-column" aria-label="Eliminar"></th>
                       </tr>
                     </thead>
@@ -362,6 +443,20 @@ $csrfToken = burnout_csrf_token();
                             </button>
                           </td>
                           <td><?= htmlspecialchars($registration['created_at'], ENT_QUOTES, 'UTF-8') ?></td>
+                          <td class="admin-table-icon-column">
+                            <button
+                              class="admin-notification-icon-button is-<?= htmlspecialchars((string) $registration['notification']['status'], ENT_QUOTES, 'UTF-8') ?>"
+                              type="button"
+                              data-registros-modal-open="registrationNotification<?= (int) $registration['id'] ?>"
+                              aria-label="Ver notificaciones"
+                            >
+                              <svg aria-hidden="true" viewBox="0 0 24 24">
+                                <path d="M4 5h16v12H7l-3 3V5Z"></path>
+                                <path d="M8 9h8"></path>
+                                <path d="M8 13h5"></path>
+                              </svg>
+                            </button>
+                          </td>
                           <td class="admin-table-delete-column">
                             <form class="admin-delete-registration-form" method="post" action="admin_registros.php" data-registration-delete-form>
                               <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
@@ -382,8 +477,9 @@ $csrfToken = burnout_csrf_token();
                       <?php endforeach; ?>
                     </tbody>
                   </table>
-                </div>
+                  </div>
                 <?php foreach ($registrations as $registration): ?>
+                  <?php $notification = $registration['notification']; ?>
                   <div class="admin-gallery-modal" id="registrationAttendees<?= (int) $registration['id'] ?>" aria-hidden="true">
                     <div class="admin-gallery-modal__overlay" data-registros-modal-close></div>
                     <div class="admin-gallery-modal__dialog admin-registrations-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="registrationAttendeesTitle<?= (int) $registration['id'] ?>">
@@ -421,6 +517,41 @@ $csrfToken = burnout_csrf_token();
                       <?php endif; ?>
                     </div>
                   </div>
+                  <div class="admin-gallery-modal" id="registrationNotification<?= (int) $registration['id'] ?>" aria-hidden="true">
+                    <div class="admin-gallery-modal__overlay" data-registros-modal-close></div>
+                    <div class="admin-gallery-modal__dialog admin-registrations-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="registrationNotificationTitle<?= (int) $registration['id'] ?>">
+                      <div class="admin-gallery-modal__header">
+                        <h2 id="registrationNotificationTitle<?= (int) $registration['id'] ?>">Notificación</h2>
+                        <button type="button" data-registros-modal-close aria-label="Cerrar ventana">x</button>
+                      </div>
+                      <dl class="admin-notification-detail">
+                        <div>
+                          <dt>Estado</dt>
+                          <dd><?= htmlspecialchars(admin_registros_notification_status_label((string) $notification['status']), ENT_QUOTES, 'UTF-8') ?></dd>
+                        </div>
+                        <div>
+                          <dt>Destinatario</dt>
+                          <dd><?= htmlspecialchars($notification['recipient_email'] !== '' ? $notification['recipient_email'] : '-', ENT_QUOTES, 'UTF-8') ?></dd>
+                        </div>
+                        <div>
+                          <dt>Enviada</dt>
+                          <dd><?= htmlspecialchars($notification['sent_at'] !== '' ? $notification['sent_at'] : '-', ENT_QUOTES, 'UTF-8') ?></dd>
+                        </div>
+                        <div>
+                          <dt>Último intento</dt>
+                          <dd><?= htmlspecialchars($notification['updated_at'] !== '' ? $notification['updated_at'] : '-', ENT_QUOTES, 'UTF-8') ?></dd>
+                        </div>
+                      </dl>
+                      <?php if ($notification['status'] === 'failed'): ?>
+                        <form class="admin-gallery-modal__actions" method="post" action="admin_registros.php">
+                          <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+                          <input type="hidden" name="action" value="resend_notification">
+                          <input type="hidden" name="id" value="<?= (int) $registration['id'] ?>">
+                          <button class="admin-login-submit" type="submit">Reenviar notificación</button>
+                        </form>
+                      <?php endif; ?>
+                    </div>
+                  </div>
                 <?php endforeach; ?>
                 <div class="admin-gallery-modal" id="registrationFiltersModal" aria-hidden="true">
                   <div class="admin-gallery-modal__overlay" data-registros-modal-close></div>
@@ -452,7 +583,7 @@ $csrfToken = burnout_csrf_token();
                         <input id="filterEmail" name="email" type="text" autocomplete="off">
                       </div>
                       <div class="admin-login-field">
-                        <label for="filterPhone">Telefono</label>
+                        <label for="filterPhone">Teléfono</label>
                         <input id="filterPhone" name="phone" type="text" autocomplete="off">
                       </div>
                       <div class="admin-login-field">
@@ -460,7 +591,7 @@ $csrfToken = burnout_csrf_token();
                         <input id="filterTeam" name="team" type="text" autocomplete="off">
                       </div>
                       <div class="admin-login-field">
-                        <label for="filterDocument">Numero Documento</label>
+                        <label for="filterDocument">Número Documento</label>
                         <input id="filterDocument" name="document" type="text" autocomplete="off">
                       </div>
                       <div class="admin-gallery-modal__actions admin-gallery-modal__actions--split">
@@ -468,6 +599,20 @@ $csrfToken = burnout_csrf_token();
                         <button class="admin-login-submit" type="submit">Aplicar filtros</button>
                       </div>
                     </form>
+                  </div>
+                </div>
+                <div class="admin-gallery-modal" id="registrationDeleteConfirmModal" aria-hidden="true">
+                  <div class="admin-gallery-modal__overlay" data-registration-delete-cancel></div>
+                  <div class="admin-gallery-modal__dialog admin-registrations-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="registrationDeleteConfirmTitle">
+                    <div class="admin-gallery-modal__header">
+                      <h2 id="registrationDeleteConfirmTitle">Eliminar registro</h2>
+                      <button type="button" data-registration-delete-cancel aria-label="Cerrar ventana">x</button>
+                    </div>
+                    <p class="admin-confirmation-text">Vas a eliminar el registro y todos sus asistentes. Esta acción no se puede deshacer.</p>
+                    <div class="admin-gallery-modal__actions admin-gallery-modal__actions--split">
+                      <button class="admin-back-link" type="button" data-registration-delete-cancel>Cancelar</button>
+                      <button class="admin-danger-submit" type="button" id="confirmRegistrationDelete">Eliminar registro</button>
+                    </div>
                   </div>
                 </div>
               <?php endif; ?>
@@ -479,7 +624,7 @@ $csrfToken = burnout_csrf_token();
         <div class="ms-footer">
           <div class="copyright" data-copyright-start="2025">Copyright &copy; 2025-2026. Designed by Alex Serret</div>
           <span class="footer-links">
-            <a href="privacidad.html" data-type="page-transition">Politica de Privacidad de datos</a>
+            <a href="privacidad.html" data-type="page-transition">Política de Privacidad de datos</a>
           </span>
           <ul class="socials">
             <li><a href="#" class="socicon-instagram"></a></li>

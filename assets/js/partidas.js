@@ -1,6 +1,7 @@
 window.initPartidasPage = function () {
   var events = [];
-  var currentDate = new Date(2026, 4, 1);
+  var today = new Date();
+  var currentDate = new Date(today.getFullYear(), today.getMonth(), 1);
   var monthNames = [
     'Enero',
     'Febrero',
@@ -93,6 +94,11 @@ window.initPartidasPage = function () {
     var number = document.createElement('span');
 
     cell.className = dayEvents.length ? 'partidas-day has-event' : 'partidas-day';
+
+    if (isToday(year, month, day)) {
+      cell.className += ' is-today';
+    }
+
     number.className = 'partidas-day-number';
     number.textContent = day;
     cell.appendChild(number);
@@ -204,6 +210,12 @@ window.initPartidasPage = function () {
     ].join('-');
   }
 
+  function isToday(year, month, day) {
+    var now = new Date();
+
+    return now.getFullYear() === year && now.getMonth() === month && now.getDate() === day;
+  }
+
   function formatEventListDate(value) {
     var parts = String(value || '').split('-');
 
@@ -242,10 +254,7 @@ window.initPartidasPage = function () {
     }
     var separator = url.indexOf('?') === -1 ? '?' : '&';
     var params = [
-      'event_id=' + encodeURIComponent(event.id || ''),
-      'titulo=' + encodeURIComponent(event.title || ''),
-      'fecha=' + encodeURIComponent(event.date || ''),
-      'turno=' + encodeURIComponent(event.time || '')
+      'event_id=' + encodeURIComponent(event.id || '')
     ];
 
     return url + separator + params.join('&');

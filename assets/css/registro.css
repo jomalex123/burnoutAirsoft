@@ -26,6 +26,21 @@
   max-width: 780px;
 }
 
+.registro-closed-message {
+  background: #ffe9eb;
+  border: 1px solid #df1f29;
+  border-radius: 6px;
+  color: #9f1119;
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 18px;
+  padding: 14px 16px;
+}
+
+.registro-closed-message[hidden] {
+  display: none;
+}
+
 .registro-event-data,
 .registro-copy,
 .registro-form {
@@ -235,6 +250,14 @@
 .registro-clear:hover {
   border-color: #df1f29;
   color: #df1f29;
+}
+
+.registro-clear:disabled,
+.registro-clear:disabled:hover {
+  border-color: rgba(21, 21, 21, .16);
+  color: #999;
+  cursor: not-allowed;
+  opacity: .65;
 }
 
 .registro-modal {

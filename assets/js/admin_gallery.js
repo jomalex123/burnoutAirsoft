@@ -77,7 +77,7 @@ window.initAdminGalleryPage = function () {
         button.type = 'button';
         button.textContent = String(page);
         button.className = page === currentPage ? 'is-active' : '';
-        button.setAttribute('aria-label', 'Pagina ' + page);
+        button.setAttribute('aria-label', 'Página ' + page);
         button.setAttribute('aria-current', page === currentPage ? 'page' : 'false');
         button.addEventListener('click', function () {
           currentPage = parseInt(this.textContent, 10);

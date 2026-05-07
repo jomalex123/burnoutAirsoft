@@ -82,6 +82,26 @@ CREATE TABLE IF NOT EXISTS registration_attendees (
     ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS registration_email_notifications (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  registration_id BIGINT UNSIGNED NOT NULL,
+  recipient_email VARCHAR(190) NOT NULL,
+  subject VARCHAR(255) NOT NULL,
+  body MEDIUMTEXT NOT NULL,
+  status ENUM('pending', 'sent', 'failed') NOT NULL DEFAULT 'pending',
+  error_message TEXT DEFAULT NULL,
+  sent_at DATETIME DEFAULT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY registration_email_notifications_registration_id_index (registration_id),
+  KEY registration_email_notifications_status_index (status),
+  CONSTRAINT registration_email_notifications_registration_id_foreign
+    FOREIGN KEY (registration_id) REFERENCES registrations (id)
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS gallery (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   src TEXT NOT NULL,

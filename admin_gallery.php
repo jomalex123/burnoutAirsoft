@@ -14,7 +14,7 @@ try {
     $adminUser = burnout_current_admin();
 } catch (Throwable $exception) {
     error_log($exception->getMessage());
-    $setupError = 'No se ha podido validar la sesion de administracion.';
+    $setupError = 'No se ha podido validar la sesión de administración.';
 }
 
 if (!$setupError && !$adminUser) {
@@ -35,7 +35,7 @@ if ($flash) {
 if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         if (!burnout_check_csrf($_POST['csrf_token'] ?? null)) {
-            throw new RuntimeException('Sesion caducada. Recarga la pagina e intentalo de nuevo.');
+            throw new RuntimeException('Sesión caducada. Recarga la página e inténtalo de nuevo.');
         }
 
         $action = $_POST['action'] ?? '';
@@ -50,7 +50,7 @@ if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             burnout_gallery_add($src, $alt, $description);
-            burnout_set_admin_flash('success', 'Imagen anadida a la galeria.');
+            burnout_set_admin_flash('success', 'Imagen añadida a la galería.');
         } elseif ($action === 'delete') {
             $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
 
@@ -59,7 +59,7 @@ if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             burnout_gallery_delete((int) $id);
-            burnout_set_admin_flash('success', 'Imagen eliminada de la galeria.');
+            burnout_set_admin_flash('success', 'Imagen eliminada de la galería.');
         }
     } catch (Throwable $exception) {
         burnout_set_admin_flash('error', $exception->getMessage());
@@ -81,7 +81,7 @@ $csrfToken = burnout_csrf_token();
 <!DOCTYPE html>
 <html lang="es">
   <head>
-    <title>Gestion Galeria - Burnout Airsoft</title>
+    <title>Gestión Galería - Burnout Airsoft</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/png" href="images/resources/logoBurnout-3.png" />
@@ -147,14 +147,14 @@ $csrfToken = burnout_csrf_token();
           <div class="admin-header">
             <div class="admin-header__title">
               <span class="admin-kicker">Burnout Airsoft</span>
-              <h1>Gestion Galeria</h1>
+              <h1>Gestión Galería</h1>
             </div>
             <?php if ($adminUser): ?>
               <div class="admin-header-actions">
                 <form class="admin-logout" method="post" action="admin.php">
                   <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                   <input type="hidden" name="action" value="logout">
-                  <button type="submit">Cerrar sesion</button>
+                  <button type="submit">Cerrar sesión</button>
                 </form>
                 <a class="admin-back-link" href="admin.php">Volver al panel</a>
               </div>
@@ -174,14 +174,14 @@ $csrfToken = burnout_csrf_token();
             <div class="admin-gallery-layout">
               <section class="admin-gallery-list-wrap">
                 <div class="admin-gallery-toolbar">
-                  <h2>Imagenes actuales</h2>
+                  <h2>Imágenes actuales</h2>
                   <button class="admin-add-image-button" type="button" data-gallery-modal-open>
                     <span>+</span>
                     Añadir imagen
                   </button>
                 </div>
                 <?php if (!$gallery): ?>
-                  <div class="admin-empty">No hay imagenes guardadas.</div>
+                  <div class="admin-empty">No hay imágenes guardadas.</div>
                 <?php else: ?>
                   <div class="admin-gallery-list" id="galleryList">
                     <?php foreach ($gallery as $item): ?>
@@ -191,7 +191,7 @@ $csrfToken = burnout_csrf_token();
                           <h3><?= htmlspecialchars((string) ($item['alt'] ?? 'Sin titulo'), ENT_QUOTES, 'UTF-8') ?></h3>
                           <span><?= htmlspecialchars((string) ($item['description'] ?? ''), ENT_QUOTES, 'UTF-8') ?></span>
                         </div>
-                        <form class="admin-gallery-delete-form" method="post" action="admin_gallery.php" onsubmit="return confirm('Eliminar esta imagen de la galeria?');">
+                        <form class="admin-gallery-delete-form" method="post" action="admin_gallery.php" onsubmit="return confirm('¿Eliminar esta imagen de la galería?');">
                           <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                           <input type="hidden" name="action" value="delete">
                           <input type="hidden" name="id" value="<?= (int) ($item['id'] ?? 0) ?>">
@@ -210,9 +210,9 @@ $csrfToken = burnout_csrf_token();
                   </div>
                   <div class="admin-gallery-pagination" id="galleryPagination">
                     <div class="admin-gallery-pagination__spacer"></div>
-                    <div class="admin-gallery-pages" id="galleryPages" aria-label="Paginacion galeria"></div>
+                    <div class="admin-gallery-pages" id="galleryPages" aria-label="Paginación galería"></div>
                     <label class="admin-gallery-page-size" for="galleryPageSize">
-                      <span>n. imagenes</span>
+                      <span>n. imágenes</span>
                       <select id="galleryPageSize">
                         <option value="5" selected>5</option>
                         <option value="10">10</option>
@@ -242,7 +242,7 @@ $csrfToken = burnout_csrf_token();
                   </div>
                   <div class="admin-login-field">
                     <label for="description">Descripcion</label>
-                    <textarea id="description" name="description" rows="5" placeholder="Texto que aparecera en el modal de la galeria"></textarea>
+                    <textarea id="description" name="description" rows="5" placeholder="Texto que aparecerá en el modal de la galería"></textarea>
                   </div>
                   <div class="admin-gallery-modal__actions">
                     <button class="admin-login-submit" type="submit">Guardar imagen</button>
@@ -257,7 +257,7 @@ $csrfToken = burnout_csrf_token();
         <div class="ms-footer">
           <div class="copyright" data-copyright-start="2025">Copyright © 2025-2026. Designed by Alex Serret</div>
           <span class="footer-links">
-            <a href="privacidad.html" data-type="page-transition">Politica de Privacidad de datos</a>
+            <a href="privacidad.html" data-type="page-transition">Política de Privacidad de datos</a>
           </span>
           <ul class="socials">
             <li><a href="#" class="socicon-instagram"></a></li>
