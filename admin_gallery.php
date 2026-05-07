@@ -191,7 +191,7 @@ $csrfToken = burnout_csrf_token();
                           <h3><?= htmlspecialchars((string) ($item['alt'] ?? 'Sin titulo'), ENT_QUOTES, 'UTF-8') ?></h3>
                           <span><?= htmlspecialchars((string) ($item['description'] ?? ''), ENT_QUOTES, 'UTF-8') ?></span>
                         </div>
-                        <form class="admin-gallery-delete-form" method="post" action="admin_gallery.php" onsubmit="return confirm('¿Eliminar esta imagen de la galería?');">
+                        <form class="admin-gallery-delete-form" method="post" action="admin_gallery.php" data-gallery-delete-form data-gallery-delete-title="<?= htmlspecialchars((string) ($item['alt'] ?? 'esta imagen'), ENT_QUOTES, 'UTF-8') ?>">
                           <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                           <input type="hidden" name="action" value="delete">
                           <input type="hidden" name="id" value="<?= (int) ($item['id'] ?? 0) ?>">
@@ -248,6 +248,22 @@ $csrfToken = burnout_csrf_token();
                     <button class="admin-login-submit" type="submit">Guardar imagen</button>
                   </div>
                 </form>
+              </div>
+            </div>
+            <div class="admin-gallery-modal" id="galleryDeleteModal" aria-hidden="true">
+              <div class="admin-gallery-modal__overlay" data-gallery-delete-cancel></div>
+              <div class="admin-gallery-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="galleryDeleteTitle">
+                <div class="admin-gallery-modal__header">
+                  <h2 id="galleryDeleteTitle">Eliminar imagen</h2>
+                  <button type="button" data-gallery-delete-cancel aria-label="Cerrar ventana">x</button>
+                </div>
+                <div class="admin-gallery-modal__body">
+                  <p id="galleryDeleteMessage">¿Eliminar esta imagen de la galería?</p>
+                </div>
+                <div class="admin-gallery-modal__actions admin-gallery-modal__actions--split">
+                  <button class="admin-back-link" type="button" data-gallery-delete-cancel>Cancelar</button>
+                  <button class="admin-danger-submit" type="button" data-gallery-delete-confirm>Eliminar imagen</button>
+                </div>
               </div>
             </div>
           <?php endif; ?>

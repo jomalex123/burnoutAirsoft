@@ -1,0 +1,2 @@
+ALTER TABLE events
+  ADD COLUMN max_attendees INT UNSIGNED NOT NULL DEFAULT 40 AFTER time_slot;

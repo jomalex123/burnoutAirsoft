@@ -178,6 +178,7 @@
   cursor: pointer;
   display: flex;
   flex: 1 1 0;
+  flex-direction: column;
   font-family: 'Yantramanav', Arial, sans-serif;
   font-size: 12px;
   font-weight: 700;
@@ -190,6 +191,19 @@
   text-overflow: ellipsis;
   transition: filter .2s ease;
   width: 100%;
+}
+
+.partidas-event-slice small {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  margin-top: 3px;
+  opacity: .9;
+}
+
+.partidas-event-slice.is-full {
+  filter: saturate(.7);
 }
 
 .partidas-event-slice:hover,
@@ -247,6 +261,15 @@
 .partidas-event-card span {
   color: #555;
   font-size: 14px;
+}
+
+.partidas-event-card .partidas-event-capacity {
+  color: #151515;
+  font-weight: 700;
+}
+
+.partidas-event-card .partidas-event-capacity.is-full {
+  color: #df1f29;
 }
 
 .partidas-empty {

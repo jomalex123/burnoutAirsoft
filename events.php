@@ -18,9 +18,18 @@ header('Cache-Control: no-store');
 
 try {
     $statement = burnout_pdo()->query(
-        'SELECT id, event_date, title, time_slot
-         FROM events
-         ORDER BY event_date ASC, FIELD(time_slot, "M", "T", "N"), id ASC'
+        'SELECT
+            e.id,
+            e.event_date,
+            e.title,
+            e.time_slot,
+            e.max_attendees,
+            COALESCE(COUNT(ra.id), 0) AS attendee_count
+         FROM events e
+         LEFT JOIN registrations r ON r.event_id = e.id
+         LEFT JOIN registration_attendees ra ON ra.registration_id = r.id
+         GROUP BY e.id, e.event_date, e.title, e.time_slot, e.max_attendees
+         ORDER BY e.event_date ASC, FIELD(e.time_slot, "M", "T", "N"), e.id ASC'
     );
 
     $events = array_map(static function (array $event): array {
@@ -30,6 +39,8 @@ try {
             'title' => (string) $event['title'],
             'time' => burnout_public_event_time_to_label((string) $event['time_slot']),
             'timeSlot' => (string) $event['time_slot'],
+            'attendeeCount' => (int) $event['attendee_count'],
+            'maxAttendees' => max(1, (int) $event['max_attendees']),
             'url' => 'registro.php',
         ];
     }, $statement->fetchAll());

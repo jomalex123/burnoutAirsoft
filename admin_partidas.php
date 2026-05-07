@@ -40,6 +40,11 @@ function burnout_event_time_to_label(string $timeSlot): string
     ][$timeSlot] ?? $timeSlot;
 }
 
+function burnout_event_attendee_count_expression(): string
+{
+    return 'COALESCE(COUNT(ra.id), 0)';
+}
+
 function burnout_normalize_event_time(string $value): string
 {
     $time = strtolower(trim($value));
@@ -63,9 +68,18 @@ function burnout_normalize_event_time(string $value): string
 function burnout_read_events(): array
 {
     $statement = burnout_pdo()->query(
-        'SELECT id, event_date, title, time_slot
-         FROM events
-         ORDER BY event_date ASC, FIELD(time_slot, "M", "T", "N"), id ASC'
+        'SELECT
+            e.id,
+            e.event_date,
+            e.title,
+            e.time_slot,
+            e.max_attendees,
+            ' . burnout_event_attendee_count_expression() . ' AS attendee_count
+         FROM events e
+         LEFT JOIN registrations r ON r.event_id = e.id
+         LEFT JOIN registration_attendees ra ON ra.registration_id = r.id
+         GROUP BY e.id, e.event_date, e.title, e.time_slot, e.max_attendees
+         ORDER BY e.event_date ASC, FIELD(e.time_slot, "M", "T", "N"), e.id ASC'
     );
 
     return array_map(static function (array $event): array {
@@ -75,6 +89,8 @@ function burnout_read_events(): array
             'title' => (string) $event['title'],
             'time' => burnout_event_time_to_label((string) $event['time_slot']),
             'timeSlot' => (string) $event['time_slot'],
+            'attendeeCount' => (int) $event['attendee_count'],
+            'maxAttendees' => max(1, (int) $event['max_attendees']),
             'url' => 'registro.php',
         ];
     }, $statement->fetchAll());
@@ -97,10 +113,25 @@ function burnout_event_has_registrations(int $id): bool
     return (int) $statement->fetchColumn() > 0;
 }
 
-function burnout_validate_event_data(string $date, string $title, string $time): array
+function burnout_validate_event_data(string $date, string $title, string $time, string $maxAttendees): array
 {
     if ($date === '' || $title === '' || $time === '') {
         throw new RuntimeException('La fecha, el titulo y el horario son obligatorios.');
+    }
+
+    if ($maxAttendees === '') {
+        $maxAttendees = '40';
+    }
+
+    $capacity = filter_var($maxAttendees, FILTER_VALIDATE_INT, [
+        'options' => [
+            'min_range' => 1,
+            'max_range' => 500,
+        ],
+    ]);
+
+    if ($capacity === false) {
+        throw new RuntimeException('El aforo debe ser un número entre 1 y 500.');
     }
 
     $dateTime = DateTime::createFromFormat('Y-m-d', $date);
@@ -113,6 +144,7 @@ function burnout_validate_event_data(string $date, string $title, string $time):
         'date' => $date,
         'title' => $title,
         'time_slot' => burnout_normalize_event_time($time),
+        'max_attendees' => (int) $capacity,
     ];
 }
 
@@ -128,7 +160,8 @@ if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $date = trim((string) ($_POST['date'] ?? ''));
             $title = trim((string) ($_POST['title'] ?? ''));
             $time = trim((string) ($_POST['time'] ?? ''));
-            $eventData = burnout_validate_event_data($date, $title, $time);
+            $maxAttendees = trim((string) ($_POST['max_attendees'] ?? '40'));
+            $eventData = burnout_validate_event_data($date, $title, $time, $maxAttendees);
 
             if ($action === 'update') {
                 $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
@@ -139,25 +172,27 @@ if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $statement = burnout_pdo()->prepare(
                     'UPDATE events
-                     SET event_date = :event_date, title = :title, time_slot = :time_slot
+                     SET event_date = :event_date, title = :title, time_slot = :time_slot, max_attendees = :max_attendees
                      WHERE id = :id'
                 );
                 $statement->execute([
                     'event_date' => $eventData['date'],
                     'title' => $eventData['title'],
                     'time_slot' => $eventData['time_slot'],
+                    'max_attendees' => $eventData['max_attendees'],
                     'id' => $id,
                 ]);
                 burnout_set_admin_flash('success', 'Evento actualizado correctamente.');
             } else {
                 $statement = burnout_pdo()->prepare(
-                    'INSERT INTO events (event_date, title, time_slot)
-                     VALUES (:event_date, :title, :time_slot)'
+                    'INSERT INTO events (event_date, title, time_slot, max_attendees)
+                     VALUES (:event_date, :title, :time_slot, :max_attendees)'
                 );
                 $statement->execute([
                     'event_date' => $eventData['date'],
                     'title' => $eventData['title'],
                     'time_slot' => $eventData['time_slot'],
+                    'max_attendees' => $eventData['max_attendees'],
                 ]);
                 burnout_set_admin_flash('success', 'Evento creado correctamente.');
             }
@@ -346,6 +381,10 @@ $csrfToken = burnout_csrf_token();
                     <input id="title" name="title" type="text" required placeholder="">
                   </div>
                   <div class="admin-login-field">
+                    <label for="maxAttendees">Aforo máximo</label>
+                    <input id="maxAttendees" name="max_attendees" type="number" min="1" max="500" step="1" value="40" required>
+                  </div>
+                  <div class="admin-login-field">
                     <label for="time">Horario</label>
                     <div class="admin-time-options" role="radiogroup" aria-label="Horario">
                       <label>
@@ -384,7 +423,7 @@ $csrfToken = burnout_csrf_token();
                       <article class="admin-partidas-delete-item">
                         <div>
                           <strong><?= htmlspecialchars((string) ($event['title'] ?? 'Sin titulo'), ENT_QUOTES, 'UTF-8') ?></strong>
-                          <span><?= htmlspecialchars((string) ($event['date'] ?? ''), ENT_QUOTES, 'UTF-8') ?> · <?= htmlspecialchars((string) ($event['time'] ?? ''), ENT_QUOTES, 'UTF-8') ?></span>
+                          <span><?= htmlspecialchars((string) ($event['date'] ?? ''), ENT_QUOTES, 'UTF-8') ?> · <?= htmlspecialchars((string) ($event['time'] ?? ''), ENT_QUOTES, 'UTF-8') ?> · <?= (int) ($event['attendeeCount'] ?? 0) ?>/<?= (int) ($event['maxAttendees'] ?? 40) ?></span>
                         </div>
                         <form method="post" action="admin_partidas.php">
                           <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
@@ -424,6 +463,10 @@ $csrfToken = burnout_csrf_token();
                   <div class="admin-login-field">
                     <label for="editTitle">Titulo</label>
                     <input id="editTitle" name="title" type="text" required>
+                  </div>
+                  <div class="admin-login-field">
+                    <label for="editMaxAttendees">Aforo máximo</label>
+                    <input id="editMaxAttendees" name="max_attendees" type="number" min="1" max="500" step="1" required>
                   </div>
                   <div class="admin-login-field">
                     <label for="editTimeMañana">Horario</label>

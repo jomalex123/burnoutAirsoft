@@ -26,7 +26,19 @@ function registro_event_time_to_label(string $timeSlot): string
 function registro_find_event(int $eventId): ?array
 {
     $statement = burnout_pdo()->prepare(
-        'SELECT id, event_date, title, time_slot FROM events WHERE id = :id LIMIT 1'
+        'SELECT
+            e.id,
+            e.event_date,
+            e.title,
+            e.time_slot,
+            e.max_attendees,
+            COALESCE(COUNT(ra.id), 0) AS attendee_count
+         FROM events e
+         LEFT JOIN registrations r ON r.event_id = e.id
+         LEFT JOIN registration_attendees ra ON ra.registration_id = r.id
+         WHERE e.id = :id
+         GROUP BY e.id, e.event_date, e.title, e.time_slot, e.max_attendees
+         LIMIT 1'
     );
     $statement->execute(['id' => $eventId]);
     $event = $statement->fetch();
@@ -40,7 +52,48 @@ function registro_find_event(int $eventId): ?array
         'date' => (string) $event['event_date'],
         'title' => (string) $event['title'],
         'turn' => registro_event_time_to_label((string) $event['time_slot']),
+        'max_attendees' => max(1, (int) $event['max_attendees']),
+        'attendee_count' => (int) $event['attendee_count'],
     ];
+}
+
+function registro_find_event_for_update(PDO $pdo, int $eventId): ?array
+{
+    $statement = $pdo->prepare(
+        'SELECT id, event_date, title, time_slot, max_attendees
+         FROM events
+         WHERE id = :id
+         LIMIT 1
+         FOR UPDATE'
+    );
+    $statement->execute(['id' => $eventId]);
+    $event = $statement->fetch();
+
+    if (!$event) {
+        return null;
+    }
+
+    return [
+        'id' => (int) $event['id'],
+        'date' => (string) $event['event_date'],
+        'title' => (string) $event['title'],
+        'turn' => registro_event_time_to_label((string) $event['time_slot']),
+        'max_attendees' => max(1, (int) $event['max_attendees']),
+        'attendee_count' => registro_event_attendee_count($pdo, (int) $event['id']),
+    ];
+}
+
+function registro_event_attendee_count(PDO $pdo, int $eventId): int
+{
+    $statement = $pdo->prepare(
+        'SELECT COALESCE(COUNT(ra.id), 0)
+         FROM registrations r
+         INNER JOIN registration_attendees ra ON ra.registration_id = r.id
+         WHERE r.event_id = :event_id'
+    );
+    $statement->execute(['event_id' => $eventId]);
+
+    return (int) $statement->fetchColumn();
 }
 
 function registro_format_date(string $value): string
@@ -97,6 +150,33 @@ function registro_event_registration_closed(array $event): bool
     }
 
     return new DateTimeImmutable('now', registro_timezone()) >= $date->modify('-24 hours');
+}
+
+function registro_event_capacity_remaining(array $event): int
+{
+    $maxAttendees = max(1, (int) ($event['max_attendees'] ?? 40));
+    $attendeeCount = max(0, (int) ($event['attendee_count'] ?? 0));
+
+    return max(0, $maxAttendees - $attendeeCount);
+}
+
+function registro_event_capacity_full(array $event): bool
+{
+    return registro_event_capacity_remaining($event) <= 0;
+}
+
+function registro_capacity_error_message(): string
+{
+    return 'La inscripción supera el máximo de aforo de la partida. Ponte en contacto por Instagram con @burnoutairsoft para confirmar la inscripción.';
+}
+
+function registro_capacity_label(array $event): string
+{
+    return sprintf(
+        '%d/%d',
+        max(0, (int) ($event['attendee_count'] ?? 0)),
+        max(1, (int) ($event['max_attendees'] ?? 40))
+    );
 }
 
 function registro_normalize_turn(string $value): string
@@ -239,8 +319,8 @@ function registro_set_closed_message(string $html): string
 function registro_disable_form_actions(string $html): string
 {
     $html = preg_replace(
-        '/<form id="registroForm" class="registro-form" method="post" action="registro.php" novalidate>/',
-        '<form id="registroForm" class="registro-form" method="post" action="registro.php" novalidate data-registration-closed="true">',
+        '/<form id="registroForm" class="registro-form" method="post" action="registro.php" novalidate([^>]*)>/',
+        '<form id="registroForm" class="registro-form" method="post" action="registro.php" novalidate$1 data-registration-closed="true">',
         $html,
         1
     ) ?? $html;
@@ -255,6 +335,23 @@ function registro_disable_form_actions(string $html): string
     return preg_replace(
         '/<button class="registro-clear" type="reset">/',
         '<button class="registro-clear" type="reset" disabled>',
+        $html,
+        1
+    ) ?? $html;
+}
+
+function registro_set_capacity_data(string $html, int $remaining, int $maxAttendees): string
+{
+    $pattern = '/<form id="registroForm" class="registro-form" method="post" action="registro.php" novalidate([^>]*)>/';
+    $attributes = sprintf(
+        ' data-capacity-remaining="%d" data-capacity-max="%d"',
+        max(0, $remaining),
+        max(1, $maxAttendees)
+    );
+
+    return preg_replace(
+        $pattern,
+        '<form id="registroForm" class="registro-form" method="post" action="registro.php" novalidate$1' . $attributes . '>',
         $html,
         1
     ) ?? $html;
@@ -416,6 +513,22 @@ function registro_save_submission(): array
     $pdo->beginTransaction();
 
     try {
+        $lockedEvent = registro_find_event_for_update($pdo, (int) $eventId);
+
+        if (!$lockedEvent) {
+            throw new RuntimeException('La partida seleccionada no existe.');
+        }
+
+        if (registro_event_registration_closed($lockedEvent)) {
+            throw new RuntimeException('La inscripción está cerrada. No se admiten registros durante las 24 horas previas al evento.');
+        }
+
+        if (count($attendeeNames) > registro_event_capacity_remaining($lockedEvent)) {
+            throw new RuntimeException(registro_capacity_error_message());
+        }
+
+        $event = $lockedEvent;
+
         $registration = $pdo->prepare(
             'INSERT INTO registrations (event_id, email, phone, team_name, accepted_rules)
              VALUES (:event_id, :email, :phone, :team_name, 1)'
@@ -466,7 +579,7 @@ $message = '';
 $messageSuccess = false;
 $submittedEvent = null;
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     try {
         $registration = registro_save_submission();
         $submittedEvent = $registration['event'] ?? null;
@@ -504,6 +617,9 @@ $title = $hasEvent ? (string) $event['title'] : 'Selecciona una partida';
 $date = $hasEvent ? (string) $event['date'] : '';
 $turn = $hasEvent ? (string) $event['turn'] : '';
 $registrationClosed = $hasEvent && registro_event_registration_closed($event);
+$capacityFull = $hasEvent && registro_event_capacity_full($event);
+$capacityRemaining = $hasEvent ? registro_event_capacity_remaining($event) : 0;
+$maxAttendees = $hasEvent ? max(1, (int) ($event['max_attendees'] ?? 40)) : 40;
 
 $html = file_get_contents(__DIR__ . '/registro.html');
 
@@ -516,7 +632,9 @@ if ($html === false) {
 $html = registro_replace_between_id($html, 'registroEventoTitulo', $hasEvent ? 'INSCRIPCIÓN ' . $title : $title);
 $html = registro_replace_between_id($html, 'registroEventoFecha', $hasEvent ? registro_format_date($date) : 'No seleccionada');
 $html = registro_replace_between_id($html, 'registroEventoTurno', $hasEvent ? registro_format_turn($turn) : 'No seleccionado');
+$html = registro_replace_between_id($html, 'registroEventoAforo', $hasEvent ? registro_capacity_label($event) : 'No seleccionado');
 $html = registro_set_input_value($html, 'eventId', $hasEvent ? (string) $event['id'] : '');
+$html = registro_set_capacity_data($html, $capacityRemaining, $maxAttendees);
 $html = $messageSuccess ? $html : registro_set_message($html, $message, false);
 $html = $messageSuccess ? registro_set_confirmation_texts($html, $date, $turn) : $html;
 $html = registro_set_confirmation_modal($html, $messageSuccess);
@@ -526,8 +644,13 @@ if (!$hasEvent && !$messageSuccess) {
     $html = registro_hide_form($html);
 }
 
-if ($registrationClosed && !$messageSuccess) {
+if (($registrationClosed || $capacityFull) && !$messageSuccess) {
     $html = registro_set_closed_message($html);
+
+    if ($capacityFull) {
+        $html = registro_set_intro_message($html, 'Inscripción cerrada: aforo completo. Ponte en contacto por Instagram con @burnoutairsoft para confirmar la inscripción.');
+    }
+
     $html = registro_disable_form_actions($html);
 }
 

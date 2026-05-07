@@ -4,6 +4,9 @@ window.initAdminGalleryPage = function () {
   var list = document.getElementById('galleryList');
   var pages = document.getElementById('galleryPages');
   var pageSizeSelect = document.getElementById('galleryPageSize');
+  var deleteModal = document.getElementById('galleryDeleteModal');
+  var deleteMessage = document.getElementById('galleryDeleteMessage');
+  var pendingDeleteForm = null;
 
   if (!modal && !list) {
     return;
@@ -24,12 +27,21 @@ window.initAdminGalleryPage = function () {
       if (event.key === 'Escape' && modal.classList.contains('is-open')) {
         closeModal();
       }
+
+      if (event.key === 'Escape' && deleteModal && deleteModal.classList.contains('is-open')) {
+        closeDeleteModal();
+      }
     });
   }
 
   if (list && pages && pageSizeSelect && list.getAttribute('data-admin-gallery-pagination-ready') !== 'true') {
     list.setAttribute('data-admin-gallery-pagination-ready', 'true');
     initPagination();
+  }
+
+  if (deleteModal && deleteModal.getAttribute('data-admin-gallery-delete-ready') !== 'true') {
+    deleteModal.setAttribute('data-admin-gallery-delete-ready', 'true');
+    initDeleteConfirmation();
   }
 
   function openModal() {
@@ -93,6 +105,49 @@ window.initAdminGalleryPage = function () {
     });
 
     renderPagination();
+  }
+
+  function initDeleteConfirmation() {
+    document.querySelectorAll('[data-gallery-delete-form]').forEach(function (form) {
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        pendingDeleteForm = form;
+        openDeleteModal(form);
+      });
+    });
+
+    document.querySelectorAll('[data-gallery-delete-cancel]').forEach(function (button) {
+      button.addEventListener('click', closeDeleteModal);
+    });
+
+    var confirmButton = document.querySelector('[data-gallery-delete-confirm]');
+
+    if (confirmButton) {
+      confirmButton.addEventListener('click', function () {
+        if (pendingDeleteForm) {
+          pendingDeleteForm.submit();
+        }
+      });
+    }
+  }
+
+  function openDeleteModal(form) {
+    var title = form.getAttribute('data-gallery-delete-title') || 'esta imagen';
+
+    if (deleteMessage) {
+      deleteMessage.textContent = '¿Eliminar "' + title + '" de la galería?';
+    }
+
+    deleteModal.classList.add('is-open');
+    deleteModal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('admin-gallery-modal-open');
+  }
+
+  function closeDeleteModal() {
+    pendingDeleteForm = null;
+    deleteModal.classList.remove('is-open');
+    deleteModal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('admin-gallery-modal-open');
   }
 };
 

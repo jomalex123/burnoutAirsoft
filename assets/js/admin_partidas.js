@@ -84,9 +84,14 @@ window.initAdminPartidasPage = function () {
 
       dayEvents.forEach(function (event) {
         var eventButton = document.createElement('button');
+        var eventTitle = document.createElement('span');
+        var eventCapacity = document.createElement('small');
         eventButton.className = 'partidas-event-slice is-' + normalizeTime(event.time);
         eventButton.type = 'button';
-        eventButton.textContent = event.title;
+        eventTitle.textContent = event.title;
+        eventCapacity.textContent = formatCapacity(event);
+        eventButton.appendChild(eventTitle);
+        eventButton.appendChild(eventCapacity);
         eventButton.addEventListener('click', function () {
           openEditModal(event);
         });
@@ -165,6 +170,7 @@ window.initAdminPartidasPage = function () {
     var id = document.getElementById('editEventId');
     var date = document.getElementById('editDate');
     var title = document.getElementById('editTitle');
+    var maxAttendees = document.getElementById('editMaxAttendees');
     var time = normalizeTime(event.timeSlot || event.time);
 
     if (id) {
@@ -177,6 +183,10 @@ window.initAdminPartidasPage = function () {
 
     if (title) {
       title.value = event.title || '';
+    }
+
+    if (maxAttendees) {
+      maxAttendees.value = event.maxAttendees || 40;
     }
 
     document.querySelectorAll('#editEventModal input[name="time"]').forEach(function (input) {
@@ -200,6 +210,21 @@ window.initAdminPartidasPage = function () {
       modal.setAttribute('aria-hidden', 'true');
     });
     document.body.classList.remove('admin-gallery-modal-open');
+  }
+
+  function formatCapacity(event) {
+    var current = parseInt(event.attendeeCount, 10);
+    var max = parseInt(event.maxAttendees, 10);
+
+    if (isNaN(current)) {
+      current = 0;
+    }
+
+    if (isNaN(max) || max < 1) {
+      max = 40;
+    }
+
+    return current + '/' + max;
   }
 };
 

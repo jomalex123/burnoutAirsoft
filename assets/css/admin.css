@@ -285,6 +285,17 @@
   width: 34px;
 }
 
+.admin-gallery-modal__body {
+  color: #444;
+  font-size: 16px;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.admin-gallery-modal__body p {
+  margin: 0;
+}
+
 .admin-gallery-modal__actions {
   display: flex;
   justify-content: flex-end;

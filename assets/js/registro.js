@@ -10,6 +10,7 @@ window.initRegistroPage = function () {
   var $rulesBody = $('#normativaModalBody');
   var $reset = $form.find('button[type="reset"]');
   var registrationClosed = $form.attr('data-registration-closed') === 'true';
+  var capacityRemaining = parseInt($form.attr('data-capacity-remaining'), 10);
   var rulesRead = false;
 
   if (!$form.length) {
@@ -222,6 +223,10 @@ window.initRegistroPage = function () {
 
     if (!message && id === 'asistentes' && !value) {
       message = 'Selecciona el número de asistentes.';
+    }
+
+    if (!message && id === 'asistentes' && !isNaN(capacityRemaining) && capacityRemaining >= 0 && Number(value) > capacityRemaining) {
+      message = 'La inscripción supera el máximo de aforo de la partida. Ponte en contacto por Instagram con @burnoutairsoft para confirmar la inscripción.';
     }
 
     setFieldError($field, message);
