@@ -617,7 +617,10 @@ nav a:hover {
  */
 
 .home-slider {
-    padding-top: 0 !important;
+    height: 100vh;
+    overflow: hidden;
+    padding: 0 !important;
+    background: #151515;
 }
 .swiper-container {
     width: 100%;
