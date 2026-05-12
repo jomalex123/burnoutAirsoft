@@ -366,6 +366,41 @@ function registro_clean_list(array $values): array
     }, $values);
 }
 
+function registro_valid_dni_letter(string $number, string $letter): bool
+{
+    $letters = 'TRWAGMYFPDXBNJZSQVHLCKE';
+
+    return $letters[((int) $number) % 23] === strtoupper($letter);
+}
+
+function registro_is_valid_phone(string $phone): bool
+{
+    if (!preg_match('/^\+?[\d\s-]+$/', $phone)) {
+        return false;
+    }
+
+    $digits = preg_replace('/\D+/', '', $phone) ?? '';
+
+    return strlen($digits) >= 9;
+}
+
+function registro_is_valid_document(string $document): bool
+{
+    $value = strtoupper(preg_replace('/[\s-]+/', '', $document) ?? '');
+
+    if (preg_match('/^(\d{8})([A-Z])$/', $value, $matches)) {
+        return registro_valid_dni_letter($matches[1], $matches[2]);
+    }
+
+    if (preg_match('/^([XYZ])(\d{7})([A-Z])$/', $value, $matches)) {
+        $prefix = ['X' => '0', 'Y' => '1', 'Z' => '2'][$matches[1]];
+
+        return registro_valid_dni_letter($prefix . $matches[2], $matches[3]);
+    }
+
+    return (bool) preg_match('/^(?:[A-Z]{3}\d{6}[A-Z]?|[A-Z]{2}\d{7})$/', $value);
+}
+
 function registro_assert_rate_limit(string $email): void
 {
     $ipBlock = burnout_rate_limit_hit('public_registration_ip', burnout_client_ip(), 5, 60 * 60, 60 * 60);
@@ -487,8 +522,8 @@ function registro_save_submission(): array
         throw new RuntimeException('Introduce una dirección electrónica válida.');
     }
 
-    if (!preg_match('/^\+?\d[\d\s-]{7,18}$/', $phone)) {
-        throw new RuntimeException('Introduce un teléfono de contacto válido.');
+    if (!registro_is_valid_phone($phone)) {
+        throw new RuntimeException('Introduce un teléfono de contacto válido con al menos 9 números.');
     }
 
     if (!$acceptedRules) {
@@ -508,6 +543,10 @@ function registro_save_submission(): array
 
         if ($name === '' || $document === '') {
             throw new RuntimeException('El nombre completo y documento son obligatorios para cada asistente.');
+        }
+
+        if (!registro_is_valid_document($document)) {
+            throw new RuntimeException('Introduce un DNI, NIE o pasaporte válido para cada asistente.');
         }
     }
 

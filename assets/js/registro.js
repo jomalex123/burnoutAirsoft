@@ -210,14 +210,14 @@ window.initRegistroPage = function () {
     }
 
     if (!message && id === 'telefono' && !isValidPhone(value)) {
-      message = 'Introduce un teléfono válido.';
+      message = 'Introduce un teléfono válido con al menos 9 números.';
     }
 
     if (!message && isAttendeeNameField(id) && value.length < 3) {
       message = 'Introduce el nombre completo.';
     }
 
-    if (!message && isAttendeeDocumentField(id) && value.length < 5) {
+    if (!message && isAttendeeDocumentField(id) && !isValidDocument(value)) {
       message = 'Introduce un DNI, NIE o pasaporte válido.';
     }
 
@@ -315,7 +315,31 @@ window.initRegistroPage = function () {
   }
 
   function isValidPhone(value) {
-    return /^(\+?\d[\d\s-]{7,18})$/.test(value);
+    var digits = String(value || '').replace(/\D/g, '');
+
+    return /^\+?[\d\s-]+$/.test(value) && digits.length >= 9;
+  }
+
+  function hasValidDniLetter(number, letter) {
+    var letters = 'TRWAGMYFPDXBNJZSQVHLCKE';
+
+    return letters[Number(number) % 23] === String(letter || '').toUpperCase();
+  }
+
+  function isValidDocument(value) {
+    var normalized = String(value || '').toUpperCase().replace(/[\s-]+/g, '');
+    var dni = normalized.match(/^(\d{8})([A-Z])$/);
+    var nie = normalized.match(/^([XYZ])(\d{7})([A-Z])$/);
+
+    if (dni) {
+      return hasValidDniLetter(dni[1], dni[2]);
+    }
+
+    if (nie) {
+      return hasValidDniLetter({ X: '0', Y: '1', Z: '2' }[nie[1]] + nie[2], nie[3]);
+    }
+
+    return /^(?:[A-Z]{3}\d{6}[A-Z]?|[A-Z]{2}\d{7})$/.test(normalized);
   }
 
   function isAttendeeNameField(id) {
