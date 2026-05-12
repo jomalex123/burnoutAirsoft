@@ -312,7 +312,7 @@ $csrfToken = burnout_csrf_token();
             <?php endif; ?>
           </div>
         </div>
-        <div class="ms-section__block">
+        <div class="ms-section__block admin-partidas-section">
           <?php if ($setupError): ?>
             <div class="admin-login-error" role="alert"><?= htmlspecialchars($setupError, ENT_QUOTES, 'UTF-8') ?></div>
           <?php else: ?>
