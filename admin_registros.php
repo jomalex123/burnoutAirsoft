@@ -636,6 +636,7 @@ $csrfToken = burnout_csrf_token();
     <script type="text/javascript" src="assets/js/jquery-3.7.1.min.js"></script>
     <script type="text/javascript" src='assets/js/plugins.min.js'></script>
     <script type="text/javascript" src="assets/js/main.js"></script>
+    <script type="text/javascript" src="assets/js/vendors/pdf-lib.min.js"></script>
     <script type="text/javascript" src="assets/js/admin_registros.js"></script>
   </body>
 </html>

@@ -301,21 +301,16 @@ window.initAdminRegistrosPage = function () {
       return;
     }
 
-    var headers = ['Evento', 'Fecha', 'Turno', 'Email', 'Teléfono', 'Equipo', 'N. asistente', 'Nombre completo', 'Documento', 'Fecha registro'];
+    var headers = ['Nombre completo', 'Telefono', 'Documento', 'Equipo', 'Firma'];
     var lines = [headers.map(csvEscape).join(';')];
 
     rowsToExport.forEach(function (row) {
       lines.push([
-        row.event,
-        row.date,
-        row.turn,
-        row.email,
-        row.phone,
-        row.team,
-        row.attendeeNumber,
         row.name,
+        row.phone,
         row.document,
-        row.createdAt
+        row.team,
+        ''
       ].map(csvEscape).join(';'));
     });
 
@@ -330,19 +325,7 @@ window.initAdminRegistrosPage = function () {
     link.remove();
   }
 
-  function htmlEscape(value) {
-    return String(value || '').replace(/[&<>"']/g, function (character) {
-      return {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-      }[character];
-    });
-  }
-
-  function exportPdf() {
+  async function exportPdf() {
     var rowsToExport = exportRows();
 
     if (!rowsToExport.length) {
@@ -350,55 +333,320 @@ window.initAdminRegistrosPage = function () {
       return;
     }
 
-    var tableRows = rowsToExport.map(function (row) {
-      return [
-        '<tr>',
-          '<td>' + htmlEscape(row.event) + '</td>',
-          '<td>' + htmlEscape(row.date) + '</td>',
-          '<td>' + htmlEscape(row.turn) + '</td>',
-          '<td>' + htmlEscape(row.email) + '</td>',
-          '<td>' + htmlEscape(row.phone) + '</td>',
-          '<td>' + htmlEscape(row.team) + '</td>',
-          '<td>' + htmlEscape(row.attendeeNumber) + '</td>',
-          '<td>' + htmlEscape(row.name) + '</td>',
-          '<td>' + htmlEscape(row.document) + '</td>',
-          '<td>' + htmlEscape(row.createdAt) + '</td>',
-        '</tr>'
-      ].join('');
-    }).join('');
-    var printWindow = window.open('', '_blank');
-
-    if (!printWindow) {
-      alert('El navegador ha bloqueado la ventana de exportacion.');
+    if (!window.PDFLib) {
+      alert('No se ha podido cargar la libreria para generar el PDF.');
       return;
     }
 
-    printWindow.document.write([
-      '<!DOCTYPE html>',
-      '<html lang="es">',
-      '<head>',
-        '<meta charset="utf-8">',
-        '<title>Asistentes registros</title>',
-        '<style>',
-          'body{font-family:Arial,sans-serif;color:#151515;margin:24px;}',
-          'h1{font-size:22px;margin:0 0 18px;}',
-          'table{border-collapse:collapse;width:100%;font-size:11px;}',
-          'th,td{border:1px solid #ccc;padding:6px;text-align:left;vertical-align:top;}',
-          'th{background:#f1f1f1;text-transform:uppercase;}',
-          '@media print{@page{size:landscape;margin:10mm;}body{margin:0;}}',
-        '</style>',
-      '</head>',
-      '<body>',
-        '<h1>Asistentes registros</h1>',
-        '<table>',
-          '<thead><tr><th>Evento</th><th>Fecha</th><th>Turno</th><th>Email</th><th>Teléfono</th><th>Equipo</th><th>N. asistente</th><th>Nombre completo</th><th>Documento</th><th>Fecha registro</th></tr></thead>',
-          '<tbody>' + tableRows + '</tbody>',
-        '</table>',
-        '<script>window.onload=function(){window.print();};<\/script>',
-      '</body>',
-      '</html>'
-    ].join(''));
-    printWindow.document.close();
+    setPdfBusy(true);
+
+    try {
+      await buildMergedRegistrationsPdf(rowsToExport);
+    } catch (error) {
+      console.error(error);
+      alert(error.message || 'No se ha podido generar el PDF.');
+    } finally {
+      setPdfBusy(false);
+    }
+
+  }
+
+  async function buildMergedRegistrationsPdf(rowsToExport) {
+    var PDFDocument = window.PDFLib.PDFDocument;
+    var StandardFonts = window.PDFLib.StandardFonts;
+    var rgb = window.PDFLib.rgb;
+    var templateResponse = await fetch('docs/Registro_Burnout-Airsoft_v01.pdf', { cache: 'no-store' });
+
+    if (!templateResponse.ok) {
+      throw new Error('No se ha podido cargar el PDF base.');
+    }
+
+    var logoResponse = await fetch('images/resources/logo-barcelona-bout.jpg', { cache: 'no-store' });
+
+    if (!logoResponse.ok) {
+      throw new Error('No se ha podido cargar el logo de Barcelona Paintball.');
+    }
+
+    var pdfDoc = await PDFDocument.load(await templateResponse.arrayBuffer());
+    var regularFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    var boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    var logoImage = await pdfDoc.embedJpg(await logoResponse.arrayBuffer());
+    var columns = pdfColumns();
+    var layout = {
+      width: 595.28,
+      height: 841.89,
+      margin: 36,
+      tableTop: 748,
+      headerHeight: 20,
+      minRowHeight: 32,
+      paddingX: 5,
+      paddingY: 7,
+      fontSize: 7.2,
+      headerFontSize: 7.5,
+      lineHeight: 9.2,
+      borderColor: rgb(0.95, 0, 0),
+      borderWidth: 1,
+      backgroundColor: rgb(0.847, 0.847, 0.847),
+      headerFill: rgb(0.847, 0.847, 0.847),
+      textColor: rgb(0.08, 0.08, 0.08)
+    };
+    var tablePageNumber = 0;
+    var pageState = addTablePage();
+
+    rowsToExport.forEach(function (row) {
+      var preparedRow = preparePdfRow(row, columns, regularFont, layout);
+
+      if (pageState.y - preparedRow.height < layout.margin) {
+        pageState = addTablePage();
+      }
+
+      drawPdfRow(pageState.page, columns, preparedRow, regularFont, layout, pageState.y);
+      pageState.y -= preparedRow.height;
+    });
+
+    downloadPdf(await pdfDoc.save());
+
+    function addTablePage() {
+      tablePageNumber++;
+      return createPdfTablePage(pdfDoc, columns, boldFont, layout, logoImage, tablePageNumber);
+    }
+  }
+
+  function pdfColumns() {
+    return [
+      { key: 'name', label: 'NOMBRE', width: 185 },
+      { key: 'phone', label: 'TELEFONO', width: 85 },
+      { key: 'document', label: 'DOCUMENTO', width: 95 },
+      { key: 'team', label: 'EQUIPO', width: 85 },
+      { key: 'signature', label: 'FIRMA', width: 73 }
+    ];
+  }
+
+  function createPdfTablePage(pdfDoc, columns, boldFont, layout, logoImage, tablePageNumber) {
+    var page = pdfDoc.addPage([layout.width, layout.height]);
+    var logoWidth = 156;
+    var logoHeight = logoWidth * (logoImage.height / logoImage.width);
+
+    page.drawRectangle({
+      x: 0,
+      y: 0,
+      width: layout.width,
+      height: layout.height,
+      color: layout.backgroundColor
+    });
+
+    page.drawImage(logoImage, {
+      x: layout.width - layout.margin - logoWidth,
+      y: layout.height - 30 - logoHeight,
+      width: logoWidth,
+      height: logoHeight
+    });
+
+    drawPdfHeader(page, columns, boldFont, layout);
+
+    return {
+      page: page,
+      y: layout.tableTop - layout.headerHeight,
+      tablePageNumber: tablePageNumber
+    };
+  }
+
+  function drawPdfHeader(page, columns, font, layout) {
+    var x = layout.margin;
+
+    columns.forEach(function (column) {
+      page.drawRectangle({
+        x: x,
+        y: layout.tableTop - layout.headerHeight,
+        width: column.width,
+        height: layout.headerHeight,
+        color: layout.headerFill,
+        borderColor: layout.borderColor,
+        borderWidth: layout.borderWidth
+      });
+      drawCenteredPdfText(page, safePdfText(column.label), {
+        x: x,
+        y: layout.tableTop - layout.paddingY - layout.headerFontSize,
+        width: column.width,
+        size: layout.headerFontSize,
+        font: font,
+        color: layout.textColor
+      });
+      x += column.width;
+    });
+  }
+
+  function preparePdfRow(row, columns, font, layout) {
+    var maxLines = 1;
+    var cells = columns.map(function (column) {
+      var value = row[column.key] || '';
+
+      if (column.key === 'team' && !value) {
+        value = '-';
+      }
+
+      var lines = column.key === 'signature'
+        ? ['']
+        : wrapPdfText(value, font, layout.fontSize, column.width - layout.paddingX * 2);
+      maxLines = Math.max(maxLines, lines.length);
+
+      return lines;
+    });
+
+    return {
+      cells: cells,
+      height: Math.max(layout.minRowHeight, maxLines * layout.lineHeight + layout.paddingY * 2)
+    };
+  }
+
+  function drawPdfRow(page, columns, preparedRow, font, layout, yTop) {
+    var x = layout.margin;
+
+    columns.forEach(function (column, index) {
+      page.drawRectangle({
+        x: x,
+        y: yTop - preparedRow.height,
+        width: column.width,
+        height: preparedRow.height,
+        borderColor: layout.borderColor,
+        borderWidth: layout.borderWidth
+      });
+      preparedRow.cells[index].forEach(function (line, lineIndex) {
+        if (!line) {
+          return;
+        }
+
+        page.drawText(line, {
+          x: x + layout.paddingX,
+          y: yTop - layout.paddingY - layout.fontSize - lineIndex * layout.lineHeight,
+          size: layout.fontSize,
+          font: font,
+          color: layout.textColor
+        });
+      });
+      x += column.width;
+    });
+  }
+
+  function drawCenteredPdfText(page, text, options) {
+    var textWidth = options.font.widthOfTextAtSize(text, options.size);
+    var x = options.x + Math.max(0, (options.width - textWidth) / 2);
+
+    page.drawText(text, {
+      x: x,
+      y: options.y,
+      size: options.size,
+      font: options.font,
+      color: options.color
+    });
+  }
+
+  function wrapPdfText(value, font, fontSize, maxWidth) {
+    var text = safePdfText(value || '-');
+    var words = text.split(/\s+/).filter(Boolean);
+    var lines = [];
+    var current = '';
+
+    if (!words.length) {
+      return ['-'];
+    }
+
+    words.forEach(function (word) {
+      var candidate = current ? current + ' ' + word : word;
+
+      if (pdfTextWidth(font, candidate, fontSize) <= maxWidth) {
+        current = candidate;
+        return;
+      }
+
+      if (current) {
+        lines.push(current);
+      }
+
+      if (pdfTextWidth(font, word, fontSize) <= maxWidth) {
+        current = word;
+        return;
+      }
+
+      var brokenWord = breakPdfWord(word, font, fontSize, maxWidth);
+      lines = lines.concat(brokenWord.slice(0, -1));
+      current = brokenWord[brokenWord.length - 1] || '';
+    });
+
+    if (current) {
+      lines.push(current);
+    }
+
+    return lines.length ? lines : ['-'];
+  }
+
+  function breakPdfWord(word, font, fontSize, maxWidth) {
+    var parts = [];
+    var current = '';
+
+    word.split('').forEach(function (character) {
+      var candidate = current + character;
+
+      if (current && pdfTextWidth(font, candidate, fontSize) > maxWidth) {
+        parts.push(current);
+        current = character;
+        return;
+      }
+
+      current = candidate;
+    });
+
+    if (current) {
+      parts.push(current);
+    }
+
+    return parts.length ? parts : ['-'];
+  }
+
+  function pdfTextWidth(font, text, fontSize) {
+    return font.widthOfTextAtSize(safePdfText(text), fontSize);
+  }
+
+  function safePdfText(value) {
+    return String(value || '')
+      .replace(/[\r\n\t]+/g, ' ')
+      .replace(/[\x00-\x1f\x7f-\x9f]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .replace(/\u00a0/g, ' ')
+      .replace(/[\u2018\u2019]/g, "'")
+      .replace(/[\u201c\u201d]/g, '"')
+      .replace(/[\u2013\u2014]/g, '-')
+      .replace(/\u2026/g, '...')
+      .replace(/[^\x20-\xff]/g, '?')
+      .trim();
+  }
+
+  function downloadPdf(pdfBytes) {
+    var blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    var link = document.createElement('a');
+
+    link.href = URL.createObjectURL(blob);
+    link.download = 'registro_burnout_airsoft_asistentes.pdf';
+    document.body.appendChild(link);
+    link.click();
+    URL.revokeObjectURL(link.href);
+    link.remove();
+  }
+
+  function setPdfBusy(isBusy) {
+    if (!exportPdfButton) {
+      return;
+    }
+
+    if (isBusy) {
+      exportPdfButton.dataset.originalText = exportPdfButton.textContent;
+      exportPdfButton.textContent = 'Generando PDF...';
+      exportPdfButton.disabled = true;
+      return;
+    }
+
+    exportPdfButton.textContent = exportPdfButton.dataset.originalText || 'Exportar PDF';
+    exportPdfButton.disabled = false;
   }
 
   function closeExportMenu() {
