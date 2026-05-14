@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/config/auth.php';
 require_once __DIR__ . '/config/mail.php';
 require_once __DIR__ . '/config/rate_limit.php';
 require_once __DIR__ . '/config/registration_notifications.php';
@@ -229,6 +230,25 @@ function registro_set_input_value(string $html, string $id, string $value): stri
 
         return $input . ' value="' . $escaped . '"' . $matches[2];
     }, $html, 1) ?? $html;
+}
+
+function registro_insert_anti_spam_fields(string $html, string $csrfToken): string
+{
+    $fields = sprintf(
+        '<input type="hidden" name="csrf_token" value="%s">' . "\n" .
+        '            <div class="registro-honeypot" aria-hidden="true" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;">' . "\n" .
+        '              <label for="companyWebsite">Web</label>' . "\n" .
+        '              <input id="companyWebsite" name="company_website" type="text" value="" autocomplete="off" tabindex="-1">' . "\n" .
+        '            </div>',
+        htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8')
+    );
+
+    return preg_replace(
+        '/(<input id="eventId" name="event_id" type="hidden" value="[^"]*">)/',
+        '$1' . "\n" . '            ' . $fields,
+        $html,
+        1
+    ) ?? $html;
 }
 
 function registro_set_message(string $html, string $message, bool $success): string
@@ -491,6 +511,17 @@ function registro_send_confirmation_email(array $registration): void
     burnout_registration_notification_send($notificationId);
 }
 
+function registro_assert_anti_spam(): void
+{
+    if (!burnout_check_csrf($_POST['csrf_token'] ?? null)) {
+        throw new RuntimeException('Sesion caducada. Recarga la pagina e intentalo de nuevo.');
+    }
+
+    if (trim((string) ($_POST['company_website'] ?? '')) !== '') {
+        throw new RuntimeException('No se ha podido procesar el registro.');
+    }
+}
+
 function registro_save_submission(): array
 {
     $eventId = filter_input(INPUT_POST, 'event_id', FILTER_VALIDATE_INT);
@@ -622,6 +653,7 @@ $submittedEvent = null;
 
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     try {
+        registro_assert_anti_spam();
         $registration = registro_save_submission();
         $submittedEvent = $registration['event'] ?? null;
 
@@ -674,6 +706,7 @@ $html = registro_replace_between_id($html, 'registroEventoTitulo', $hasEvent ? '
 $html = registro_replace_between_id($html, 'registroEventoFecha', $hasEvent ? registro_format_date($date) : 'No seleccionada');
 $html = registro_replace_between_id($html, 'registroEventoTurno', $hasEvent ? registro_format_turn($turn) : 'No seleccionado');
 $html = registro_set_input_value($html, 'eventId', $hasEvent ? (string) $event['id'] : '');
+$html = registro_insert_anti_spam_fields($html, burnout_csrf_token());
 $html = registro_set_capacity_data($html, $capacityRemaining, $maxAttendees);
 $html = $messageSuccess ? $html : registro_set_message($html, $message, false);
 $html = $messageSuccess ? registro_set_confirmation_texts($html, $date, $turn) : $html;

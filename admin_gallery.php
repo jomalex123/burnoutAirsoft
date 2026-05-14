@@ -233,8 +233,8 @@ $csrfToken = burnout_csrf_token();
                   <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                   <input type="hidden" name="action" value="add">
                   <div class="admin-login-field">
-                    <label for="src">URL imagen</label>
-                    <input id="src" name="src" type="text" required placeholder="url">
+                    <label for="src">Ruta imagen</label>
+                    <input id="src" name="src" type="text" required placeholder="images/gallery/foto.webp o https://scontent...">
                   </div>
                   <div class="admin-login-field">
                     <label for="alt">Titulo / Alt</label>

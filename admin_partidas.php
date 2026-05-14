@@ -113,6 +113,19 @@ function burnout_event_has_registrations(int $id): bool
     return (int) $statement->fetchColumn() > 0;
 }
 
+function burnout_event_attendee_count(int $id): int
+{
+    $statement = burnout_pdo()->prepare(
+        'SELECT COALESCE(COUNT(ra.id), 0)
+         FROM registrations r
+         INNER JOIN registration_attendees ra ON ra.registration_id = r.id
+         WHERE r.event_id = :id'
+    );
+    $statement->execute(['id' => $id]);
+
+    return (int) $statement->fetchColumn();
+}
+
 function burnout_validate_event_data(string $date, string $title, string $time, string $maxAttendees): array
 {
     if ($date === '' || $title === '' || $time === '') {
@@ -168,6 +181,15 @@ if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 if ($id === false || $id === null || !burnout_find_event((int) $id)) {
                     throw new RuntimeException('El evento seleccionado no existe.');
+                }
+
+                $attendeeCount = burnout_event_attendee_count((int) $id);
+
+                if ($eventData['max_attendees'] < $attendeeCount) {
+                    throw new RuntimeException(sprintf(
+                        'No puedes bajar el aforo por debajo de los %d inscritos actuales.',
+                        $attendeeCount
+                    ));
                 }
 
                 $statement = burnout_pdo()->prepare(

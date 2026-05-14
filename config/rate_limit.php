@@ -17,22 +17,7 @@ function burnout_rate_limit_table(): void
         return;
     }
 
-    burnout_pdo()->exec(
-        'CREATE TABLE IF NOT EXISTS rate_limits (
-            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            scope VARCHAR(80) NOT NULL,
-            identifier_hash CHAR(64) NOT NULL,
-            attempts INT UNSIGNED NOT NULL DEFAULT 0,
-            window_started_at DATETIME NOT NULL,
-            blocked_until DATETIME DEFAULT NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            UNIQUE KEY rate_limits_scope_identifier_unique (scope, identifier_hash),
-            KEY rate_limits_blocked_until_index (blocked_until)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
-    );
-
+    // Las tablas se crean desde database/schema.sql por un administrador SQL.
     $ready = true;
 }
 
