@@ -1,0 +1,171 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background:
+    linear-gradient(135deg, rgba(11, 15, 18, .96), rgba(21, 28, 26, .95)),
+    repeating-linear-gradient(45deg, #151a18 0 18px, #202722 18px 36px);
+  color: #fff;
+  font-family: Arial, sans-serif;
+}
+
+button {
+  font: inherit;
+}
+
+.dominio-page {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  min-height: 100svh;
+  padding: max(16px, env(safe-area-inset-top)) 12px max(16px, env(safe-area-inset-bottom));
+}
+
+.dominio-board {
+  background: #0f1211;
+  border: 1px solid rgba(255, 255, 255, .14);
+  border-radius: 8px;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, .34);
+  max-width: 440px;
+  padding: 18px;
+  width: 100%;
+}
+
+.dominio-header span {
+  color: #df1f29;
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.dominio-header h1 {
+  color: #fff;
+  font-size: 46px;
+  line-height: .95;
+  margin: 8px 0 18px;
+  text-transform: uppercase;
+}
+
+.dominio-timer {
+  background: #9eb78c;
+  border: 8px solid #080909;
+  border-radius: 8px;
+  color: #102411;
+  font-family: "Courier New", monospace;
+  font-size: 64px;
+  font-weight: 900;
+  line-height: 1;
+  padding: 18px 8px;
+  text-align: center;
+}
+
+.dominio-status {
+  color: rgba(255, 255, 255, .72);
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: .12em;
+  margin: 16px 0;
+  text-align: center;
+}
+
+.flag-controls,
+.round-controls,
+.score-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.flag-controls {
+  grid-template-columns: 1fr;
+}
+
+.flag-button,
+.round-controls button {
+  border: 1px solid rgba(255, 255, 255, .16);
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 900;
+  min-height: 58px;
+  text-transform: uppercase;
+}
+
+.flag-button--red {
+  background: #af1d24;
+}
+
+.flag-button--neutral {
+  background: #313734;
+}
+
+.flag-button--blue {
+  background: #1e5ca8;
+}
+
+.score-grid {
+  grid-template-columns: 1fr 1fr;
+  margin: 14px 0;
+}
+
+.score-grid div {
+  background: rgba(255, 255, 255, .08);
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 8px;
+  padding: 14px;
+  text-align: center;
+}
+
+.score-grid span {
+  color: rgba(255, 255, 255, .68);
+  display: block;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.score-grid strong {
+  display: block;
+  font-size: 46px;
+  line-height: 1;
+  margin-top: 8px;
+}
+
+.round-controls {
+  grid-template-columns: 1fr 1fr;
+}
+
+.round-controls button:first-child {
+  background: #df1f29;
+}
+
+.round-controls button:last-child {
+  background: #2d3330;
+}
+
+.is-red .dominio-status {
+  color: #ff4a53;
+}
+
+.is-blue .dominio-status {
+  color: #58a4ff;
+}
+
+@media (max-width: 430px) {
+  .dominio-header h1 {
+    font-size: 38px;
+  }
+
+  .dominio-timer {
+    font-size: 52px;
+  }
+}

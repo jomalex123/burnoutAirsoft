@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <title>Dominio de Banderas - Burnout Games</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <link rel="icon" type="image/png" href="images/resources/logoBurnout-3.png" />
+    <link rel="stylesheet" href="assets/css/burnoutgames_dominio.css">
+  </head>
+  <body>
+    <main class="dominio-page" aria-label="Juego Dominio de banderas">
+      <section class="dominio-board">
+        <div class="dominio-header">
+          <span>Burnout Games</span>
+          <h1>Dominio</h1>
+        </div>
+        <div class="dominio-timer" id="dominioTimer">15:00</div>
+        <div class="dominio-status" id="dominioStatus">SIN CONTROL</div>
+
+        <div class="flag-controls" aria-label="Control de bandera">
+          <button class="flag-button flag-button--red" type="button" data-team="red">Rojo</button>
+          <button class="flag-button flag-button--neutral" type="button" data-team="neutral">Neutral</button>
+          <button class="flag-button flag-button--blue" type="button" data-team="blue">Azul</button>
+        </div>
+
+        <div class="score-grid">
+          <div>
+            <span>Rojo</span>
+            <strong id="redScore">0</strong>
+          </div>
+          <div>
+            <span>Azul</span>
+            <strong id="blueScore">0</strong>
+          </div>
+        </div>
+
+        <div class="round-controls">
+          <button type="button" data-round="start">Iniciar</button>
+          <button type="button" data-round="reset">Reset</button>
+        </div>
+      </section>
+    </main>
+    <script src="assets/js/burnoutgames_dominio.js"></script>
+  </body>
+</html>
