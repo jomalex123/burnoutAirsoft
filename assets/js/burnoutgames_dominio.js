@@ -1,10 +1,8 @@
 (function() {
   'use strict';
 
-  var totalSeconds = 900;
-  var remainingSeconds = totalSeconds;
-  var activeTeam = 'neutral';
-  var scores = {
+  var activeTeam = '';
+  var counters = {
     red: 0,
     blue: 0
   };
@@ -18,99 +16,56 @@
   function bindControls() {
     document.querySelectorAll('[data-team]').forEach(function(button) {
       button.addEventListener('click', function() {
-        activeTeam = button.getAttribute('data-team');
-        updateDisplay();
-      });
-    });
-
-    document.querySelectorAll('[data-round]').forEach(function(button) {
-      button.addEventListener('click', function() {
-        var action = button.getAttribute('data-round');
-
-        if (action === 'start') {
-          startRound();
-        }
-
-        if (action === 'reset') {
-          resetRound();
-        }
+        setActiveTeam(button.getAttribute('data-team') || '');
       });
     });
   }
 
-  function startRound() {
+  function setActiveTeam(team) {
+    if (team !== 'red' && team !== 'blue') {
+      return;
+    }
+
+    activeTeam = team;
+    startCounter();
+    updateDisplay();
+  }
+
+  function startCounter() {
     if (timerId) {
       return;
     }
 
-    timerId = window.setInterval(tick, 1000);
-  }
+    timerId = window.setInterval(function() {
+      if (activeTeam === 'red' || activeTeam === 'blue') {
+        counters[activeTeam] += 1;
+      }
 
-  function resetRound() {
-    stopTimer();
-    remainingSeconds = totalSeconds;
-    activeTeam = 'neutral';
-    scores.red = 0;
-    scores.blue = 0;
-    updateDisplay();
-  }
-
-  function tick() {
-    remainingSeconds = Math.max(0, remainingSeconds - 1);
-
-    if (activeTeam === 'red' || activeTeam === 'blue') {
-      scores[activeTeam] += 1;
-    }
-
-    if (remainingSeconds <= 0) {
-      stopTimer();
-    }
-
-    updateDisplay();
+      updateDisplay();
+    }, 1000);
   }
 
   function updateDisplay() {
     var page = document.querySelector('.dominio-page');
-    var timer = document.getElementById('dominioTimer');
-    var status = document.getElementById('dominioStatus');
-    var redScore = document.getElementById('redScore');
-    var blueScore = document.getElementById('blueScore');
+    var counter = document.getElementById('dominioCounter');
 
-    if (!page || !timer || !status || !redScore || !blueScore) {
+    if (!page || !counter) {
       return;
     }
 
-    page.classList.remove('is-red', 'is-blue', 'is-neutral');
-    page.classList.add('is-' + activeTeam);
-    timer.textContent = formatTime(remainingSeconds);
-    redScore.textContent = scores.red;
-    blueScore.textContent = scores.blue;
-    status.textContent = getStatusText();
-  }
+    page.classList.remove('is-red', 'is-blue');
 
-  function getStatusText() {
-    if (activeTeam === 'red') {
-      return 'BANDERA ROJA';
+    if (activeTeam) {
+      page.classList.add('is-' + activeTeam);
     }
 
-    if (activeTeam === 'blue') {
-      return 'BANDERA AZUL';
-    }
-
-    return 'SIN CONTROL';
+    counter.textContent = formatTime(activeTeam ? counters[activeTeam] : 0);
   }
 
-  function formatTime(secondsLeft) {
-    var minutes = Math.floor(secondsLeft / 60);
-    var seconds = secondsLeft % 60;
+  function formatTime(seconds) {
+    var minutes = Math.floor(seconds / 60);
+    var remainingSeconds = seconds % 60;
 
-    return String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
-  }
-
-  function stopTimer() {
-    if (timerId) {
-      window.clearInterval(timerId);
-      timerId = null;
-    }
+    return String(minutes).padStart(2, '0') + ':' + String(remainingSeconds).padStart(2, '0');
   }
 })();

@@ -1,0 +1,38 @@
+services:
+  web:
+    build: .
+    container_name: burnoutairsoft
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      BURNOUT_ENV: local
+      BURNOUT_ENV_FILE: /var/www/html/docker/env.php
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mariadb:11.4
+    container_name: burnoutairsoft-db
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: burnout_root
+      MARIADB_DATABASE: burnoutairsoft_local
+      MARIADB_USER: burnout
+      MARIADB_PASSWORD: burnout
+    ports:
+      - "3307:3306"
+    volumes:
+      - burnoutairsoft_db:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  burnoutairsoft_db:
