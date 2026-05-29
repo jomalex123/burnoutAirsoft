@@ -145,6 +145,84 @@
   margin: 10px 0;
 }
 
+.gallery-maintenance-page {
+  background: #151515;
+  min-height: calc(100vh - 92px);
+  padding: 6em 0 0;
+}
+
+.gallery-maintenance {
+  align-items: center;
+  display: flex;
+  min-height: calc(100vh - 92px);
+  overflow: hidden;
+  position: relative;
+}
+
+.gallery-maintenance__media,
+.gallery-maintenance__overlay {
+  inset: 0;
+  position: absolute;
+}
+
+.gallery-maintenance__media {
+  background-position: center;
+  background-size: cover;
+  filter: saturate(.92);
+  transform: scale(1.03);
+}
+
+.gallery-maintenance__overlay {
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, .84), rgba(0, 0, 0, .52) 58%, rgba(0, 0, 0, .28)),
+    radial-gradient(circle at 78% 30%, rgba(223, 31, 41, .2), transparent 34%);
+}
+
+.gallery-maintenance__content {
+  color: #fff;
+  max-width: 790px;
+  padding: 178px 7vw 96px;
+  position: relative;
+  z-index: 2;
+}
+
+.gallery-maintenance__content span {
+  color: #df1f29;
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  margin-bottom: 14px;
+  text-transform: uppercase;
+}
+
+.gallery-maintenance__content h1 {
+  color: #fff;
+  font-size: clamp(44px, 8vw, 92px);
+  line-height: .95;
+  margin: 0 0 24px;
+  max-width: 900px;
+}
+
+.gallery-maintenance__content p {
+  color: rgba(255, 255, 255, .84);
+  font-size: 21px;
+  line-height: 1.55;
+  margin: 0 0 32px;
+  max-width: 680px;
+}
+
+.gallery-maintenance__content a {
+  background: #df1f29;
+  color: #fff;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  padding: 15px 18px;
+  text-transform: uppercase;
+}
+
 @media (max-width: 768px) {
   .ms-container .gallery-section {
     margin: 18px 0 3em;
@@ -197,5 +275,22 @@
 
   .gallery-modal-next {
     right: 4px;
+  }
+
+  .gallery-maintenance,
+  .gallery-maintenance-page {
+    min-height: calc(100vh - 74px);
+  }
+
+  .gallery-maintenance__content {
+    padding: 150px 24px 72px;
+  }
+
+  .gallery-maintenance__content h1 {
+    font-size: 42px;
+  }
+
+  .gallery-maintenance__content p {
+    font-size: 16px;
   }
 }

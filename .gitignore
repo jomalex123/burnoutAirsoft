@@ -3,3 +3,4 @@ config/env.php
 private/
 *.env
 campo_bk.html
+galeria_bk.html
