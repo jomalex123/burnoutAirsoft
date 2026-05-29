@@ -2,3 +2,4 @@
 config/env.php
 private/
 *.env
+campo_bk.html
