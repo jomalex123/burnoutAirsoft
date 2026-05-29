@@ -51,6 +51,11 @@ Author: madsparrow.us
     background: #555;    
     color: #fff;
 }
+
+.maintenance-background {
+    background-image: url("../../images/resources/maintenance.webp");
+}
+
 body {
     background: #151515;
     padding: 0;
