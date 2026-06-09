@@ -195,8 +195,8 @@ function registro_turn_hours(string $turn): array
         'm' => ['open' => '8:00 AM', 'close' => '9:00 AM'],
         'tarde' => ['open' => '15:00 PM', 'close' => '16:00 PM'],
         't' => ['open' => '15:00 PM', 'close' => '16:00 PM'],
-        'noche' => ['open' => '19:00 PM', 'close' => '20:00 PM'],
-        'n' => ['open' => '19:00 PM', 'close' => '20:00 PM'],
+        'noche' => ['open' => '20:00 h', 'close' => '21:00 h'],
+        'n' => ['open' => '20:00 h', 'close' => '21:00 h'],
     ][registro_normalize_turn($turn)] ?? ['open' => '8:00 AM', 'close' => '9:00 AM'];
 }
 
@@ -207,8 +207,8 @@ function registro_confirmation_schedule(string $turn): string
         'm' => 'Recuerda que el horario de apertura de puertas será a las 8:00 AM y el cierre de ellas a las 9:00 AM.',
         'tarde' => 'Recuerda que el horario de apertura de puertas será a las 15:00 PM y el cierre de ellas a las 16:00 PM.',
         't' => 'Recuerda que el horario de apertura de puertas será a las 15:00 PM y el cierre de ellas a las 16:00 PM.',
-        'noche' => 'Recuerda que el horario de apertura de puertas será a las 19:00 PM y el cierre de ellas a las 20:00 PM.',
-        'n' => 'Recuerda que el horario de apertura de puertas será a las 19:00 PM y el cierre de ellas a las 20:00 PM.',
+        'noche' => 'Recuerda que la hora de apertura será a las 20:00 h y la hora de cierre de puertas a las 21:00 h.',
+        'n' => 'Recuerda que la hora de apertura será a las 20:00 h y la hora de cierre de puertas a las 21:00 h.',
     ][registro_normalize_turn($turn)] ?? 'Recuerda que el horario de apertura de puertas será a las 8:00 AM y el cierre de ellas a las 9:00 AM.';
 }
 
@@ -471,8 +471,8 @@ function registro_build_confirmation_email(array $registration): string
 
     return sprintf(
         "Tu inscripción para el evento \"%s\" se ha registrado correctamente.\n\n" .
-        "Recuerda que el horario de apertura de puertas será a las %s y el \n" .
-        "cierre de ellas a las %s\n\n" .
+        "Recuerda que la hora de apertura será a las %s y la \n" .
+        "hora de cierre de puertas a las %s\n\n" .
         "Resumen de los datos enviados:\n" .
         "• Número de asistentes: %d\n" .
         "• Lista de asistentes:\n%s\n\n" .
