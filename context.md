@@ -6,7 +6,7 @@ Este fichero sirve como contexto base para nuevas sesiones de desarrollo. Antes 
 
 - Proyecto PHP/HTML/CSS/JS sin framework.
 - Paginas publicas en la raiz: `index.html`, `burnout.html`, `campo.html`, `galeria.html`, `partidas.html`, `registro.html`, `normativa.html`, `privacidad.html`.
-- Endpoints/controladores PHP en la raiz: `events.php`, `gallery_items.php`, `registro.php`, `admin.php`, `admin_partidas.php`, `admin_registros.php`, `admin_gallery.php`.
+- Endpoints/controladores PHP en la raiz: `events.php`, `gallery_items.php`, `registro.php`, `admin.php`, `admin_partidas.php`, `admin_registros.php`, `admin_gallery.php`, `admin_normativa.php`.
 - CSS propio en `assets/css/`; JS propio en `assets/js/`.
 - Configuracion y helpers en `config/`.
 - Base de datos MariaDB/MySQL definida en `database/schema.sql`.
@@ -362,6 +362,7 @@ Paginas:
 - `admin_partidas.php`: CRUD de eventos/partidas y calendario administrable.
 - `admin_registros.php`: listado de registros, filtros, ordenacion, borrado, detalle, reenvio de notificaciones, export CSV/PDF.
 - `admin_gallery.php`: alta/borrado/listado/paginacion de imagenes de galeria.
+- `admin_normativa.php`: editor del titulo y de los bloques HTML de `normativa.html`.
 
 Patrones UI admin:
 
@@ -379,6 +380,17 @@ Patrones PHP admin:
 - Redirecciones post-action con flash messages cuando aplica.
 - Borrados protegidos: por ejemplo, eventos con registros no deben eliminarse sin control.
 - Usar `htmlspecialchars` en cada valor renderizado.
+
+### Normativa editable
+
+- `normativa.html` sigue siendo la URL publica y tambien la fuente que carga el modal de `registro.html`.
+- Los bloques editables estan delimitados por comentarios `BURNOUT_NORMATIVA_BLOCK_START` y `BURNOUT_NORMATIVA_BLOCK_END`.
+- `admin_normativa.php` lee esos marcadores, permite editar cada bloque, borrar bloques y anadir bloques nuevos.
+- Cada bloque del editor tiene un boton `Ver contenido` / `Ocultar contenido` para alternar entre codigo HTML y previsualizacion WEB.
+- La previsualizacion cliente se gestiona en `assets/js/admin_normativa.js` y no guarda cambios hasta que se pulsa el boton de guardar.
+- No eliminar esos comentarios manualmente: si faltan, el admin no puede reconstruir la pagina.
+- El editor permite HTML de contenido como `h3`, `h4`, `p`, `ul`, `li`, `strong`, `div`, `table`, `thead`, `tbody`, `tr`, `th` y `td`.
+- El editor bloquea etiquetas peligrosas o interactivas como `script`, `iframe`, `object`, `embed`, `form`, `input`, `button`, atributos `on...` y URLs `javascript:`.
 
 ## Seguridad y configuracion HTTP
 

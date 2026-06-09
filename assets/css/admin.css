@@ -1077,6 +1077,146 @@
   padding: 20px 0;
 }
 
+.admin-normativa-editor,
+.admin-normativa-block,
+.admin-normativa-add {
+  margin-bottom: 24px;
+}
+
+.admin-normativa-blocks {
+  display: grid;
+  gap: 24px;
+}
+
+.admin-normativa-help {
+  color: #777;
+  font-size: 13px;
+}
+
+.admin-normativa-view-controls {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.admin-normativa-view-controls button {
+  border: 1px solid rgba(21, 21, 21, .18);
+  color: #151515;
+  font-family: 'Yantramanav', Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  min-height: 38px;
+  padding: 0 12px;
+  text-transform: uppercase;
+}
+
+.admin-normativa-view-controls button {
+  background: #151515;
+  color: #fff;
+  cursor: pointer;
+  transition: background .2s ease, border-color .2s ease;
+}
+
+.admin-normativa-view-controls button:hover {
+  background: #df1f29;
+  border-color: #df1f29;
+}
+
+.admin-normativa-top-link {
+  align-items: center;
+  background: #151515;
+  border: 1px solid rgba(21, 21, 21, .18);
+  color: #fff;
+  display: inline-flex;
+  font-family: 'Yantramanav', Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  min-height: 38px;
+  padding: 0 12px;
+  text-transform: uppercase;
+  transition: background .2s ease, border-color .2s ease;
+}
+
+.admin-normativa-top-link:hover {
+  background: #df1f29;
+  border-color: #df1f29;
+  color: #fff;
+}
+
+.admin-normativa-title-form {
+  max-width: 760px;
+}
+
+.admin-normativa-block textarea,
+.admin-normativa-add textarea {
+  font-family: Consolas, "Courier New", monospace;
+  line-height: 1.5;
+  min-height: 260px;
+}
+
+.admin-normativa-add textarea {
+  min-height: 180px;
+}
+
+.admin-normativa-preview-pane {
+  background: #f4f4f4;
+  border: 1px solid rgba(21, 21, 21, .12);
+  border-radius: 8px;
+  max-height: 620px;
+  overflow: auto;
+  padding: 24px;
+}
+
+.admin-normativa-preview {
+  background: #fff;
+  border: 1px solid rgba(21, 21, 21, .08);
+  border-radius: 8px;
+  box-shadow: 0 18px 40px rgba(21, 21, 21, .08);
+  color: #151515;
+  margin: 0 auto;
+  max-width: 900px;
+  padding: 28px;
+}
+
+.admin-normativa-preview h3,
+.admin-normativa-preview h4 {
+  color: #151515;
+  font-weight: 700;
+  margin-top: 0;
+}
+
+.admin-normativa-preview p,
+.admin-normativa-preview li {
+  color: #333;
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.admin-normativa-preview ul {
+  list-style: disc;
+  margin: 0 0 18px 20px;
+  padding-left: 20px !important;
+}
+
+.admin-normativa-preview table {
+  border-collapse: collapse;
+  color: #333;
+  width: 100%;
+}
+
+.admin-normativa-preview th,
+.admin-normativa-preview td {
+  border: 1px solid rgba(21, 21, 21, .18);
+  padding: 12px;
+}
+
+.admin-normativa-preview-empty {
+  color: #777;
+  margin: 0;
+}
+
 @media only screen and (max-width: 900px) {
   .admin-stats,
   .admin-grid,

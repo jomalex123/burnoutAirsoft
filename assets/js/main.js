@@ -47,6 +47,10 @@ function InitPage() {
         window.initAdminPartidasPage();
     }
 
+    if (typeof window.initAdminNormativaPage === 'function') {
+        window.initAdminNormativaPage();
+    }
+
     if (typeof window.initGalleryPage === 'function') {
         window.initGalleryPage();
     }
