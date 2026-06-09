@@ -480,7 +480,7 @@ function registro_build_confirmation_email(array $registration): string
         "• Correo electrónico: %s\n" .
         "• Equipo: %s\n\n" .
         "Normativa:\n" .
-        "https://drive.google.com/file/d/104gDRmUVKkp6AtADIaEomPMzdUN7tZVT/\n\n" .
+        "https://drive.google.com/file/d/1ZwLOwiNFrWdmVO7XU9cix1nm4yUjLVK5/view?usp=sharing\n\n" .
         "Por favor, asegúrate de leer la normativa. Su incumplimiento podrá ser \n" .
         "sancionado por la organización, incluyendo la expulsión del terreno de \n" .
         "juego.\n\n" .
