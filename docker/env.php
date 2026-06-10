@@ -9,9 +9,9 @@ return [
         'local' => [
             'host' => 'db',
             'port' => 3306,
-            'database' => 'burnoutairsoft_local',
-            'username' => 'burnout',
-            'password' => 'burnout',
+            'database' => '11364681_burnoutairsoft',
+            'username' => 'boutAdmin',
+            'password' => 'Asdqwe123',
             'charset' => 'utf8mb4',
         ],
     ],

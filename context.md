@@ -9,13 +9,14 @@ Este fichero sirve como contexto base para nuevas sesiones de desarrollo. Antes 
 - Endpoints/controladores PHP en la raiz: `events.php`, `gallery_items.php`, `registro.php`, `admin.php`, `admin_partidas.php`, `admin_registros.php`, `admin_gallery.php`, `admin_normativa.php`.
 - CSS propio en `assets/css/`; JS propio en `assets/js/`.
 - Configuracion y helpers en `config/`.
-- Base de datos MariaDB/MySQL definida en `database/schema.sql`.
+- Base de datos MySQL definida en `database/schema.sql`.
 - Imagenes de contenido en `images/resources/` y galeria administrable en `images/gallery/`.
 
 ## Stack y dependencias
 
 - PHP 8.3 en Docker, con Apache y extension `pdo_mysql`.
-- MariaDB 11.4 en `docker-compose.yml`.
+- En este equipo puede no haber PHP local. Antes de lanzar cualquier comando PHP, comprobar si `php` esta disponible; si no lo esta, usar el PHP del contenedor Docker del servicio `web`.
+- MySQL 8.4 en `docker-compose.yml`.
 - Frontend sin bundler: HTML, CSS y JavaScript directo.
 - Librerias JS/CSS locales:
   - jQuery 3.7.1.
@@ -480,7 +481,15 @@ docker compose up --build
 Crear tablas:
 
 ```bash
-D:\xampp\mysql\bin\mysql.exe -u root bbdd < database\schema.sql
+docker compose exec -T db sh -c 'mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' < database/schema.sql
+```
+
+En la primera creacion del contenedor MySQL, `database/schema.sql` se importa automaticamente desde `/docker-entrypoint-initdb.d/01-schema.sql`. Si la base ya existe, importar el esquema manualmente solo cuando haga falta.
+
+Migraciones:
+
+```bash
+docker compose exec -T db sh -c 'mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' < database/migrations/archivo.sql
 ```
 
 Crear admin:
@@ -489,10 +498,16 @@ Crear admin:
 php scripts/create_admin_user.php admin "password-seguro" "Burnout Admin"
 ```
 
-En XAMPP Windows:
+Si no hay PHP local, usar Docker:
 
 ```bash
-C:\xampp\php\php.exe scripts/create_admin_user.php admin "password-seguro" "Burnout Admin"
+docker compose run --rm web php scripts/create_admin_user.php admin "password-seguro" "Burnout Admin"
+```
+
+Patron general para comandos PHP en este equipo:
+
+```bash
+command -v php >/dev/null 2>&1 && php ruta/al/script.php || docker compose run --rm web php ruta/al/script.php
 ```
 
 ## Instruccion para futuras sesiones

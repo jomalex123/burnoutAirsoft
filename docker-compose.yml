@@ -15,24 +15,24 @@ services:
         condition: service_healthy
 
   db:
-    image: mariadb:11.4
+    image: mysql:8.4
     container_name: burnoutairsoft-db
     restart: unless-stopped
     environment:
-      MARIADB_ROOT_PASSWORD: burnout_root
-      MARIADB_DATABASE: burnoutairsoft_local
-      MARIADB_USER: burnout
-      MARIADB_PASSWORD: burnout
+      MYSQL_ROOT_PASSWORD: burnout_root
+      MYSQL_DATABASE: 11364681_burnoutairsoft
+      MYSQL_USER: boutAdmin
+      MYSQL_PASSWORD: Asdqwe123
     ports:
-      - "3307:3306"
+      - "3306:3306"
     volumes:
-      - burnoutairsoft_db:/var/lib/mysql
+      - burnoutairsoft_mysql_db:/var/lib/mysql
       - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pburnout_root"]
       interval: 5s
       timeout: 5s
       retries: 20
 
 volumes:
-  burnoutairsoft_db:
+  burnoutairsoft_mysql_db:
