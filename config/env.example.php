@@ -59,4 +59,13 @@ return [
             'reply_to' => null,
         ],
     ],
+
+    'instagram' => [
+        'enabled' => false,
+        'graph_version' => 'v20.0',
+        'user_id' => '',
+        'access_token' => '',
+        'limit' => 12,
+        'profile_url' => 'https://www.instagram.com/burnoutairsoft/',
+    ],
 ];

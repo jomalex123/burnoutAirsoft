@@ -1,17 +1,18 @@
 <!DOCTYPE html>
 <html lang="es">
   <head>
-    <title>Galer&iacute;a en mantenimiento | Burnout Airsoft</title>
+    <title>Galer&iacute;a Instagram - Burnout Airsoft</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <link rel="icon" type="image/png" href="images/resources/logoBurnout-4.png" />
     <link rel="stylesheet" href="assets/css/plugins.min.css">
     <link rel="stylesheet" href="assets/css/style.css">
-    <link rel="stylesheet" href="assets/css/gallery.css">
+    <link rel="stylesheet" href="assets/css/instagram_gallery.css">
   </head>
   <body>
     <div class="ms-main-container">
+      <div class="ms-preloader"></div>
       <header class="ms-header">
         <nav class="ms-nav">
           <div class="ms-logo">
@@ -63,17 +64,22 @@
         </nav>
       </header>
 
-      <main class="ms-container gallery-maintenance-page">
-        <section class="gallery-maintenance" aria-label="Galer&iacute;a en mantenimiento">
-          <div class="gallery-maintenance__media maintenance-background"></div>
-          <div class="gallery-maintenance__overlay"></div>
-          <div class="gallery-maintenance__content">
-            <span>Burnout Airsoft</span>
-            <h1>Galer&iacute;a bajo mantenimiento</h1>
-            <p>Estamos reorganizando las im&aacute;genes y preparando esta secci&oacute;n para mostrar mejor nuestros momentos. Volver&aacute; a estar disponible pronto.</p>
-            <a href="galeria_instagram.html" data-type="page-transition">Ver prueba Instagram</a>
-            <a href="./" data-type="page-transition">Volver al inicio</a>
+      <main class="ms-container instagram-gallery-page">
+        <section class="ms-section__block instagram-gallery-header">
+          <span class="instagram-gallery-kicker">Burnout Airsoft</span>
+          <h1>Galer&iacute;a Instagram</h1>
+          <p>Prueba de galer&iacute;a conectable con las publicaciones de <strong>@burnoutairsoft</strong>. Ahora carga un JSON local para poder validar dise&ntilde;o y flujo sin depender todav&iacute;a de tokens externos.</p>
+        </section>
+
+        <section class="ms-section__block">
+          <div class="instagram-gallery-toolbar">
+            <p id="instagramGalleryStatus">Cargando publicaciones...</p>
+            <a href="https://www.instagram.com/burnoutairsoft/" target="_blank" rel="noopener noreferrer" data-instagram-profile-link>Ver Instagram</a>
           </div>
+        </section>
+
+        <section class="ms-section__block">
+          <div id="instagramGalleryGrid" class="instagram-gallery-grid" data-instagram-source="instagram_feed.php" aria-live="polite"></div>
         </section>
       </main>
 
@@ -94,5 +100,6 @@
     <script type="text/javascript" src="assets/js/jquery-3.7.1.min.js"></script>
     <script type="text/javascript" src='assets/js/plugins.min.js'></script>
     <script type="text/javascript" src="assets/js/main.js"></script>
+    <script type="text/javascript" src="assets/js/instagram_gallery.js"></script>
   </body>
 </html>

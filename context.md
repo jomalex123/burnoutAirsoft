@@ -5,8 +5,8 @@ Este fichero sirve como contexto base para nuevas sesiones de desarrollo. Antes 
 ## Resumen rapido
 
 - Proyecto PHP/HTML/CSS/JS sin framework.
-- Paginas publicas en la raiz: `index.html`, `burnout.html`, `campo.html`, `galeria.html`, `partidas.html`, `registro.html`, `normativa.html`, `privacidad.html`.
-- Endpoints/controladores PHP en la raiz: `events.php`, `gallery_items.php`, `registro.php`, `admin.php`, `admin_partidas.php`, `admin_registros.php`, `admin_gallery.php`, `admin_normativa.php`.
+- Paginas publicas en la raiz: `index.html`, `burnout.html`, `campo.html`, `galeria.html`, `galeria_instagram.html`, `partidas.html`, `registro.html`, `normativa.html`, `privacidad.html`.
+- Endpoints/controladores PHP en la raiz: `events.php`, `gallery_items.php`, `instagram_feed.php`, `registro.php`, `admin.php`, `admin_partidas.php`, `admin_registros.php`, `admin_gallery.php`, `admin_normativa.php`.
 - CSS propio en `assets/css/`; JS propio en `assets/js/`.
 - Configuracion y helpers en `config/`.
 - Base de datos MySQL definida en `database/schema.sql`.
@@ -42,12 +42,14 @@ Este fichero sirve como contexto base para nuevas sesiones de desarrollo. Antes 
 - `assets/css/burnout.css`: pagina "Nosotros".
 - `assets/css/campo.css`: pagina "Campo" y pantalla de mantenimiento del campo.
 - `assets/css/gallery.css`: galeria y pantalla de mantenimiento de galeria.
+- `assets/css/instagram_gallery.css`: prueba de galeria Instagram con grid y fuente JSON.
 - `assets/css/privacidad.css`: politica de privacidad.
 - `assets/css/normativa.css`: normativa, pensada tambien para cargarse dentro del modal de registro.
 - `assets/css/template.css`: placeholder para paginas generadas desde `template.html`.
 - `assets/js/main.js`: inicializador global, menu, transiciones parciales, slider y carga dinamica de scripts/estilos.
 - `assets/js/partidas.js`: calendario publico que consume `events.php`.
 - `assets/js/registro.js`: validacion del formulario publico, modal de normativa y asistentes dinamicos.
+- `assets/js/instagram_gallery.js`: carga `instagram_feed.php` para pintar la prueba de galeria Instagram.
 - `assets/js/admin_*.js`: interacciones de administracion.
 - `config/database.php`: crea un singleton PDO con `PDO::ERRMODE_EXCEPTION`, fetch assoc y prepares reales.
 - `config/auth.php`: sesiones admin, login, logout, CSRF y rate limit de login.
@@ -365,6 +367,14 @@ Paginas:
 - `admin_gallery.php`: alta/borrado/listado/paginacion de imagenes de galeria.
 - `admin_normativa.php`: editor del titulo y de los bloques HTML de `normativa.html`.
 
+### Galeria Instagram
+
+- `galeria_instagram.html` es una prueba de galeria con el mismo header/footer y estetica Burnout.
+- El grid carga datos desde `instagram_feed.php` mediante `data-instagram-source`.
+- `instagram_feed.php` devuelve `assets/data/instagram_gallery.json` si la API no esta configurada.
+- Para automatizar publicaciones reales, configurar en `env.php` la clave `instagram` con `enabled`, `graph_version`, `user_id`, `access_token`, `limit` y `profile_url`.
+- No hacer scraping de Instagram publico: usar API oficial o mantener el JSON local.
+
 Patrones UI admin:
 
 - Fondo claro `.admin-page`.
@@ -438,6 +448,7 @@ Usar estas paginas como base segun el caso:
 - Nueva pagina con calendario o panel lateral: `partidas.html` + `assets/css/partidas.css`.
 - Nueva pagina con formulario publico: `registro.html` + `assets/css/registro.css` + patron servidor de `registro.php`.
 - Nueva pantalla de mantenimiento o landing oscura: `campo.html` o `galeria.html`.
+- Nueva galeria conectable a Instagram: `galeria_instagram.html` + `assets/css/instagram_gallery.css` + `assets/js/instagram_gallery.js`.
 - Nueva pagina admin: `admin_gallery.php` si necesita modal/form/listado simple; `admin_registros.php` si necesita tabla/filtros/export; `admin_partidas.php` si necesita calendario editable.
 
 ## Checklist antes de implementar una pagina nueva

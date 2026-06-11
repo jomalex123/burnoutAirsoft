@@ -55,6 +55,10 @@ function InitPage() {
         window.initGalleryPage();
     }
 
+    if (typeof window.initInstagramGalleryPage === 'function') {
+        window.initInstagramGalleryPage();
+    }
+
     if (typeof window.initPartidasPage === 'function') {
         window.initPartidasPage();
     }
