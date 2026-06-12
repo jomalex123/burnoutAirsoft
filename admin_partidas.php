@@ -491,10 +491,10 @@ $csrfToken = burnout_csrf_token();
                     <input id="editMaxAttendees" name="max_attendees" type="number" min="1" max="500" step="1" required>
                   </div>
                   <div class="admin-login-field">
-                    <label for="editTimeMañana">Horario</label>
+                    <label for="editTimeManana">Horario</label>
                     <div class="admin-time-options" role="radiogroup" aria-label="Horario">
                       <label>
-                        <input id="editTimeMañana" type="radio" name="time" value="M" required>
+                        <input id="editTimeManana" type="radio" name="time" value="M" required>
                         <span>Mañana</span>
                       </label>
                       <label>

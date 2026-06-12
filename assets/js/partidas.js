@@ -179,8 +179,8 @@ window.initPartidasPage = function () {
   function normalizeTime(time) {
     var value = String(time || '').toLowerCase();
 
-    if (value === 'm' || value === 'mañana') {
-      return 'Mañana';
+    if (value === 'm' || value === 'mañana' || value === 'manana') {
+      return 'manana';
     }
 
     if (value === 't') {
@@ -196,7 +196,7 @@ window.initPartidasPage = function () {
 
   function timeOrder(time) {
     return {
-      Mañana: 1,
+      manana: 1,
       tarde: 2,
       noche: 3
     }[normalizeTime(time)] || 99;
