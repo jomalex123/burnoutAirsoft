@@ -67,5 +67,7 @@ return [
         'access_token' => '',
         'limit' => 12,
         'profile_url' => 'https://www.instagram.com/burnoutairsoft/',
+        'ca_file' => '',
+        'ssl_verify' => true,
     ],
 ];

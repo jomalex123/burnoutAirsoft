@@ -293,6 +293,7 @@ function loadPageStyles(page) {
 function collectDetachedPageElements(page, nextMain) {
     var selectors = [
         '#modal',
+        '#instagramModal',
         '#normativaModal',
         '#registroConfirmationModal'
     ];
@@ -311,6 +312,7 @@ function collectDetachedPageElements(page, nextMain) {
 function syncDetachedPageElements(detachedPageElements) {
     var selectors = [
         '#modal',
+        '#instagramModal',
         '#normativaModal',
         '#registroConfirmationModal'
     ];

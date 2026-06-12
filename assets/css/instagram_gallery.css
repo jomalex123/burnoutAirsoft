@@ -24,11 +24,6 @@
   margin-bottom: 18px;
 }
 
-.instagram-gallery-header p {
-  color: #555;
-  max-width: 720px;
-}
-
 .instagram-gallery-toolbar {
   align-items: center;
   background: #151515;
@@ -57,37 +52,45 @@
   letter-spacing: .1em;
   padding: 13px 16px;
   text-transform: uppercase;
-  transition: background .2s ease;
+  transition: background .2s ease, color .2s ease;
 }
 
-.instagram-gallery-toolbar a:hover,
-.instagram-empty a:hover {
+.instagram-gallery-toolbar a:hover {
   background: #fff;
   color: #151515;
 }
 
+.instagram-gallery-section {
+  margin-left: 0;
+  margin-right: 0;
+  max-width: none;
+  padding-left: 0;
+  padding-right: 0;
+  width: 100%;
+}
+
 .instagram-gallery-grid {
   display: grid;
-  gap: 18px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  margin: 0 auto;
+  max-width: none;
+  padding: 2px;
+  width: 100%;
 }
 
-.instagram-card,
-.instagram-empty {
-  background: #fff;
-  border: 1px solid rgba(21, 21, 21, .1);
-  border-radius: 8px;
-  box-shadow: 0 18px 40px rgba(21, 21, 21, .08);
-  overflow: hidden;
-}
-
-.instagram-card__media {
-  background: #151515;
+.instagram-gallery-thumb {
+  background: #111;
+  border: 0;
+  cursor: pointer;
   display: block;
+  margin: 0;
   overflow: hidden;
+  padding: 0;
+  width: 100%;
 }
 
-.instagram-card__media img {
+.instagram-gallery-thumb img {
   aspect-ratio: 1;
   display: block;
   height: auto;
@@ -96,18 +99,59 @@
   width: 100%;
 }
 
-.instagram-card__media:hover img {
-  filter: brightness(.84);
+.instagram-gallery-thumb:hover img,
+.instagram-gallery-thumb:focus-visible img {
+  filter: brightness(.86);
   transform: scale(1.025);
 }
 
-.instagram-card__body {
-  display: grid;
-  gap: 8px;
-  padding: 20px;
+.instagram-gallery-thumb:focus-visible {
+  outline: 2px solid #df1f29;
+  outline-offset: -2px;
 }
 
-.instagram-card__body span,
+.instagram-gallery-actions {
+  display: flex;
+  justify-content: center;
+  padding: 34px 0 12px;
+}
+
+.instagram-load-more {
+  background: #151515;
+  border: 0;
+  color: #fff;
+  cursor: pointer;
+  font-family: "Yantramanav", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  min-width: 180px;
+  padding: 14px 20px;
+  text-transform: uppercase;
+  transition: background .2s ease, color .2s ease, opacity .2s ease;
+}
+
+.instagram-load-more:hover,
+.instagram-load-more:focus-visible {
+  background: #df1f29;
+  color: #fff;
+  outline: none;
+}
+
+.instagram-load-more:disabled {
+  cursor: wait;
+  opacity: .65;
+}
+
+.instagram-empty {
+  background: #fff;
+  border: 1px solid rgba(21, 21, 21, .1);
+  border-radius: 8px;
+  box-shadow: 0 18px 40px rgba(21, 21, 21, .08);
+  grid-column: 1 / -1;
+  padding: 32px;
+}
+
 .instagram-empty span {
   color: #df1f29;
   display: block;
@@ -117,24 +161,17 @@
   text-transform: uppercase;
 }
 
-.instagram-card__body h2,
 .instagram-empty h2 {
   font-size: 24px;
   line-height: 1.05;
-  margin: 0;
+  margin: 10px 0;
 }
 
-.instagram-card__body p,
 .instagram-empty p {
   color: #444;
   font-size: 16px;
   line-height: 1.6;
   margin: 0;
-}
-
-.instagram-empty {
-  grid-column: 1 / -1;
-  padding: 32px;
 }
 
 .instagram-empty a {
@@ -150,23 +187,68 @@
   border-color: rgba(223, 31, 41, .3);
 }
 
+.instagram-modal .modal-desc {
+  font-size: 19px;
+  padding: 18px;
+}
+
+.instagram-modal .gallery-modal-close {
+  height: 24px;
+  right: 10px;
+  top: 10px;
+  width: 24px;
+}
+
+.instagram-modal-meta {
+  color: #df1f29;
+  display: block;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.instagram-modal .modal-desc p {
+  font-size: 19px;
+  line-height: 1.45;
+  margin: 6px 0;
+  white-space: pre-line;
+}
+
+body.instagram-modal-open {
+  overflow: hidden;
+}
+
 @media only screen and (max-width: 900px) {
   .instagram-gallery-header h1 {
     font-size: 38px;
   }
-
-  .instagram-gallery-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
-@media only screen and (max-width: 640px) {
+@media only screen and (max-width: 768px) {
+  .instagram-gallery-section {
+    margin: 18px 0 3em;
+    padding-left: 0;
+    padding-right: 0;
+    width: 100%;
+  }
+
   .instagram-gallery-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    max-width: none;
+    padding: 0;
+    width: 100%;
   }
 
   .instagram-gallery-toolbar {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .instagram-modal .modal-desc,
+  .instagram-modal-meta,
+  .instagram-modal .modal-desc p {
+    font-size: 15px;
   }
 }

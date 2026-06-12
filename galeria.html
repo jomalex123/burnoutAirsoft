@@ -1,7 +1,7 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
   <head>
-    <title>Galer&iacute;a en mantenimiento | Burnout Airsoft</title>
+    <title>Galer&iacute;a - Burnout Airsoft</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
@@ -9,9 +9,11 @@
     <link rel="stylesheet" href="assets/css/plugins.min.css">
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/gallery.css">
+    <link rel="stylesheet" href="assets/css/instagram_gallery.css">
   </head>
   <body>
     <div class="ms-main-container">
+      <div class="ms-preloader"></div>
       <header class="ms-header">
         <nav class="ms-nav">
           <div class="ms-logo">
@@ -63,16 +65,16 @@
         </nav>
       </header>
 
-      <main class="ms-container gallery-maintenance-page">
-        <section class="gallery-maintenance" aria-label="Galer&iacute;a en mantenimiento">
-          <div class="gallery-maintenance__media maintenance-background"></div>
-          <div class="gallery-maintenance__overlay"></div>
-          <div class="gallery-maintenance__content">
-            <span>Burnout Airsoft</span>
-            <h1>Galer&iacute;a bajo mantenimiento</h1>
-            <p>Estamos reorganizando las im&aacute;genes y preparando esta secci&oacute;n para mostrar mejor nuestros momentos. Volver&aacute; a estar disponible pronto.</p>
-            <a href="galeria_instagram.html" data-type="page-transition">Ver prueba Instagram</a>
-            <a href="./" data-type="page-transition">Volver al inicio</a>
+      <main class="ms-container instagram-gallery-page">
+        <section class="ms-section__block instagram-gallery-header">
+          <span class="instagram-gallery-kicker">Burnout Airsoft</span>
+          <h1>Galer&iacute;a</h1>
+        </section>
+
+        <section class="ms-section__block instagram-gallery-section">
+          <div id="instagramGalleryGrid" class="instagram-gallery-grid" data-instagram-source="instagram_feed.php" aria-live="polite"></div>
+          <div class="instagram-gallery-actions">
+            <button id="instagramLoadMore" class="instagram-load-more" type="button" hidden>Cargar m&aacute;s</button>
           </div>
         </section>
       </main>
@@ -90,9 +92,30 @@
         </div>
       </footer>
     </div>
+    <div id="instagramModal" class="modal instagram-modal" style="display:none;">
+      <div class="modal-content">
+        <button class="gallery-modal-button gallery-modal-close" type="button" data-instagram-modal-close aria-label="Cerrar imagen">
+          <img src="assets/images/gallery/lightbox-icon-close-white.png" alt="">
+        </button>
+        <button class="gallery-modal-button gallery-modal-prev" type="button" data-instagram-modal-prev aria-label="Imagen anterior">
+          <img src="assets/images/gallery/lightbox-arrow-left-white.png" alt="">
+        </button>
+        <button class="gallery-modal-button gallery-modal-next" type="button" data-instagram-modal-next aria-label="Imagen siguiente">
+          <img src="assets/images/gallery/lightbox-arrow-right-white.png" alt="">
+        </button>
+        <div class="modal-body">
+          <img id="instagramModalImg" src="" alt="">
+          <div class="modal-desc">
+            <span id="instagramModalMeta" class="instagram-modal-meta"></span>
+            <p id="instagramModalText"></p>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <script type="text/javascript" src="assets/js/jquery-3.7.1.min.js"></script>
     <script type="text/javascript" src='assets/js/plugins.min.js'></script>
     <script type="text/javascript" src="assets/js/main.js"></script>
+    <script type="text/javascript" src="assets/js/instagram_gallery.js"></script>
   </body>
 </html>
