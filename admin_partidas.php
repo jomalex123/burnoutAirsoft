@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/config/auth.php';
+require_once __DIR__ . '/config/registration_notifications.php';
 
 $adminUser = null;
 $setupError = '';
@@ -126,6 +127,295 @@ function burnout_event_attendee_count(int $id): int
     return (int) $statement->fetchColumn();
 }
 
+function burnout_admin_event_attendee_count(PDO $pdo, int $id): int
+{
+    $statement = $pdo->prepare(
+        'SELECT COALESCE(COUNT(ra.id), 0)
+         FROM registrations r
+         INNER JOIN registration_attendees ra ON ra.registration_id = r.id
+         WHERE r.event_id = :id'
+    );
+    $statement->execute(['id' => $id]);
+
+    return (int) $statement->fetchColumn();
+}
+
+function burnout_admin_find_event_for_registration(PDO $pdo, int $eventId): ?array
+{
+    $statement = $pdo->prepare(
+        'SELECT id, event_date, title, time_slot, max_attendees
+         FROM events
+         WHERE id = :id
+         LIMIT 1
+         FOR UPDATE'
+    );
+    $statement->execute(['id' => $eventId]);
+    $event = $statement->fetch();
+
+    if (!$event) {
+        return null;
+    }
+
+    return [
+        'id' => (int) $event['id'],
+        'date' => (string) $event['event_date'],
+        'title' => (string) $event['title'],
+        'turn' => burnout_event_time_to_label((string) $event['time_slot']),
+        'max_attendees' => max(1, (int) $event['max_attendees']),
+        'attendee_count' => burnout_admin_event_attendee_count($pdo, (int) $event['id']),
+    ];
+}
+
+function burnout_admin_event_capacity_remaining(array $event): int
+{
+    return max(
+        0,
+        max(1, (int) ($event['max_attendees'] ?? 40)) - max(0, (int) ($event['attendee_count'] ?? 0))
+    );
+}
+
+function burnout_admin_clean_list(array $values): array
+{
+    return array_map(static function ($value): string {
+        return trim((string) $value);
+    }, $values);
+}
+
+function burnout_admin_valid_dni_letter(string $number, string $letter): bool
+{
+    $letters = 'TRWAGMYFPDXBNJZSQVHLCKE';
+
+    return $letters[((int) $number) % 23] === strtoupper($letter);
+}
+
+function burnout_admin_is_valid_phone(string $phone): bool
+{
+    if (!preg_match('/^\+?[\d\s-]+$/', $phone)) {
+        return false;
+    }
+
+    $digits = preg_replace('/\D+/', '', $phone) ?? '';
+
+    return strlen($digits) >= 9;
+}
+
+function burnout_admin_is_valid_document(string $document): bool
+{
+    $value = strtoupper(preg_replace('/[\s-]+/', '', $document) ?? '');
+
+    if (preg_match('/^(\d{8})([A-Z])$/', $value, $matches)) {
+        return burnout_admin_valid_dni_letter($matches[1], $matches[2]);
+    }
+
+    if (preg_match('/^([XYZ])(\d{7})([A-Z])$/', $value, $matches)) {
+        $prefix = ['X' => '0', 'Y' => '1', 'Z' => '2'][$matches[1]];
+
+        return burnout_admin_valid_dni_letter($prefix . $matches[2], $matches[3]);
+    }
+
+    return (bool) preg_match('/^(?:[A-Z]{3}\d{6}[A-Z]?|[A-Z]{2}\d{7})$/', $value);
+}
+
+function burnout_admin_format_short_date(string $value): string
+{
+    $date = DateTime::createFromFormat('Y-m-d', $value);
+
+    if (!$date || $date->format('Y-m-d') !== $value) {
+        return $value;
+    }
+
+    $months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+    return sprintf('%d %s', (int) $date->format('j'), $months[(int) $date->format('n') - 1]);
+}
+
+function burnout_admin_normalize_turn(string $value): string
+{
+    $turn = strtolower(trim($value));
+    $turn = str_replace(['Ã¡', 'Ã©', 'Ã­', 'Ã³', 'Ãº', 'Ã±'], ['a', 'e', 'i', 'o', 'u', 'n'], $turn);
+
+    return $turn;
+}
+
+function burnout_admin_turn_hours(string $turn): array
+{
+    return [
+        'manana' => ['open' => '8:00 AM', 'close' => '9:00 AM'],
+        'm' => ['open' => '8:00 AM', 'close' => '9:00 AM'],
+        'tarde' => ['open' => '15:00 PM', 'close' => '16:00 PM'],
+        't' => ['open' => '15:00 PM', 'close' => '16:00 PM'],
+        'noche' => ['open' => '20:00 h', 'close' => '21:00 h'],
+        'n' => ['open' => '20:00 h', 'close' => '21:00 h'],
+    ][burnout_admin_normalize_turn($turn)] ?? ['open' => '8:00 AM', 'close' => '9:00 AM'];
+}
+
+function burnout_admin_registration_event_label(array $registration): string
+{
+    $event = is_array($registration['event'] ?? null) ? $registration['event'] : [];
+    $parts = [
+        trim((string) ($event['title'] ?? 'Burnout Airsoft')),
+        !empty($event['date']) ? burnout_admin_format_short_date((string) $event['date']) : '',
+        trim((string) ($event['turn'] ?? '')),
+    ];
+
+    return implode(' - ', array_values(array_filter($parts, static function (string $part): bool {
+        return trim($part) !== '';
+    })));
+}
+
+function burnout_admin_build_confirmation_email(array $registration): string
+{
+    $attendees = $registration['attendees'] ?? [];
+    $attendeeLines = array_map(static function (array $attendee): string {
+        return (string) $attendee['name'];
+    }, $attendees);
+    $event = is_array($registration['event'] ?? null) ? $registration['event'] : [];
+    $hours = burnout_admin_turn_hours((string) ($event['turn'] ?? ''));
+
+    return sprintf(
+        "Tu inscripcion para el evento \"%s\" se ha registrado correctamente.\n\n" .
+        "Recuerda que la hora de apertura sera a las %s y la \n" .
+        "hora de cierre de puertas a las %s\n\n" .
+        "Resumen de los datos enviados:\n" .
+        "- Numero de asistentes: %d\n" .
+        "- Lista de asistentes:\n%s\n\n" .
+        "- Telefono de contacto: %s\n" .
+        "- Correo electronico: %s\n" .
+        "- Equipo: %s\n\n" .
+        "Normativa:\n" .
+        "https://drive.google.com/file/d/1ZwLOwiNFrWdmVO7XU9cix1nm4yUjLVK5/view?usp=sharing\n\n" .
+        "Por favor, asegurate de leer la normativa. Su incumplimiento podra ser \n" .
+        "sancionado por la organizacion, incluyendo la expulsion del terreno de \n" .
+        "juego.\n\n" .
+        "Gracias por tu inscripcion.\n" .
+        "Un saludo.",
+        burnout_admin_registration_event_label($registration),
+        $hours['open'],
+        $hours['close'],
+        count($attendees),
+        implode("\n", $attendeeLines),
+        $registration['phone'],
+        $registration['email'],
+        $registration['team'] !== '' ? $registration['team'] : '-'
+    );
+}
+
+function burnout_admin_send_registration_email(array $registration): void
+{
+    $event = is_array($registration['event'] ?? null) ? $registration['event'] : [];
+    $subject = 'Confirmacion de inscripcion - ' . (trim((string) ($event['title'] ?? '')) ?: 'Burnout Airsoft');
+    $notificationId = burnout_registration_notification_create(
+        (int) $registration['id'],
+        (string) $registration['email'],
+        $subject,
+        burnout_admin_build_confirmation_email($registration)
+    );
+
+    burnout_registration_notification_send($notificationId);
+}
+
+function burnout_admin_save_late_registration(): array
+{
+    $eventId = filter_input(INPUT_POST, 'event_id', FILTER_VALIDATE_INT);
+
+    if ($eventId === false || $eventId === null) {
+        throw new RuntimeException('No se ha recibido el ID de la partida.');
+    }
+
+    $email = trim((string) ($_POST['email'] ?? ''));
+    $phone = trim((string) ($_POST['telefono'] ?? ''));
+    $team = trim((string) ($_POST['equipo'] ?? ''));
+    $attendeeNames = burnout_admin_clean_list(is_array($_POST['attendee_name'] ?? null) ? $_POST['attendee_name'] : []);
+    $attendeeDocuments = burnout_admin_clean_list(is_array($_POST['attendee_document'] ?? null) ? $_POST['attendee_document'] : []);
+
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        throw new RuntimeException('Introduce una direccion electronica valida.');
+    }
+
+    if (!burnout_admin_is_valid_phone($phone)) {
+        throw new RuntimeException('Introduce un telefono de contacto valido con al menos 9 numeros.');
+    }
+
+    if (!$attendeeNames || count($attendeeNames) !== count($attendeeDocuments)) {
+        throw new RuntimeException('Completa el nombre y documento de todos los asistentes.');
+    }
+
+    if (count($attendeeNames) > 10) {
+        throw new RuntimeException('No se pueden registrar mas de 10 asistentes en el mismo formulario.');
+    }
+
+    foreach ($attendeeNames as $index => $name) {
+        $document = $attendeeDocuments[$index] ?? '';
+
+        if ($name === '' || $document === '') {
+            throw new RuntimeException('El nombre completo y documento son obligatorios para cada asistente.');
+        }
+
+        if (!burnout_admin_is_valid_document($document)) {
+            throw new RuntimeException('Introduce un DNI, NIE o pasaporte valido para cada asistente.');
+        }
+    }
+
+    $pdo = burnout_pdo();
+    $pdo->beginTransaction();
+
+    try {
+        $event = burnout_admin_find_event_for_registration($pdo, (int) $eventId);
+
+        if (!$event) {
+            throw new RuntimeException('La partida seleccionada no existe.');
+        }
+
+        if (count($attendeeNames) > burnout_admin_event_capacity_remaining($event)) {
+            throw new RuntimeException('La inscripcion supera el maximo de aforo de la partida.');
+        }
+
+        $registration = $pdo->prepare(
+            'INSERT INTO registrations (event_id, email, phone, team_name, accepted_rules)
+             VALUES (:event_id, :email, :phone, :team_name, 1)'
+        );
+        $registration->execute([
+            'event_id' => $eventId,
+            'email' => $email,
+            'phone' => $phone,
+            'team_name' => $team !== '' ? $team : null,
+        ]);
+
+        $registrationId = (int) $pdo->lastInsertId();
+        $attendee = $pdo->prepare(
+            'INSERT INTO registration_attendees (registration_id, full_name, document)
+             VALUES (:registration_id, :full_name, :document)'
+        );
+
+        foreach ($attendeeNames as $index => $name) {
+            $attendee->execute([
+                'registration_id' => $registrationId,
+                'full_name' => $name,
+                'document' => $attendeeDocuments[$index],
+            ]);
+        }
+
+        $pdo->commit();
+
+        return [
+            'id' => $registrationId,
+            'email' => $email,
+            'phone' => $phone,
+            'team' => $team,
+            'event' => $event,
+            'attendees' => array_map(static function (string $name, string $document): array {
+                return [
+                    'name' => $name,
+                    'document' => $document,
+                ];
+            }, $attendeeNames, $attendeeDocuments),
+        ];
+    } catch (Throwable $exception) {
+        $pdo->rollBack();
+        throw $exception;
+    }
+}
+
 function burnout_validate_event_data(string $date, string $title, string $time, string $maxAttendees): array
 {
     if ($date === '' || $title === '' || $time === '') {
@@ -218,6 +508,16 @@ if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 ]);
                 burnout_set_admin_flash('success', 'Evento creado correctamente.');
             }
+        } elseif ($action === 'add_registration') {
+            $registration = burnout_admin_save_late_registration();
+
+            try {
+                burnout_admin_send_registration_email($registration);
+            } catch (Throwable $emailException) {
+                error_log('No se ha podido enviar el correo de confirmacion del registro ' . $registration['id'] . ': ' . $emailException->getMessage());
+            }
+
+            burnout_set_admin_flash('success', 'Registro añadido correctamente.');
         } elseif ($action === 'delete') {
             $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
 
@@ -507,9 +807,66 @@ $csrfToken = burnout_csrf_token();
                       </label>
                     </div>
                   </div>
-                  <div class="admin-gallery-modal__actions admin-gallery-modal__actions--split">
-                    <button class="admin-login-submit" type="submit" name="action" value="update">Guardar evento</button>
+                  <div class="admin-gallery-modal__actions admin-gallery-modal__actions--split admin-event-edit-actions">
                     <button class="admin-danger-submit" type="submit" name="action" value="delete">Borrar evento</button>
+                    <button class="admin-secondary-submit admin-event-registration-button" type="button" data-open-late-registration>A&ntilde;adir registro</button>
+                    <button class="admin-login-submit" type="submit" name="action" value="update">Guardar evento</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <div class="admin-gallery-modal" id="lateRegistrationModal" aria-hidden="true">
+              <div class="admin-gallery-modal__overlay" data-partidas-modal-close></div>
+              <div class="admin-gallery-modal__dialog admin-late-registration-dialog" role="dialog" aria-modal="true" aria-labelledby="lateRegistrationTitle">
+                <div class="admin-gallery-modal__header">
+                  <h2 id="lateRegistrationTitle">A&ntilde;adir registro</h2>
+                  <button type="button" data-partidas-modal-close aria-label="Cerrar ventana">x</button>
+                </div>
+                <div class="admin-gallery-modal__body admin-late-registration-summary">
+                  <p><strong>Evento:</strong> <span id="lateRegistrationEventTitle">Selecciona un evento</span></p>
+                  <p><strong>Fecha:</strong> <span id="lateRegistrationEventDate">-</span></p>
+                  <p><strong>Turno:</strong> <span id="lateRegistrationEventTime">-</span></p>
+                </div>
+                <form class="admin-gallery-form admin-late-registration-form" method="post" action="admin_partidas.php" id="lateRegistrationForm" novalidate>
+                  <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+                  <input type="hidden" name="action" value="add_registration">
+                  <input type="hidden" name="event_id" id="lateRegistrationEventId" value="">
+                  <div class="admin-login-field">
+                    <label for="lateRegistrationEmail">Direcci&oacute;n electr&oacute;nica *</label>
+                    <input id="lateRegistrationEmail" name="email" type="email" autocomplete="email" required placeholder="nombre@dominio.com">
+                    <span class="admin-registration-error" data-error-for="lateRegistrationEmail"></span>
+                  </div>
+                  <div class="admin-login-field">
+                    <label for="lateRegistrationPhone">Tel&eacute;fono de contacto *</label>
+                    <input id="lateRegistrationPhone" name="telefono" type="tel" autocomplete="tel" inputmode="tel" required placeholder="600000000">
+                    <span class="admin-registration-error" data-error-for="lateRegistrationPhone"></span>
+                  </div>
+                  <div class="admin-login-field">
+                    <label for="lateRegistrationAttendees">Asistentes *</label>
+                    <select id="lateRegistrationAttendees" name="asistentes" required>
+                      <option value="">Selecciona asistentes</option>
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">4</option>
+                      <option value="5">5</option>
+                      <option value="6">6</option>
+                      <option value="7">7</option>
+                      <option value="8">8</option>
+                      <option value="9">9</option>
+                      <option value="10">10</option>
+                    </select>
+                    <span class="admin-registration-error" data-error-for="lateRegistrationAttendees"></span>
+                  </div>
+                  <div class="admin-registration-attendees" id="lateRegistrationAttendeeFields" aria-live="polite"></div>
+                  <div class="admin-login-field">
+                    <label for="lateRegistrationTeam">Equipo</label>
+                    <input id="lateRegistrationTeam" name="equipo" type="text" autocomplete="organization" placeholder="Nombre del equipo">
+                  </div>
+                  <div class="admin-gallery-modal__actions admin-gallery-modal__actions--split">
+                    <button class="admin-secondary-submit" type="reset">Limpiar</button>
+                    <button class="admin-login-submit" type="submit">Guardar registro</button>
                   </div>
                 </form>
               </div>

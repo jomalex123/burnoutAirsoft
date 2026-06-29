@@ -464,7 +464,7 @@ function registro_build_confirmation_email(array $registration): string
 {
     $attendees = $registration['attendees'] ?? [];
     $attendeeLines = array_map(static function (array $attendee): string {
-        return sprintf('%s %s', $attendee['name'], $attendee['document']);
+        return (string) $attendee['name'];
     }, $attendees);
     $event = is_array($registration['event'] ?? null) ? $registration['event'] : [];
     $hours = registro_turn_hours((string) ($event['turn'] ?? ''));
@@ -719,7 +719,7 @@ if (!$hasEvent && !$messageSuccess) {
 
 if (($registrationClosed || $capacityFull) && !$messageSuccess) {
     $html = registro_set_closed_message($html, $capacityFull ? 'Inscripción cerrada: aforo completo. Ponte en contacto por Instagram con @burnoutairsoft para confirmar la inscripción.' : 'Inscripción cerrada');
-    $html = registro_disable_form_actions($html);
+    $html = registro_hide_form($html);
 }
 
 $html = preg_replace('/<title>.*?<\/title>/s', '<title>Inscripción - ' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '</title>', $html, 1) ?? $html;

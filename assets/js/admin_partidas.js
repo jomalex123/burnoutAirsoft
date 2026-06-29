@@ -1,5 +1,6 @@
 window.initAdminPartidasPage = function () {
   var events = Array.isArray(window.BurnoutAdminEvents) ? window.BurnoutAdminEvents : [];
+  var root = document.querySelector('.admin-page');
 
   var today = new Date();
   var currentDate = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -8,10 +9,20 @@ window.initAdminPartidasPage = function () {
   var title = document.getElementById('calendarTitle');
   var previous = document.getElementById('prevMonth');
   var next = document.getElementById('nextMonth');
+  var lateRegistrationForm = document.getElementById('lateRegistrationForm');
+  var lateRegistrationAttendees = document.getElementById('lateRegistrationAttendees');
+  var lateRegistrationFields = document.getElementById('lateRegistrationAttendeeFields');
+  var currentEditEvent = null;
 
-  if (!grid || !title || !previous || !next) {
+  if (!root || !grid || !title || !previous || !next) {
     return;
   }
+
+  if (root.getAttribute('data-admin-partidas-ready') === 'true') {
+    return;
+  }
+
+  root.setAttribute('data-admin-partidas-ready', 'true');
 
   previous.addEventListener('click', function () {
     currentDate.setMonth(currentDate.getMonth() - 1);
@@ -32,6 +43,46 @@ window.initAdminPartidasPage = function () {
   document.querySelectorAll('[data-partidas-modal-close]').forEach(function (button) {
     button.addEventListener('click', closeModals);
   });
+
+  document.querySelectorAll('[data-open-late-registration]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      openLateRegistrationModal(currentEditEvent);
+    });
+  });
+
+  if (lateRegistrationAttendees) {
+    lateRegistrationAttendees.addEventListener('change', renderLateRegistrationAttendees);
+  }
+
+  if (lateRegistrationForm) {
+    lateRegistrationForm.addEventListener('input', function (event) {
+      if (event.target && event.target.matches('input, select')) {
+        validateLateRegistrationField(event.target);
+      }
+    });
+
+    lateRegistrationForm.addEventListener('change', function (event) {
+      if (event.target && event.target.matches('input, select')) {
+        validateLateRegistrationField(event.target);
+      }
+    });
+
+    lateRegistrationForm.addEventListener('reset', function () {
+      setTimeout(function () {
+        if (lateRegistrationFields) {
+          lateRegistrationFields.innerHTML = '';
+        }
+
+        clearLateRegistrationErrors();
+      }, 0);
+    });
+
+    lateRegistrationForm.addEventListener('submit', function (event) {
+      if (!validateLateRegistrationForm()) {
+        event.preventDefault();
+      }
+    });
+  }
 
   document.addEventListener('keydown', function (event) {
     if (event.key === 'Escape') {
@@ -167,6 +218,8 @@ window.initAdminPartidasPage = function () {
   }
 
   function openEditModal(event) {
+    currentEditEvent = event;
+
     var id = document.getElementById('editEventId');
     var date = document.getElementById('editDate');
     var title = document.getElementById('editTitle');
@@ -202,6 +255,235 @@ window.initAdminPartidasPage = function () {
     }
 
     openModal('editEventModal');
+  }
+
+  function openLateRegistrationModal(event) {
+    if (!event || !event.id) {
+      return;
+    }
+
+    setLateRegistrationEvent(event);
+
+    if (lateRegistrationForm) {
+      lateRegistrationForm.reset();
+      setLateRegistrationEvent(event);
+    }
+
+    if (lateRegistrationFields) {
+      lateRegistrationFields.innerHTML = '';
+    }
+
+    clearLateRegistrationErrors();
+    closeModals();
+    openModal('lateRegistrationModal');
+
+    var firstInput = document.getElementById('lateRegistrationEmail');
+
+    if (firstInput) {
+      firstInput.focus();
+    }
+  }
+
+  function setLateRegistrationEvent(event) {
+    setValue('lateRegistrationEventId', event.id || '');
+    setText('lateRegistrationEventTitle', event.title || 'Sin titulo');
+    setText('lateRegistrationEventDate', event.date || '-');
+    setText('lateRegistrationEventTime', event.time || event.timeSlot || '-');
+  }
+
+  function renderLateRegistrationAttendees() {
+    if (!lateRegistrationAttendees || !lateRegistrationFields) {
+      return;
+    }
+
+    var total = parseInt(lateRegistrationAttendees.value, 10);
+    var existingValues = {};
+
+    lateRegistrationFields.querySelectorAll('input').forEach(function (input) {
+      existingValues[input.id] = input.value;
+    });
+
+    lateRegistrationFields.innerHTML = '';
+
+    if (isNaN(total) || total < 1) {
+      return;
+    }
+
+    for (var index = 1; index <= total; index++) {
+      var nameId = 'lateRegistrationAttendeeName' + index;
+      var documentId = 'lateRegistrationAttendeeDocument' + index;
+      var field = document.createElement('div');
+      var heading = document.createElement('h3');
+      var nameField = document.createElement('div');
+      var nameLabel = document.createElement('label');
+      var nameInput = document.createElement('input');
+      var nameError = document.createElement('span');
+      var documentField = document.createElement('div');
+      var documentLabel = document.createElement('label');
+      var documentInput = document.createElement('input');
+      var documentError = document.createElement('span');
+
+      field.className = 'admin-registration-attendee-field';
+      heading.textContent = 'Asistente ' + index;
+
+      nameField.className = 'admin-login-field';
+      nameLabel.setAttribute('for', nameId);
+      nameLabel.textContent = 'Nombre completo *';
+      nameInput.id = nameId;
+      nameInput.name = 'attendee_name[]';
+      nameInput.type = 'text';
+      nameInput.autocomplete = 'name';
+      nameInput.required = true;
+      nameInput.placeholder = 'Nombre y apellidos';
+      nameInput.value = existingValues[nameId] || '';
+      nameError.className = 'admin-registration-error';
+      nameError.setAttribute('data-error-for', nameId);
+
+      documentField.className = 'admin-login-field';
+      documentLabel.setAttribute('for', documentId);
+      documentLabel.textContent = 'DNI/NIE/Pasaporte *';
+      documentInput.id = documentId;
+      documentInput.name = 'attendee_document[]';
+      documentInput.type = 'text';
+      documentInput.autocomplete = 'off';
+      documentInput.required = true;
+      documentInput.placeholder = 'DNI, NIE o pasaporte';
+      documentInput.value = existingValues[documentId] || '';
+      documentError.className = 'admin-registration-error';
+      documentError.setAttribute('data-error-for', documentId);
+
+      nameField.appendChild(nameLabel);
+      nameField.appendChild(nameInput);
+      nameField.appendChild(nameError);
+      documentField.appendChild(documentLabel);
+      documentField.appendChild(documentInput);
+      documentField.appendChild(documentError);
+      field.appendChild(heading);
+      field.appendChild(nameField);
+      field.appendChild(documentField);
+      lateRegistrationFields.appendChild(field);
+    }
+  }
+
+  function validateLateRegistrationForm() {
+    var valid = true;
+
+    if (!lateRegistrationForm) {
+      return true;
+    }
+
+    lateRegistrationForm.querySelectorAll('input[required], select[required]').forEach(function (field) {
+      if (!validateLateRegistrationField(field)) {
+        valid = false;
+      }
+    });
+
+    return valid;
+  }
+
+  function validateLateRegistrationField(field) {
+    var id = field.id;
+    var value = String(field.value || '').trim();
+    var message = '';
+
+    if (field.required && !value) {
+      message = 'Este campo es obligatorio.';
+    }
+
+    if (!message && id === 'lateRegistrationEmail' && !isValidEmail(value)) {
+      message = 'Introduce una direccion electronica valida.';
+    }
+
+    if (!message && id === 'lateRegistrationPhone' && !isValidPhone(value)) {
+      message = 'Introduce un telefono valido con al menos 9 numeros.';
+    }
+
+    if (!message && /^lateRegistrationAttendeeName\d+$/.test(id) && value.length < 3) {
+      message = 'Introduce el nombre completo.';
+    }
+
+    if (!message && /^lateRegistrationAttendeeDocument\d+$/.test(id) && !isValidDocument(value)) {
+      message = 'Introduce un DNI, NIE o pasaporte valido.';
+    }
+
+    setLateRegistrationFieldError(field, message);
+
+    return !message;
+  }
+
+  function setLateRegistrationFieldError(field, message) {
+    var wrapper = field.closest('.admin-login-field');
+    var error = document.querySelector('[data-error-for="' + field.id + '"]');
+
+    if (wrapper) {
+      wrapper.classList.toggle('is-invalid', Boolean(message));
+    }
+
+    if (error) {
+      error.textContent = message;
+    }
+  }
+
+  function clearLateRegistrationErrors() {
+    if (!lateRegistrationForm) {
+      return;
+    }
+
+    lateRegistrationForm.querySelectorAll('.admin-login-field').forEach(function (field) {
+      field.classList.remove('is-invalid');
+    });
+
+    lateRegistrationForm.querySelectorAll('.admin-registration-error').forEach(function (error) {
+      error.textContent = '';
+    });
+  }
+
+  function setValue(id, value) {
+    var element = document.getElementById(id);
+
+    if (element) {
+      element.value = value;
+    }
+  }
+
+  function setText(id, value) {
+    var element = document.getElementById(id);
+
+    if (element) {
+      element.textContent = value;
+    }
+  }
+
+  function isValidEmail(value) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value);
+  }
+
+  function isValidPhone(value) {
+    var digits = String(value || '').replace(/\D/g, '');
+
+    return /^\+?[\d\s-]+$/.test(value) && digits.length >= 9;
+  }
+
+  function hasValidDniLetter(number, letter) {
+    var letters = 'TRWAGMYFPDXBNJZSQVHLCKE';
+
+    return letters[Number(number) % 23] === String(letter || '').toUpperCase();
+  }
+
+  function isValidDocument(value) {
+    var normalized = String(value || '').toUpperCase().replace(/[\s-]+/g, '');
+    var dni = normalized.match(/^(\d{8})([A-Z])$/);
+    var nie = normalized.match(/^([XYZ])(\d{7})([A-Z])$/);
+
+    if (dni) {
+      return hasValidDniLetter(dni[1], dni[2]);
+    }
+
+    if (nie) {
+      return hasValidDniLetter({ X: '0', Y: '1', Z: '2' }[nie[1]] + nie[2], nie[3]);
+    }
+
+    return /^(?:[A-Z]{3}\d{6}[A-Z]?|[A-Z]{2}\d{7})$/.test(normalized);
   }
 
   function closeModals() {

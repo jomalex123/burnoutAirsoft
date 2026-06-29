@@ -302,7 +302,26 @@
 }
 
 .admin-gallery-modal__actions--split {
+  gap: 12px;
   justify-content: space-between;
+}
+
+.admin-secondary-submit {
+  border: 1px solid rgba(21, 21, 21, .22);
+  color: #151515;
+  cursor: pointer;
+  font-family: 'Yantramanav', Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  padding: 12px 18px;
+  text-transform: uppercase;
+  transition: border-color .2s ease, color .2s ease;
+}
+
+.admin-secondary-submit:hover {
+  border-color: #df1f29;
+  color: #df1f29;
 }
 
 .admin-danger-submit {
@@ -326,6 +345,66 @@
 
 .admin-gallery-modal-open {
   overflow: hidden;
+}
+
+.admin-event-edit-actions {
+  align-items: center;
+}
+
+.admin-event-registration-button {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.admin-late-registration-dialog {
+  max-width: 760px;
+  width: min(100%, 760px);
+}
+
+.admin-late-registration-summary {
+  background: #f7f7f7;
+  border: 1px solid rgba(21, 21, 21, .08);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+}
+
+.admin-late-registration-form {
+  display: grid;
+  gap: 16px;
+}
+
+.admin-registration-attendees {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-registration-attendee-field {
+  background: #f7f7f7;
+  border: 1px solid rgba(21, 21, 21, .08);
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 16px;
+}
+
+.admin-registration-attendee-field h3 {
+  font-size: 16px;
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.admin-login-field.is-invalid input,
+.admin-login-field.is-invalid select {
+  border-color: #df1f29;
+}
+
+.admin-registration-error {
+  color: #b91620;
+  font-size: 13px;
+  min-height: 18px;
 }
 
 .admin-partidas-layout {
@@ -1356,5 +1435,24 @@
     gap: 10px;
     padding: 12px;
     width: 100%;
+  }
+
+  .admin-gallery-modal {
+    padding: 12px;
+  }
+
+  .admin-event-edit-actions,
+  .admin-gallery-modal__actions--split {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-event-registration-button {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .admin-registration-attendee-field {
+    grid-template-columns: 1fr;
   }
 }
