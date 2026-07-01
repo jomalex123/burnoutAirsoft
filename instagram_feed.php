@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/config/env_loader.php';
+require_once __DIR__ . '/config/database.php';
 
 function burnout_instagram_config(): array
 {
@@ -75,6 +76,96 @@ function burnout_instagram_fallback(array $config): array
             'hasMore' => false,
             'nextCursor' => '',
         ],
+    ];
+}
+
+function burnout_instagram_cache_tables(PDO $pdo): void
+{
+    static $ready = false;
+
+    if ($ready) {
+        return;
+    }
+
+    $pdo->exec(
+        'CREATE TABLE IF NOT EXISTS instagram_cache_items (
+          id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+          instagram_id VARCHAR(80) NOT NULL,
+          caption TEXT DEFAULT NULL,
+          media_type VARCHAR(40) DEFAULT NULL,
+          permalink VARCHAR(500) NOT NULL,
+          published_at DATETIME DEFAULT NULL,
+          image_mime VARCHAR(80) NOT NULL DEFAULT "image/jpeg",
+          image_data MEDIUMBLOB NOT NULL,
+          image_size INT UNSIGNED NOT NULL DEFAULT 0,
+          image_hash CHAR(64) DEFAULT NULL,
+          is_visible TINYINT(1) NOT NULL DEFAULT 1,
+          fetched_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          PRIMARY KEY (id),
+          UNIQUE KEY instagram_cache_items_instagram_id_unique (instagram_id),
+          KEY instagram_cache_items_visible_published_index (is_visible, published_at),
+          KEY instagram_cache_items_fetched_at_index (fetched_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+    );
+
+    $ready = true;
+}
+
+function burnout_instagram_cache_payload(array $config): array
+{
+    $pdo = burnout_pdo();
+    burnout_instagram_cache_tables($pdo);
+
+    $limit = burnout_instagram_request_limit($config);
+    $offset = max(0, (int) burnout_instagram_request_after());
+    $statement = $pdo->prepare(
+        'SELECT instagram_id, caption, media_type, permalink, published_at, image_hash
+         FROM instagram_cache_items
+         WHERE is_visible = 1
+         ORDER BY COALESCE(published_at, created_at) DESC, id DESC
+         LIMIT :limit OFFSET :offset'
+    );
+    $statement->bindValue('limit', $limit, PDO::PARAM_INT);
+    $statement->bindValue('offset', $offset, PDO::PARAM_INT);
+    $statement->execute();
+    $items = array_map('burnout_instagram_cache_map_item', $statement->fetchAll());
+
+    $countStatement = $pdo->query('SELECT COUNT(*) FROM instagram_cache_items WHERE is_visible = 1');
+    $total = (int) $countStatement->fetchColumn();
+    $nextOffset = $offset + count($items);
+
+    return [
+        'profileUrl' => (string) ($config['profile_url'] ?? 'https://www.instagram.com/burnoutairsoft/'),
+        'items' => $items,
+        'pagination' => [
+            'hasMore' => $nextOffset < $total,
+            'nextCursor' => $nextOffset < $total ? (string) $nextOffset : '',
+        ],
+    ];
+}
+
+function burnout_instagram_cache_map_item(array $item): array
+{
+    $caption = trim((string) ($item['caption'] ?? ''));
+    $publishedAt = (string) ($item['published_at'] ?? '');
+    $imageUrl = 'instagram_image.php?id=' . rawurlencode((string) $item['instagram_id']);
+    $hash = (string) ($item['image_hash'] ?? '');
+
+    if ($hash !== '') {
+        $imageUrl .= '&v=' . rawurlencode(substr($hash, 0, 12));
+    }
+
+    return [
+        'id' => (string) $item['instagram_id'],
+        'image' => $imageUrl,
+        'url' => (string) $item['permalink'],
+        'title' => 'Burnout Airsoft',
+        'description' => $caption,
+        'date' => burnout_instagram_format_date($publishedAt),
+        'alt' => $caption !== '' ? burnout_instagram_excerpt($caption, 140) : 'Publicacion de Instagram de Burnout Airsoft',
+        'type' => (string) ($item['media_type'] ?? ''),
     ];
 }
 
@@ -253,12 +344,26 @@ $GLOBALS['burnout_instagram_ca_file'] = (string) ($config['ca_file'] ?? '');
 $GLOBALS['burnout_instagram_ssl_verify'] = (bool) ($config['ssl_verify'] ?? true);
 
 try {
-    $payload = !empty($config['enabled'])
-        ? burnout_instagram_fetch_graph($config)
-        : burnout_instagram_fallback($config);
+    $payload = burnout_instagram_cache_payload($config);
+
+    if (!$payload['items']) {
+        $payload = !empty($config['enabled'])
+            ? burnout_instagram_fetch_graph($config)
+            : burnout_instagram_fallback($config);
+    }
 } catch (Throwable $exception) {
     error_log($exception->getMessage());
-    $payload = burnout_instagram_fallback($config);
+
+    try {
+        $payload = burnout_instagram_cache_payload($config);
+
+        if (!$payload['items']) {
+            $payload = burnout_instagram_fallback($config);
+        }
+    } catch (Throwable $cacheException) {
+        error_log($cacheException->getMessage());
+        $payload = burnout_instagram_fallback($config);
+    }
 }
 
 echo json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE) ?: '{"items":[]}';

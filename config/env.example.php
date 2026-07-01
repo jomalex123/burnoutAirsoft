@@ -66,8 +66,18 @@ return [
         'user_id' => '',
         'access_token' => '',
         'limit' => 12,
+        'sync_limit' => 24,
+        'cache_keep_items' => 36,
+        'max_image_bytes' => 2000000,
         'profile_url' => 'https://www.instagram.com/burnoutairsoft/',
         'ca_file' => '',
         'ssl_verify' => true,
+        'refresh_enabled' => false,
+        'refresh_url' => 'https://graph.instagram.com/refresh_access_token',
+        'refresh_token_param' => 'access_token',
+        'refresh_params' => [
+            'grant_type' => 'ig_refresh_token',
+        ],
+        'refresh_interval_days' => 30,
     ],
 ];
