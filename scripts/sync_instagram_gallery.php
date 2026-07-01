@@ -4,18 +4,28 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../config/database.php';
 
+if (!class_exists('PDO')) {
+    fwrite(STDERR, 'Error sincronizando Instagram: la version PHP de esta tarea no tiene PDO activo. Activa PDO/pdo_mysql o selecciona otra version PHP en la tarea programada.' . PHP_EOL);
+    exit(1);
+}
+
+if (!extension_loaded('pdo_mysql')) {
+    fwrite(STDERR, 'Error sincronizando Instagram: la version PHP de esta tarea no tiene pdo_mysql activo. Activa pdo_mysql o selecciona otra version PHP en la tarea programada.' . PHP_EOL);
+    exit(1);
+}
+
 function burnout_instagram_sync_config(): array
 {
     $config = burnout_env_config();
     $instagramConfig = $config['instagram'] ?? [];
-
-    return $instagramConfig + [
+    $resolvedConfig = $instagramConfig + [
         'enabled' => false,
         'graph_version' => 'v20.0',
         'user_id' => '',
         'access_token' => '',
         'limit' => 12,
         'sync_limit' => 24,
+        'sync_max_pages' => 20,
         'cache_keep_items' => 36,
         'max_image_bytes' => 2000000,
         'profile_url' => 'https://www.instagram.com/burnoutairsoft/',
@@ -29,6 +39,23 @@ function burnout_instagram_sync_config(): array
         ],
         'refresh_interval_days' => 30,
     ];
+    $caFile = getenv('BURNOUT_INSTAGRAM_CA_FILE');
+    $sslVerify = getenv('BURNOUT_INSTAGRAM_SSL_VERIFY');
+    $maxImageBytes = getenv('BURNOUT_INSTAGRAM_MAX_IMAGE_BYTES');
+
+    if (is_string($caFile) && trim($caFile) !== '') {
+        $resolvedConfig['ca_file'] = trim($caFile);
+    }
+
+    if (is_string($sslVerify) && trim($sslVerify) !== '') {
+        $resolvedConfig['ssl_verify'] = !in_array(strtolower(trim($sslVerify)), ['0', 'false', 'no', 'off'], true);
+    }
+
+    if (is_string($maxImageBytes) && trim($maxImageBytes) !== '') {
+        $resolvedConfig['max_image_bytes'] = max(100000, (int) $maxImageBytes);
+    }
+
+    return $resolvedConfig;
 }
 
 function burnout_instagram_sync_tables(PDO $pdo): void
@@ -169,13 +196,19 @@ function burnout_instagram_sync_fetch_media(array $config, string $accessToken):
         throw new RuntimeException('Falta configurar user_id o access_token de Instagram.');
     }
 
-    $target = max(1, min(100, (int) ($config['sync_limit'] ?? $config['limit'] ?? 24)));
+    $configuredLimit = (int) ($config['sync_limit'] ?? $config['limit'] ?? 24);
+    $syncAll = $configuredLimit <= 0;
+    $target = $syncAll ? PHP_INT_MAX : max(1, min(500, $configuredLimit));
+    $maxPages = max(1, min(50, (int) ($config['sync_max_pages'] ?? 20)));
     $items = [];
     $after = '';
+    $page = 0;
 
-    while (count($items) < $target) {
+    while (count($items) < $target && $page < $maxPages) {
+        $page++;
+        $pageLimit = $syncAll ? 50 : min(50, $target - count($items));
         $response = burnout_instagram_sync_http_get(
-            burnout_instagram_sync_graph_url($config, $accessToken, min(50, $target - count($items)), $after),
+            burnout_instagram_sync_graph_url($config, $accessToken, $pageLimit, $after),
             $config
         );
         $decoded = json_decode($response['body'], true);
@@ -202,7 +235,7 @@ function burnout_instagram_sync_fetch_media(array $config, string $accessToken):
         }
     }
 
-    return array_slice($items, 0, $target);
+    return $syncAll ? $items : array_slice($items, 0, $target);
 }
 
 function burnout_instagram_sync_http_get(string $url, array $config): array
@@ -364,6 +397,10 @@ function burnout_instagram_sync_store_item(PDO $pdo, array $config, array $item)
 
 function burnout_instagram_sync_prune(PDO $pdo, int $keepItems): void
 {
+    if ($keepItems <= 0) {
+        return;
+    }
+
     $keepItems = max(1, min(200, $keepItems));
     $pdo->exec(
         'DELETE FROM instagram_cache_items
@@ -393,8 +430,12 @@ try {
     $saved = 0;
 
     foreach ($items as $item) {
-        if (burnout_instagram_sync_store_item($pdo, $config, $item)) {
-            $saved++;
+        try {
+            if (burnout_instagram_sync_store_item($pdo, $config, $item)) {
+                $saved++;
+            }
+        } catch (Throwable $itemException) {
+            fwrite(STDERR, 'Publicacion omitida: ' . $itemException->getMessage() . PHP_EOL);
         }
     }
 

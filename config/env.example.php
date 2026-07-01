@@ -67,6 +67,7 @@ return [
         'access_token' => '',
         'limit' => 12,
         'sync_limit' => 24,
+        'sync_max_pages' => 20,
         'cache_keep_items' => 36,
         'max_image_bytes' => 2000000,
         'profile_url' => 'https://www.instagram.com/burnoutairsoft/',
