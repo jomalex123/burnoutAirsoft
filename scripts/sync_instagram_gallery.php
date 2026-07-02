@@ -26,9 +26,9 @@ function burnout_instagram_sync_config(): array
         'app_id' => '',
         'app_secret' => '',
         'limit' => 12,
-        'sync_limit' => 24,
-        'sync_max_pages' => 20,
-        'cache_keep_items' => 36,
+        'sync_limit' => 0,
+        'sync_max_pages' => 50,
+        'cache_keep_items' => 0,
         'max_image_bytes' => 2000000,
         'profile_url' => 'https://www.instagram.com/burnoutairsoft/',
         'ca_file' => '',
@@ -297,7 +297,7 @@ function burnout_instagram_sync_fetch_media(array $config, string $accessToken):
     $configuredLimit = (int) ($config['sync_limit'] ?? $config['limit'] ?? 24);
     $syncAll = $configuredLimit <= 0;
     $target = $syncAll ? PHP_INT_MAX : max(1, min(500, $configuredLimit));
-    $maxPages = max(1, min(50, (int) ($config['sync_max_pages'] ?? 20)));
+    $maxPages = max(1, min(50, (int) ($config['sync_max_pages'] ?? 50)));
     $items = [];
     $after = '';
     $page = 0;
