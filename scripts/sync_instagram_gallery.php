@@ -272,8 +272,12 @@ function burnout_instagram_sync_http_get(string $url, array $config): array
         $contentType = (string) curl_getinfo($handle, CURLINFO_CONTENT_TYPE);
         curl_close($handle);
 
-        if ($body === false || $statusCode >= 400) {
+        if ($body === false) {
             throw new RuntimeException('Error HTTP al conectar con Instagram' . ($error !== '' ? ': ' . $error : '.'));
+        }
+
+        if ($statusCode >= 400) {
+            throw new RuntimeException(burnout_instagram_sync_http_error_message($url, $statusCode, (string) $body, $error));
         }
 
         return [
@@ -290,12 +294,17 @@ function burnout_instagram_sync_http_get(string $url, array $config): array
         ],
     ]);
     $body = @file_get_contents($url, false, $context);
+    $statusCode = burnout_instagram_sync_response_status($http_response_header ?? []);
 
     if ($body === false) {
         $lastError = error_get_last();
         $message = is_array($lastError) ? (string) ($lastError['message'] ?? '') : '';
 
         throw new RuntimeException('Error HTTP al conectar con Instagram' . ($message !== '' ? ': ' . $message : '.'));
+    }
+
+    if ($statusCode >= 400) {
+        throw new RuntimeException(burnout_instagram_sync_http_error_message($url, $statusCode, (string) $body, ''));
     }
 
     $contentType = '';
@@ -311,6 +320,52 @@ function burnout_instagram_sync_http_get(string $url, array $config): array
         'body' => (string) $body,
         'content_type' => $contentType,
     ];
+}
+
+function burnout_instagram_sync_response_status(array $headers): int
+{
+    foreach ($headers as $header) {
+        if (preg_match('/^HTTP\/\S+\s+(\d{3})/', (string) $header, $matches)) {
+            return (int) $matches[1];
+        }
+    }
+
+    return 0;
+}
+
+function burnout_instagram_sync_http_error_message(string $url, int $statusCode, string $body, string $transportError): string
+{
+    $host = parse_url($url, PHP_URL_HOST);
+    $message = 'Error HTTP ' . $statusCode . ' al conectar con ' . ($host ?: 'Instagram');
+    $decoded = json_decode($body, true);
+
+    if (is_array($decoded)) {
+        if (is_array($decoded['error'] ?? null)) {
+            $error = $decoded['error'];
+            $parts = array_filter([
+                (string) ($error['message'] ?? ''),
+                isset($error['type']) ? 'type=' . (string) $error['type'] : '',
+                isset($error['code']) ? 'code=' . (string) $error['code'] : '',
+                isset($error['error_subcode']) ? 'subcode=' . (string) $error['error_subcode'] : '',
+            ]);
+
+            if ($parts) {
+                return $message . ': ' . implode(' | ', $parts);
+            }
+        }
+
+        if (isset($decoded['error_message'])) {
+            return $message . ': ' . (string) $decoded['error_message'];
+        }
+    }
+
+    if ($transportError !== '') {
+        return $message . ': ' . $transportError;
+    }
+
+    $excerpt = trim(preg_replace('/\s+/', ' ', substr($body, 0, 300)) ?? '');
+
+    return $excerpt !== '' ? $message . ': ' . $excerpt : $message . '.';
 }
 
 function burnout_instagram_sync_image_url(array $item): string
