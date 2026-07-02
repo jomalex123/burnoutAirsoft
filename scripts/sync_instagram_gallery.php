@@ -23,6 +23,8 @@ function burnout_instagram_sync_config(): array
         'graph_version' => 'v20.0',
         'user_id' => '',
         'access_token' => '',
+        'app_id' => '',
+        'app_secret' => '',
         'limit' => 12,
         'sync_limit' => 24,
         'sync_max_pages' => 20,
@@ -31,6 +33,12 @@ function burnout_instagram_sync_config(): array
         'profile_url' => 'https://www.instagram.com/burnoutairsoft/',
         'ca_file' => '',
         'ssl_verify' => true,
+        'exchange_enabled' => false,
+        'exchange_url' => 'https://graph.facebook.com/{graph_version}/oauth/access_token',
+        'exchange_token_param' => 'fb_exchange_token',
+        'exchange_params' => [
+            'grant_type' => 'fb_exchange_token',
+        ],
         'refresh_enabled' => false,
         'refresh_url' => 'https://graph.instagram.com/refresh_access_token',
         'refresh_token_param' => 'access_token',
@@ -117,9 +125,99 @@ function burnout_instagram_sync_state_set(PDO $pdo, string $key, string $value):
 
 function burnout_instagram_sync_access_token(PDO $pdo, array $config): string
 {
+    $configuredToken = trim((string) ($config['access_token'] ?? ''));
+    $configuredHash = $configuredToken !== '' ? hash('sha256', $configuredToken) : '';
+    $storedConfiguredHash = burnout_instagram_sync_state_get($pdo, 'configured_access_token_hash');
     $storedToken = burnout_instagram_sync_state_get($pdo, 'access_token');
 
-    return $storedToken !== '' ? $storedToken : trim((string) ($config['access_token'] ?? ''));
+    if ($configuredToken !== '' && $configuredHash !== $storedConfiguredHash) {
+        burnout_instagram_sync_state_set($pdo, 'access_token', $configuredToken);
+        burnout_instagram_sync_state_set($pdo, 'configured_access_token_hash', $configuredHash);
+        burnout_instagram_sync_state_set($pdo, 'access_token_refreshed_at', '');
+
+        return $configuredToken;
+    }
+
+    if ($storedToken !== '') {
+        return $storedToken;
+    }
+
+    if ($configuredToken !== '') {
+        burnout_instagram_sync_state_set($pdo, 'access_token', $configuredToken);
+        burnout_instagram_sync_state_set($pdo, 'configured_access_token_hash', $configuredHash);
+    }
+
+    return $configuredToken;
+}
+
+function burnout_instagram_sync_resolve_url(string $url, array $config): string
+{
+    $version = preg_replace('/[^A-Za-z0-9._-]/', '', (string) ($config['graph_version'] ?? 'v20.0')) ?: 'v20.0';
+
+    return str_replace('{graph_version}', $version, $url);
+}
+
+function burnout_instagram_sync_auth_params(array $params, array $config): array
+{
+    $appId = trim((string) ($config['app_id'] ?? ''));
+    $appSecret = trim((string) ($config['app_secret'] ?? ''));
+
+    if ($appId !== '' && !isset($params['client_id'])) {
+        $params['client_id'] = $appId;
+    }
+
+    if ($appSecret !== '' && !isset($params['client_secret'])) {
+        $params['client_secret'] = $appSecret;
+    }
+
+    return $params;
+}
+
+function burnout_instagram_sync_exchange_token_if_needed(PDO $pdo, array $config, string $accessToken): string
+{
+    if (empty($config['exchange_enabled']) || $accessToken === '') {
+        return $accessToken;
+    }
+
+    $configuredToken = trim((string) ($config['access_token'] ?? ''));
+    $sourceToken = $configuredToken !== '' ? $configuredToken : $accessToken;
+    $sourceHash = hash('sha256', $sourceToken);
+    $storedSourceHash = burnout_instagram_sync_state_get($pdo, 'exchange_source_token_hash');
+    $storedToken = burnout_instagram_sync_state_get($pdo, 'access_token');
+
+    if ($storedSourceHash === $sourceHash && $storedToken !== '' && $storedToken !== $sourceToken) {
+        return $storedToken;
+    }
+
+    $url = burnout_instagram_sync_resolve_url(
+        (string) ($config['exchange_url'] ?? 'https://graph.facebook.com/{graph_version}/oauth/access_token'),
+        $config
+    );
+    $params = burnout_instagram_sync_auth_params(
+        is_array($config['exchange_params'] ?? null) ? $config['exchange_params'] : [],
+        $config
+    );
+    $tokenParam = preg_replace('/[^A-Za-z0-9_]/', '', (string) ($config['exchange_token_param'] ?? 'fb_exchange_token')) ?: 'fb_exchange_token';
+    $params[$tokenParam] = $sourceToken;
+    $separator = str_contains($url, '?') ? '&' : '?';
+    $response = burnout_instagram_sync_http_get($url . $separator . http_build_query($params), $config);
+    $decoded = json_decode($response['body'], true);
+
+    if (!is_array($decoded) || empty($decoded['access_token'])) {
+        throw new RuntimeException('No se ha podido convertir el token de Instagram a larga duracion.');
+    }
+
+    $newToken = (string) $decoded['access_token'];
+    burnout_instagram_sync_state_set($pdo, 'access_token', $newToken);
+    burnout_instagram_sync_state_set($pdo, 'exchange_source_token_hash', $sourceHash);
+    burnout_instagram_sync_state_set($pdo, 'access_token_exchanged_at', (new DateTimeImmutable('now'))->format(DATE_ATOM));
+    burnout_instagram_sync_state_set($pdo, 'access_token_refreshed_at', (new DateTimeImmutable('now'))->format(DATE_ATOM));
+
+    if (isset($decoded['expires_in'])) {
+        burnout_instagram_sync_state_set($pdo, 'access_token_expires_in', (string) $decoded['expires_in']);
+    }
+
+    return $newToken;
 }
 
 function burnout_instagram_sync_refresh_token_if_needed(PDO $pdo, array $config, string $accessToken): string
@@ -143,8 +241,8 @@ function burnout_instagram_sync_refresh_token_if_needed(PDO $pdo, array $config,
         }
     }
 
-    $url = (string) ($config['refresh_url'] ?? 'https://graph.instagram.com/refresh_access_token');
-    $params = is_array($config['refresh_params'] ?? null) ? $config['refresh_params'] : [];
+    $url = burnout_instagram_sync_resolve_url((string) ($config['refresh_url'] ?? 'https://graph.instagram.com/refresh_access_token'), $config);
+    $params = burnout_instagram_sync_auth_params(is_array($config['refresh_params'] ?? null) ? $config['refresh_params'] : [], $config);
     $tokenParam = preg_replace('/[^A-Za-z0-9_]/', '', (string) ($config['refresh_token_param'] ?? 'access_token')) ?: 'access_token';
     $params[$tokenParam] = $accessToken;
     $separator = str_contains($url, '?') ? '&' : '?';
@@ -480,6 +578,7 @@ try {
     }
 
     $accessToken = burnout_instagram_sync_access_token($pdo, $config);
+    $accessToken = burnout_instagram_sync_exchange_token_if_needed($pdo, $config, $accessToken);
     $accessToken = burnout_instagram_sync_refresh_token_if_needed($pdo, $config, $accessToken);
     $items = burnout_instagram_sync_fetch_media($config, $accessToken);
     $saved = 0;
