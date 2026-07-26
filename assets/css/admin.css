@@ -183,6 +183,21 @@
   padding-bottom: 18px;
 }
 
+.admin-gallery-toolbar__note {
+  color: #555;
+  font-size: 15px;
+  line-height: 1.4;
+  margin: 6px 0 0;
+}
+
+.admin-toolbar-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
 .admin-add-image-button {
   align-items: center;
   background: #df1f29;
@@ -212,6 +227,21 @@
 .admin-gallery-form {
   display: grid;
   gap: 18px;
+}
+
+.admin-checkbox-field {
+  align-items: center;
+  color: #333;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 15px;
+  gap: 10px;
+}
+
+.admin-checkbox-field input {
+  accent-color: #df1f29;
+  height: 18px;
+  width: 18px;
 }
 
 .admin-gallery-form textarea {
@@ -558,6 +588,88 @@
 .admin-gallery-list {
   display: grid;
   gap: 14px;
+}
+
+.admin-event-gallery-list {
+  display: grid;
+  gap: 18px;
+}
+
+.admin-event-gallery {
+  border: 1px solid rgba(21, 21, 21, .1);
+  border-radius: 8px;
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+
+.admin-event-gallery__header {
+  align-items: flex-start;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+}
+
+.admin-event-gallery__header h3 {
+  font-size: 22px;
+  line-height: 1.1;
+  margin: 4px 0 6px;
+}
+
+.admin-event-gallery__toggle {
+  background: transparent;
+  border: 0;
+  color: #151515;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+  text-align: left;
+}
+
+.admin-event-gallery__toggle:hover,
+.admin-event-gallery__toggle:focus-visible {
+  color: #df1f29;
+  outline: none;
+}
+
+.admin-event-gallery__toggle::after {
+  content: " -";
+}
+
+.admin-event-gallery__toggle[aria-expanded="false"]::after {
+  content: " +";
+}
+
+.admin-event-gallery__body {
+  display: grid;
+  gap: 16px;
+}
+
+.admin-event-gallery__body[hidden] {
+  display: none;
+}
+
+.admin-event-gallery__header p {
+  color: #555;
+  font-size: 15px;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.admin-event-gallery__meta {
+  color: #df1f29;
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.admin-event-gallery__actions {
+  align-items: center;
+  display: flex;
+  flex: 0 0 auto;
+  gap: 10px;
 }
 
 .admin-gallery-item {
@@ -1314,6 +1426,20 @@
 
   .admin-gallery-item {
     grid-template-columns: 76px minmax(0, 1fr);
+  }
+
+  .admin-event-gallery__header,
+  .admin-event-gallery__actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-event-gallery__actions {
+    width: 100%;
+  }
+
+  .admin-event-gallery__actions .admin-add-image-button {
+    justify-content: center;
   }
 
   .admin-gallery-item form {

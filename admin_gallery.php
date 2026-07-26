@@ -9,12 +9,14 @@ $adminUser = null;
 $setupError = '';
 $message = '';
 $error = '';
+$galleryEvents = [];
+$eventOptions = [];
 
 try {
     $adminUser = burnout_current_admin();
 } catch (Throwable $exception) {
     error_log($exception->getMessage());
-    $setupError = 'No se ha podido validar la sesión de administración.';
+    $setupError = 'No se ha podido validar la sesion de administracion.';
 }
 
 if (!$setupError && !$adminUser) {
@@ -35,31 +37,76 @@ if ($flash) {
 if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         if (!burnout_check_csrf($_POST['csrf_token'] ?? null)) {
-            throw new RuntimeException('Sesión caducada. Recarga la página e inténtalo de nuevo.');
+            throw new RuntimeException('Sesion caducada. Recarga la pagina e intentalo de nuevo.');
         }
 
         $action = $_POST['action'] ?? '';
 
-        if ($action === 'add') {
-            $src = trim((string) ($_POST['src'] ?? ''));
-            $alt = trim((string) ($_POST['alt'] ?? ''));
-            $description = trim((string) ($_POST['description'] ?? ''));
+        if ($action === 'add_event') {
+            $eventId = filter_input(INPUT_POST, 'event_id', FILTER_VALIDATE_INT);
 
-            if ($src === '' || $alt === '') {
-                throw new RuntimeException('La ruta de imagen y el texto alternativo son obligatorios.');
+            if ($eventId === false || $eventId === null) {
+                throw new RuntimeException('Selecciona una partida para crear su galeria.');
             }
 
-            burnout_gallery_add($src, $alt, $description);
-            burnout_set_admin_flash('success', 'Imagen añadida a la galería.');
-        } elseif ($action === 'delete') {
+            burnout_gallery_event_add(
+                (int) $eventId,
+                trim((string) ($_POST['title'] ?? '')),
+                isset($_POST['is_visible'])
+            );
+            burnout_set_admin_flash('success', 'Galeria de evento creada.');
+        } elseif ($action === 'add_image') {
+            $galleryEventId = filter_input(INPUT_POST, 'gallery_event_id', FILTER_VALIDATE_INT);
+
+            if ($galleryEventId === false || $galleryEventId === null) {
+                throw new RuntimeException('Selecciona una galeria de evento.');
+            }
+
+            $uploadedFiles = burnout_gallery_upload_files($_FILES['image_files'] ?? []);
+
+            if (!$uploadedFiles) {
+                throw new RuntimeException('Selecciona al menos una imagen.');
+            }
+
+            $savedImages = 0;
+
+            foreach ($uploadedFiles as $file) {
+                $uploadedImage = burnout_gallery_store_upload($file);
+
+                if ($uploadedImage === null) {
+                    continue;
+                }
+
+                burnout_gallery_event_image_add(
+                    (int) $galleryEventId,
+                    $uploadedImage
+                );
+                $savedImages++;
+            }
+
+            if ($savedImages === 0) {
+                throw new RuntimeException('No se ha podido guardar ninguna imagen.');
+            }
+
+            burnout_set_admin_flash('success', $savedImages . ($savedImages === 1 ? ' imagen anadida.' : ' imagenes anadidas.'));
+        } elseif ($action === 'delete_image') {
             $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
 
             if ($id === false || $id === null) {
                 throw new RuntimeException('La imagen seleccionada no existe.');
             }
 
-            burnout_gallery_delete((int) $id);
-            burnout_set_admin_flash('success', 'Imagen eliminada de la galería.');
+            burnout_gallery_event_image_delete((int) $id);
+            burnout_set_admin_flash('success', 'Imagen eliminada de la galeria.');
+        } elseif ($action === 'delete_event') {
+            $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
+
+            if ($id === false || $id === null) {
+                throw new RuntimeException('La galeria seleccionada no existe.');
+            }
+
+            burnout_gallery_event_delete((int) $id);
+            burnout_set_admin_flash('success', 'Galeria de evento eliminada.');
         }
     } catch (Throwable $exception) {
         burnout_set_admin_flash('error', $exception->getMessage());
@@ -70,10 +117,13 @@ if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 try {
-    $gallery = $setupError ? [] : burnout_gallery_all();
+    if (!$setupError) {
+        $galleryEvents = burnout_gallery_admin_events();
+        $eventOptions = burnout_gallery_events_for_select();
+    }
 } catch (Throwable $exception) {
-    $gallery = [];
-    $error = $exception->getMessage();
+    error_log($exception->getMessage());
+    $error = 'No se han podido cargar las galerias de evento.';
 }
 
 $csrfToken = burnout_csrf_token();
@@ -81,7 +131,7 @@ $csrfToken = burnout_csrf_token();
 <!DOCTYPE html>
 <html lang="es">
   <head>
-    <title>Gestión Galería - Burnout Airsoft</title>
+    <title>Gestion Galeria - Burnout Airsoft</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/png" href="images/resources/logoBurnout-4.png" />
@@ -117,7 +167,7 @@ $csrfToken = burnout_csrf_token();
               <li class="nav-item">
                 <a href="galeria.html" data-type="page-transition">
                   <span class="ms-btn">Galeria</span>
-                  <span class="nav-item__label">Ver nuestros momentos</span>
+                  <span class="nav-item__label">Ver nuestros eventos</span>
                 </a>
               </li>
               <li class="nav-item">
@@ -147,14 +197,14 @@ $csrfToken = burnout_csrf_token();
           <div class="admin-header">
             <div class="admin-header__title">
               <span class="admin-kicker">Burnout Airsoft</span>
-              <h1>Gestión Galería</h1>
+              <h1>Gestion Galeria</h1>
             </div>
             <?php if ($adminUser): ?>
               <div class="admin-header-actions">
                 <form class="admin-logout" method="post" action="admin.php">
                   <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                   <input type="hidden" name="action" value="logout">
-                  <button type="submit">Cerrar sesión</button>
+                  <button type="submit">Cerrar sesion</button>
                 </form>
                 <a class="admin-back-link" href="admin.php">Volver al panel</a>
               </div>
@@ -174,78 +224,164 @@ $csrfToken = burnout_csrf_token();
             <div class="admin-gallery-layout">
               <section class="admin-gallery-list-wrap">
                 <div class="admin-gallery-toolbar">
-                  <h2>Imágenes actuales</h2>
-                  <button class="admin-add-image-button" type="button" data-gallery-modal-open>
-                    <span>+</span>
-                    Añadir imagen
-                  </button>
+                  <div>
+                    <h2>Galerias por evento</h2>
+                    <p class="admin-gallery-toolbar__note">Cada partida puede tener su propio feed publico de imagenes.</p>
+                  </div>
+                  <div class="admin-toolbar-actions">
+                    <button class="admin-add-image-button" type="button" data-gallery-modal-open="galleryEventModal">
+                      <span>+</span>
+                      Crear feed
+                    </button>
+                    <?php if ($galleryEvents): ?>
+                      <button class="admin-add-image-button" type="button" data-gallery-modal-open="galleryImageModal">
+                        <span>+</span>
+                        Anadir imagenes
+                      </button>
+                    <?php endif; ?>
+                  </div>
                 </div>
-                <?php if (!$gallery): ?>
-                  <div class="admin-empty">No hay imágenes guardadas.</div>
+                <?php if (!$galleryEvents): ?>
+                  <div class="admin-empty">No hay galerias de evento creadas.</div>
                 <?php else: ?>
-                  <div class="admin-gallery-list" id="galleryList">
-                    <?php foreach ($gallery as $item): ?>
-                      <article class="admin-gallery-item">
-                        <img src="<?= htmlspecialchars((string) ($item['src'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" alt="<?= htmlspecialchars((string) ($item['alt'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
-                        <div class="admin-gallery-item__body">
-                          <h3><?= htmlspecialchars((string) ($item['alt'] ?? 'Sin titulo'), ENT_QUOTES, 'UTF-8') ?></h3>
-                          <span><?= htmlspecialchars((string) ($item['description'] ?? ''), ENT_QUOTES, 'UTF-8') ?></span>
+                  <div class="admin-event-gallery-list" id="galleryEventList">
+                    <?php foreach ($galleryEvents as $event): ?>
+                      <article class="admin-event-gallery">
+                        <div class="admin-event-gallery__header">
+                          <div>
+                            <span class="admin-event-gallery__meta">
+                              <?= htmlspecialchars(trim($event['date'] . ' ' . $event['turn']) ?: 'Sin fecha vinculada', ENT_QUOTES, 'UTF-8') ?>
+                            </span>
+                            <h3>
+                              <button
+                                class="admin-event-gallery__toggle"
+                                type="button"
+                                data-event-gallery-toggle
+                                aria-expanded="false"
+                                aria-controls="eventGalleryBody<?= (int) $event['id'] ?>"
+                              >
+                                <?= htmlspecialchars($event['title'], ENT_QUOTES, 'UTF-8') ?>
+                              </button>
+                            </h3>
+                            <p><?= htmlspecialchars($event['image_count'] . ((int) $event['image_count'] === 1 ? ' imagen' : ' imagenes'), ENT_QUOTES, 'UTF-8') ?> - <?= $event['is_visible'] ? 'Visible' : 'Oculta' ?></p>
+                          </div>
+                          <div class="admin-event-gallery__actions">
+                            <button class="admin-add-image-button" type="button" data-gallery-modal-open="galleryImageModal" data-gallery-event-id="<?= (int) $event['id'] ?>">
+                              <span>+</span>
+                              Imagenes
+                            </button>
+                            <form method="post" action="admin_gallery.php" data-gallery-delete-form data-gallery-delete-title="<?= htmlspecialchars($event['title'], ENT_QUOTES, 'UTF-8') ?>" data-gallery-delete-kind="event">
+                              <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+                              <input type="hidden" name="action" value="delete_event">
+                              <input type="hidden" name="id" value="<?= (int) $event['id'] ?>">
+                              <button class="admin-delete-icon-button" type="submit" aria-label="Eliminar galeria">
+                                <svg aria-hidden="true" viewBox="0 0 24 24">
+                                  <path d="M3 6h18"></path>
+                                  <path d="M8 6V4h8v2"></path>
+                                  <path d="M19 6l-1 14H6L5 6"></path>
+                                  <path d="M10 11v5"></path>
+                                  <path d="M14 11v5"></path>
+                                </svg>
+                              </button>
+                            </form>
+                          </div>
                         </div>
-                        <form class="admin-gallery-delete-form" method="post" action="admin_gallery.php" data-gallery-delete-form data-gallery-delete-title="<?= htmlspecialchars((string) ($item['alt'] ?? 'esta imagen'), ENT_QUOTES, 'UTF-8') ?>">
-                          <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
-                          <input type="hidden" name="action" value="delete">
-                          <input type="hidden" name="id" value="<?= (int) ($item['id'] ?? 0) ?>">
-                          <button class="admin-delete-icon-button" type="submit" aria-label="Eliminar imagen">
-                            <svg aria-hidden="true" viewBox="0 0 24 24">
-                              <path d="M3 6h18"></path>
-                              <path d="M8 6V4h8v2"></path>
-                              <path d="M19 6l-1 14H6L5 6"></path>
-                              <path d="M10 11v5"></path>
-                              <path d="M14 11v5"></path>
-                            </svg>
-                          </button>
-                        </form>
+                        <div class="admin-event-gallery__body" id="eventGalleryBody<?= (int) $event['id'] ?>" hidden>
+                          <?php if (!$event['images']): ?>
+                            <div class="admin-empty">Este evento todavia no tiene imagenes.</div>
+                          <?php else: ?>
+                            <div class="admin-gallery-list">
+                              <?php foreach ($event['images'] as $image): ?>
+                                <article class="admin-gallery-item">
+                                  <img src="<?= htmlspecialchars($image['src'], ENT_QUOTES, 'UTF-8') ?>" alt="<?= htmlspecialchars($image['alt'], ENT_QUOTES, 'UTF-8') ?>">
+                                  <div class="admin-gallery-item__body">
+                                    <span><?= htmlspecialchars($image['label'], ENT_QUOTES, 'UTF-8') ?></span>
+                                  </div>
+                                  <form method="post" action="admin_gallery.php" data-gallery-delete-form data-gallery-delete-title="<?= htmlspecialchars($image['label'], ENT_QUOTES, 'UTF-8') ?>" data-gallery-delete-kind="image">
+                                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+                                    <input type="hidden" name="action" value="delete_image">
+                                    <input type="hidden" name="id" value="<?= (int) $image['id'] ?>">
+                                    <button class="admin-delete-icon-button" type="submit" aria-label="Eliminar imagen">
+                                      <svg aria-hidden="true" viewBox="0 0 24 24">
+                                        <path d="M3 6h18"></path>
+                                        <path d="M8 6V4h8v2"></path>
+                                        <path d="M19 6l-1 14H6L5 6"></path>
+                                        <path d="M10 11v5"></path>
+                                        <path d="M14 11v5"></path>
+                                      </svg>
+                                    </button>
+                                  </form>
+                                </article>
+                              <?php endforeach; ?>
+                            </div>
+                          <?php endif; ?>
+                        </div>
                       </article>
                     <?php endforeach; ?>
-                  </div>
-                  <div class="admin-gallery-pagination" id="galleryPagination">
-                    <div class="admin-gallery-pagination__spacer"></div>
-                    <div class="admin-gallery-pages" id="galleryPages" aria-label="Paginación galería"></div>
-                    <label class="admin-gallery-page-size" for="galleryPageSize">
-                      <span>n. imágenes</span>
-                      <select id="galleryPageSize">
-                        <option value="5" selected>5</option>
-                        <option value="10">10</option>
-                      </select>
-                    </label>
                   </div>
                 <?php endif; ?>
               </section>
             </div>
-            <div class="admin-gallery-modal" id="galleryModal" aria-hidden="true">
+            <div class="admin-gallery-modal" id="galleryEventModal" aria-hidden="true">
               <div class="admin-gallery-modal__overlay" data-gallery-modal-close></div>
-              <div class="admin-gallery-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="galleryModalTitle">
+              <div class="admin-gallery-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="galleryEventModalTitle">
                 <div class="admin-gallery-modal__header">
-                  <h2 id="galleryModalTitle">Añadir imagen</h2>
+                  <h2 id="galleryEventModalTitle">Crear feed de evento</h2>
                   <button type="button" data-gallery-modal-close aria-label="Cerrar ventana">x</button>
                 </div>
                 <form class="admin-gallery-form" method="post" action="admin_gallery.php">
                   <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
-                  <input type="hidden" name="action" value="add">
+                  <input type="hidden" name="action" value="add_event">
                   <div class="admin-login-field">
-                    <label for="src">Ruta imagen</label>
-                    <input id="src" name="src" type="text" required placeholder="images/gallery/foto.webp o https://scontent...">
+                    <label for="event_id">Partida</label>
+                    <select id="event_id" name="event_id" required>
+                      <option value=""><?= $eventOptions ? 'Selecciona una partida' : 'No hay partidas disponibles sin feed' ?></option>
+                      <?php foreach ($eventOptions as $event): ?>
+                        <option value="<?= (int) $event['id'] ?>">
+                          <?= htmlspecialchars($event['date'] . ' - ' . $event['turn'] . ' - ' . $event['title'], ENT_QUOTES, 'UTF-8') ?>
+                        </option>
+                      <?php endforeach; ?>
+                    </select>
                   </div>
                   <div class="admin-login-field">
-                    <label for="alt">Titulo / Alt</label>
-                    <input id="alt" name="alt" type="text" required placeholder="Titulo">
+                    <label for="event_title">Titulo publico opcional</label>
+                    <input id="event_title" name="title" type="text" placeholder="Si lo dejas vacio se usa el titulo de la partida">
+                  </div>
+                  <label class="admin-checkbox-field">
+                    <input name="is_visible" type="checkbox" value="1" checked>
+                    <span>Mostrar en la galeria publica</span>
+                  </label>
+                  <div class="admin-gallery-modal__actions">
+                    <button class="admin-login-submit" type="submit">Crear feed</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+            <div class="admin-gallery-modal" id="galleryImageModal" aria-hidden="true">
+              <div class="admin-gallery-modal__overlay" data-gallery-modal-close></div>
+              <div class="admin-gallery-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="galleryImageModalTitle">
+                <div class="admin-gallery-modal__header">
+                  <h2 id="galleryImageModalTitle">Anadir imagenes</h2>
+                  <button type="button" data-gallery-modal-close aria-label="Cerrar ventana">x</button>
+                </div>
+                <form class="admin-gallery-form" method="post" action="admin_gallery.php" enctype="multipart/form-data">
+                  <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+                  <input type="hidden" name="action" value="add_image">
+                  <div class="admin-login-field">
+                    <label for="gallery_event_id">Feed del evento</label>
+                    <select id="gallery_event_id" name="gallery_event_id" required>
+                      <option value="">Selecciona una galeria</option>
+                      <?php foreach ($galleryEvents as $event): ?>
+                        <option value="<?= (int) $event['id'] ?>"><?= htmlspecialchars($event['title'], ENT_QUOTES, 'UTF-8') ?></option>
+                      <?php endforeach; ?>
+                    </select>
                   </div>
                   <div class="admin-login-field">
-                    <label for="description">Descripcion</label>
-                    <textarea id="description" name="description" rows="5" placeholder="Texto que aparecerá en el modal de la galería"></textarea>
+                    <label for="image_files">Subir imagenes</label>
+                    <input id="image_files" name="image_files[]" type="file" accept="image/jpeg,image/png,image/gif,image/webp,image/avif" multiple required>
                   </div>
                   <div class="admin-gallery-modal__actions">
-                    <button class="admin-login-submit" type="submit">Guardar imagen</button>
+                    <button class="admin-login-submit" type="submit">Guardar imagenes</button>
                   </div>
                 </form>
               </div>
@@ -254,15 +390,15 @@ $csrfToken = burnout_csrf_token();
               <div class="admin-gallery-modal__overlay" data-gallery-delete-cancel></div>
               <div class="admin-gallery-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="galleryDeleteTitle">
                 <div class="admin-gallery-modal__header">
-                  <h2 id="galleryDeleteTitle">Eliminar imagen</h2>
+                  <h2 id="galleryDeleteTitle">Eliminar</h2>
                   <button type="button" data-gallery-delete-cancel aria-label="Cerrar ventana">x</button>
                 </div>
                 <div class="admin-gallery-modal__body">
-                  <p id="galleryDeleteMessage">¿Eliminar esta imagen de la galería?</p>
+                  <p id="galleryDeleteMessage">Eliminar elemento de la galeria?</p>
                 </div>
                 <div class="admin-gallery-modal__actions admin-gallery-modal__actions--split">
                   <button class="admin-back-link" type="button" data-gallery-delete-cancel>Cancelar</button>
-                  <button class="admin-danger-submit" type="button" data-gallery-delete-confirm>Eliminar imagen</button>
+                  <button class="admin-danger-submit" type="button" data-gallery-delete-confirm>Eliminar</button>
                 </div>
               </div>
             </div>
@@ -271,9 +407,9 @@ $csrfToken = burnout_csrf_token();
       </main>
       <footer>
         <div class="ms-footer">
-          <div class="copyright" data-copyright-start="2025">Copyright © 2025-2026. Designed by Alex Serret</div>
+          <div class="copyright" data-copyright-start="2025">Copyright &copy; 2025-2026. Designed by Alex Serret</div>
           <span class="footer-links">
-            <a href="privacidad.html" data-type="page-transition">Política de Privacidad de datos</a>
+            <a href="privacidad.html" data-type="page-transition">Politica de Privacidad de datos</a>
           </span>
           <ul class="socials">
             <li><a href="#" class="socicon-instagram"></a></li>

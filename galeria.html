@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
   <head>
     <title>Galer&iacute;a - Burnout Airsoft</title>
@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="assets/css/plugins.min.css">
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/gallery.css">
-    <link rel="stylesheet" href="assets/css/instagram_gallery.css">
   </head>
   <body>
     <div class="ms-main-container">
@@ -39,7 +38,7 @@
               <li class="nav-item">
                 <a href="galeria.html" data-type="page-transition">
                   <span class="ms-btn">Galer&iacute;a</span>
-                  <span class="nav-item__label">Ver nuestros momentos</span>
+                  <span class="nav-item__label">Ver nuestros eventos</span>
                 </a>
               </li>
               <li class="nav-item">
@@ -65,17 +64,14 @@
         </nav>
       </header>
 
-      <main class="ms-container instagram-gallery-page">
-        <section class="ms-section__block instagram-gallery-header">
-          <span class="instagram-gallery-kicker">Burnout Airsoft</span>
-          <h1>Galer&iacute;a</h1>
+      <main class="ms-container event-gallery-page">
+        <section class="ms-section__block event-gallery-header">
+          <span class="event-gallery-kicker">Burnout Airsoft</span>
+          <h1>Galer&iacute;a de eventos</h1>
         </section>
 
-        <section class="ms-section__block instagram-gallery-section">
-          <div id="instagramGalleryGrid" class="instagram-gallery-grid" data-instagram-source="instagram_feed.php" aria-live="polite"></div>
-          <div class="instagram-gallery-actions">
-            <button id="instagramLoadMore" class="instagram-load-more" type="button" hidden>Cargar m&aacute;s</button>
-          </div>
+        <section class="ms-section__block event-gallery-section">
+          <div id="eventGalleryFeeds" class="event-gallery-feeds" data-gallery-source="gallery_items.php" aria-live="polite"></div>
         </section>
       </main>
 
@@ -92,23 +88,19 @@
         </div>
       </footer>
     </div>
-    <div id="instagramModal" class="modal instagram-modal" style="display:none;">
+    <div id="modal" class="modal event-image-modal" style="display:none;">
       <div class="modal-content">
-        <button class="gallery-modal-button gallery-modal-close" type="button" data-instagram-modal-close aria-label="Cerrar imagen">
+        <button class="gallery-modal-button gallery-modal-close close" type="button" aria-label="Cerrar imagen">
           <img src="assets/images/gallery/lightbox-icon-close-white.png" alt="">
         </button>
-        <button class="gallery-modal-button gallery-modal-prev" type="button" data-instagram-modal-prev aria-label="Imagen anterior">
+        <button class="gallery-modal-button gallery-modal-prev" type="button" aria-label="Imagen anterior">
           <img src="assets/images/gallery/lightbox-arrow-left-white.png" alt="">
         </button>
-        <button class="gallery-modal-button gallery-modal-next" type="button" data-instagram-modal-next aria-label="Imagen siguiente">
+        <button class="gallery-modal-button gallery-modal-next" type="button" aria-label="Imagen siguiente">
           <img src="assets/images/gallery/lightbox-arrow-right-white.png" alt="">
         </button>
         <div class="modal-body">
-          <img id="instagramModalImg" src="" alt="">
-          <div class="modal-desc">
-            <span id="instagramModalMeta" class="instagram-modal-meta"></span>
-            <p id="instagramModalText"></p>
-          </div>
+          <img id="modal-img" src="" alt="">
         </div>
       </div>
     </div>
@@ -116,6 +108,6 @@
     <script type="text/javascript" src="assets/js/jquery-3.7.1.min.js"></script>
     <script type="text/javascript" src='assets/js/plugins.min.js'></script>
     <script type="text/javascript" src="assets/js/main.js"></script>
-    <script type="text/javascript" src="assets/js/instagram_gallery.js"></script>
+    <script type="text/javascript" src="assets/js/gallery.js"></script>
   </body>
 </html>

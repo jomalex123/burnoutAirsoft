@@ -319,7 +319,7 @@ function syncDetachedPageElements(detachedPageElements) {
     var container = document.querySelector('.ms-main-container') || document.body;
     var currentMain = document.querySelector('main.ms-container');
 
-    $('body').removeClass('registro-modal-open');
+    $('body').removeClass('registro-modal-open instagram-modal-open');
 
     selectors.forEach(function(selector) {
         document.querySelectorAll(selector).forEach(function(element) {
