@@ -277,6 +277,9 @@ try {
 }
 
 $csrfToken = burnout_csrf_token();
+$attendeeTotal = array_sum(array_map(static function (array $registration): int {
+    return (int) $registration['attendee_count'];
+}, $registrations));
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -400,6 +403,7 @@ $csrfToken = burnout_csrf_token();
               <?php else: ?>
                 <div class="admin-table-controls">
                   <span class="admin-table-count" id="registrationCount"><?= count($registrations) ?> registros</span>
+                  <span class="admin-table-count" id="registrationAttendeeCount"><?= (int) $attendeeTotal ?> asistentes</span>
                 </div>
                 <div class="admin-table-scroll">
                   <table class="admin-table admin-table--wide" id="registrationsTable">
@@ -427,6 +431,7 @@ $csrfToken = burnout_csrf_token();
                           data-email="<?= htmlspecialchars(strtolower($registration['email']), ENT_QUOTES, 'UTF-8') ?>"
                           data-phone="<?= htmlspecialchars(strtolower($registration['phone']), ENT_QUOTES, 'UTF-8') ?>"
                           data-team="<?= htmlspecialchars(strtolower($registration['team']), ENT_QUOTES, 'UTF-8') ?>"
+                          data-attendee-count="<?= (int) $registration['attendee_count'] ?>"
                           data-document="<?= htmlspecialchars(strtolower(admin_registros_attendee_documents($registration['attendees'])), ENT_QUOTES, 'UTF-8') ?>"
                           data-created="<?= htmlspecialchars($registration['created_at'], ENT_QUOTES, 'UTF-8') ?>"
                           data-registration-id="<?= (int) $registration['id'] ?>"

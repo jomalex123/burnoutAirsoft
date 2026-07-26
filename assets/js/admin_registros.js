@@ -2,6 +2,7 @@ window.initAdminRegistrosPage = function () {
   var table = document.getElementById('registrationsTable');
   var filtersForm = document.getElementById('registrationFiltersForm');
   var count = document.getElementById('registrationCount');
+  var attendeeCount = document.getElementById('registrationAttendeeCount');
   var exportToggle = document.getElementById('registrationExportToggle');
   var exportOptions = document.getElementById('registrationExportOptions');
   var exportCsvButton = document.getElementById('exportRegistrationsCsv');
@@ -237,6 +238,7 @@ window.initAdminRegistrosPage = function () {
   function renderRows() {
     var tbody = table.querySelector('tbody');
     var visibleCount = 0;
+    var visibleAttendees = 0;
 
     rows.slice().sort(compareRows).forEach(function (row) {
       var isVisible = rowMatches(row);
@@ -246,6 +248,7 @@ window.initAdminRegistrosPage = function () {
 
       if (isVisible) {
         visibleCount++;
+        visibleAttendees += parseInt(row.dataset.attendeeCount || '0', 10) || 0;
       }
 
       tbody.appendChild(row);
@@ -253,6 +256,10 @@ window.initAdminRegistrosPage = function () {
 
     if (count) {
       count.textContent = visibleCount + (visibleCount === 1 ? ' registro' : ' registros');
+    }
+
+    if (attendeeCount) {
+      attendeeCount.textContent = visibleAttendees + (visibleAttendees === 1 ? ' asistente' : ' asistentes');
     }
   }
 
