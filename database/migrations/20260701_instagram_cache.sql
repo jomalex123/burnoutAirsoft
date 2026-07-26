@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS instagram_cache_items (
   permalink VARCHAR(500) NOT NULL,
   published_at DATETIME DEFAULT NULL,
   image_mime VARCHAR(80) NOT NULL DEFAULT 'image/jpeg',
-  image_data MEDIUMBLOB NOT NULL,
+  image_data LONGBLOB NOT NULL,
   image_size INT UNSIGNED NOT NULL DEFAULT 0,
   image_hash CHAR(64) DEFAULT NULL,
   is_visible TINYINT(1) NOT NULL DEFAULT 1,

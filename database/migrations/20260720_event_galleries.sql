@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS gallery_event_images (
   src TEXT NULL,
   original_name VARCHAR(255) DEFAULT NULL,
   image_mime VARCHAR(80) DEFAULT NULL,
-  image_data MEDIUMBLOB NULL,
+  image_data LONGBLOB NULL,
   image_size INT UNSIGNED NOT NULL DEFAULT 0,
   image_hash CHAR(64) DEFAULT NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

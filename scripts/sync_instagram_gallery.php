@@ -29,7 +29,7 @@ function burnout_instagram_sync_config(): array
         'sync_limit' => 0,
         'sync_max_pages' => 50,
         'cache_keep_items' => 0,
-        'max_image_bytes' => 2000000,
+        'max_image_bytes' => 67108864,
         'profile_url' => 'https://www.instagram.com/burnoutairsoft/',
         'ca_file' => '',
         'ssl_verify' => true,
@@ -77,7 +77,7 @@ function burnout_instagram_sync_tables(PDO $pdo): void
           permalink VARCHAR(500) NOT NULL,
           published_at DATETIME DEFAULT NULL,
           image_mime VARCHAR(80) NOT NULL DEFAULT "image/jpeg",
-          image_data MEDIUMBLOB NOT NULL,
+          image_data LONGBLOB NOT NULL,
           image_size INT UNSIGNED NOT NULL DEFAULT 0,
           image_hash CHAR(64) DEFAULT NULL,
           is_visible TINYINT(1) NOT NULL DEFAULT 1,
@@ -487,7 +487,32 @@ function burnout_instagram_sync_timestamp(?string $timestamp): ?string
     }
 }
 
-function burnout_instagram_sync_store_item(PDO $pdo, array $config, array $item): bool
+function burnout_instagram_sync_effective_max_image_bytes(PDO $pdo, array $config): int
+{
+    $configuredMax = max(67108864, (int) ($config['max_image_bytes'] ?? 67108864));
+    $environmentMax = getenv('BURNOUT_INSTAGRAM_MAX_IMAGE_BYTES');
+
+    if (is_string($environmentMax) && trim($environmentMax) !== '') {
+        $configuredMax = max(100000, (int) $environmentMax);
+    }
+
+    try {
+        $packetLimit = (int) $pdo->query('SELECT @@max_allowed_packet')->fetchColumn();
+    } catch (Throwable $exception) {
+        return $configuredMax;
+    }
+
+    if ($packetLimit <= 0) {
+        return $configuredMax;
+    }
+
+    $packetReserve = max(262144, (int) floor($packetLimit * 0.10));
+    $databaseMax = max(100000, $packetLimit - $packetReserve);
+
+    return min($configuredMax, $databaseMax);
+}
+
+function burnout_instagram_sync_store_item(PDO $pdo, array $config, array $item, int $maxImageBytes): bool
 {
     $instagramId = trim((string) ($item['id'] ?? ''));
     $permalink = trim((string) ($item['permalink'] ?? ''));
@@ -500,10 +525,17 @@ function burnout_instagram_sync_store_item(PDO $pdo, array $config, array $item)
     $image = burnout_instagram_sync_http_get($imageUrl, $config);
     $body = $image['body'];
     $size = strlen($body);
-    $maxBytes = max(100000, (int) ($config['max_image_bytes'] ?? 2000000));
 
-    if ($size <= 0 || $size > $maxBytes) {
-        throw new RuntimeException('Imagen omitida por tamano no valido: ' . $instagramId);
+    if ($size <= 0) {
+        echo 'Publicacion omitida por imagen vacia: ' . $instagramId . PHP_EOL;
+
+        return false;
+    }
+
+    if ($size > $maxImageBytes) {
+        echo 'Publicacion omitida por tamano de imagen: ' . $instagramId . ' (' . $size . ' bytes, limite ' . $maxImageBytes . ')' . PHP_EOL;
+
+        return false;
     }
 
     $mime = strtolower(trim(explode(';', (string) ($image['content_type'] ?? ''))[0]));
@@ -580,16 +612,21 @@ try {
     $accessToken = burnout_instagram_sync_access_token($pdo, $config);
     $accessToken = burnout_instagram_sync_exchange_token_if_needed($pdo, $config, $accessToken);
     $accessToken = burnout_instagram_sync_refresh_token_if_needed($pdo, $config, $accessToken);
+    $maxImageBytes = burnout_instagram_sync_effective_max_image_bytes($pdo, $config);
     $items = burnout_instagram_sync_fetch_media($config, $accessToken);
     $saved = 0;
+    $skipped = 0;
 
     foreach ($items as $item) {
         try {
-            if (burnout_instagram_sync_store_item($pdo, $config, $item)) {
+            if (burnout_instagram_sync_store_item($pdo, $config, $item, $maxImageBytes)) {
                 $saved++;
+            } else {
+                $skipped++;
             }
         } catch (Throwable $itemException) {
-            fwrite(STDERR, 'Publicacion omitida: ' . $itemException->getMessage() . PHP_EOL);
+            $skipped++;
+            echo 'Publicacion omitida por error: ' . $itemException->getMessage() . PHP_EOL;
         }
     }
 
@@ -597,7 +634,7 @@ try {
     burnout_instagram_sync_state_set($pdo, 'last_sync_at', (new DateTimeImmutable('now'))->format(DATE_ATOM));
     burnout_instagram_sync_state_set($pdo, 'last_sync_count', (string) $saved);
 
-    echo 'Instagram sincronizado. Publicaciones guardadas: ' . $saved . PHP_EOL;
+    echo 'Instagram sincronizado. Publicaciones guardadas: ' . $saved . '. Publicaciones omitidas: ' . $skipped . '. Limite por imagen: ' . $maxImageBytes . ' bytes.' . PHP_EOL;
 } catch (Throwable $exception) {
     fwrite(STDERR, 'Error sincronizando Instagram: ' . $exception->getMessage() . PHP_EOL);
     exit(1);

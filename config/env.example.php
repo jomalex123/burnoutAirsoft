@@ -71,7 +71,7 @@ return [
         'sync_limit' => 0,
         'sync_max_pages' => 50,
         'cache_keep_items' => 0,
-        'max_image_bytes' => 2000000,
+        'max_image_bytes' => 67108864,
         'profile_url' => 'https://www.instagram.com/burnoutairsoft/',
         'ca_file' => '',
         'ssl_verify' => true,
