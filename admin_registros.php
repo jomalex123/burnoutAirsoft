@@ -405,7 +405,7 @@ $attendeeTotal = array_sum(array_map(static function (array $registration): int 
               <?php if (!$registrations): ?>
                 <div class="admin-empty">No hay registros guardados.</div>
               <?php else: ?>
-                <div class="admin-table-controls">
+                <div class="admin-table-controls admin-registration-controls">
                   <span class="admin-table-count" id="registrationCount"><?= count($registrations) ?> registros</span>
                   <span class="admin-table-count" id="registrationAttendeeCount"><?= (int) $attendeeTotal ?> asistentes</span>
                   <label class="admin-gallery-page-size" for="registrationPageSize">
