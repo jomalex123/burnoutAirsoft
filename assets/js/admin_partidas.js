@@ -91,6 +91,7 @@ window.initAdminPartidasPage = function () {
   });
 
   renderCalendar();
+  renderAvailableEvents();
 
   function renderCalendar() {
     var year = currentDate.getFullYear();
@@ -136,13 +137,15 @@ window.initAdminPartidasPage = function () {
       dayEvents.forEach(function (event) {
         var eventButton = document.createElement('button');
         var eventTitle = document.createElement('span');
-        var eventCapacity = document.createElement('small');
         eventButton.className = 'partidas-event-slice is-' + normalizeTime(event.time);
         eventButton.type = 'button';
         eventTitle.textContent = event.title;
-        eventCapacity.textContent = formatCapacity(event);
         eventButton.appendChild(eventTitle);
-        eventButton.appendChild(eventCapacity);
+        if (dayEvents.length === 1) {
+          var eventCapacity = document.createElement('small');
+          eventCapacity.textContent = formatCapacity(event);
+          eventButton.appendChild(eventCapacity);
+        }
         eventButton.addEventListener('click', function () {
           openEditModal(event);
         });
@@ -153,6 +156,60 @@ window.initAdminPartidasPage = function () {
     }
 
     return cell;
+  }
+
+  function renderAvailableEvents() {
+    var list = document.getElementById('adminAvailableEvents');
+
+    if (!list) {
+      return;
+    }
+
+    var now = new Date();
+    var todayKey = formatDate(now.getFullYear(), now.getMonth(), now.getDate());
+    var upcomingEvents = events.filter(function (event) {
+      return event.date >= todayKey;
+    }).sort(compareEvents);
+
+    list.innerHTML = '';
+
+    if (!upcomingEvents.length) {
+      var empty = document.createElement('p');
+      empty.className = 'partidas-empty';
+      empty.textContent = 'No hay partidas programadas';
+      list.appendChild(empty);
+      return;
+    }
+
+    upcomingEvents.forEach(function (event) {
+      var card = document.createElement('button');
+      var heading = document.createElement('strong');
+      var date = document.createElement('span');
+      var capacity = document.createElement('span');
+      var parts = event.date.split('-');
+      var eventDate = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+
+      card.className = 'partidas-event-card';
+      card.type = 'button';
+      heading.textContent = event.title;
+      date.textContent = eventDate.toLocaleDateString('es-ES', {
+        day: 'numeric', month: 'long', year: 'numeric'
+      }) + ' - ' + event.time;
+      capacity.className = 'partidas-event-capacity';
+      capacity.textContent = 'Participantes: ' + formatCapacity(event);
+
+      if (Number(event.attendeeCount) >= Number(event.maxAttendees)) {
+        capacity.classList.add('is-full');
+      }
+
+      card.appendChild(heading);
+      card.appendChild(date);
+      card.appendChild(capacity);
+      card.addEventListener('click', function () {
+        openEditModal(event);
+      });
+      list.appendChild(card);
+    });
   }
 
   function getEventsByDate(dateKey) {

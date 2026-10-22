@@ -441,6 +441,12 @@
   align-items: start;
 }
 
+.admin-partidas-sidebar {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+
 .admin-partidas-panel {
   display: grid;
   gap: 12px;

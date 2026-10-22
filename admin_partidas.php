@@ -668,7 +668,8 @@ $csrfToken = burnout_csrf_token();
                 </div>
                 <div class="partidas-grid" id="calendarGrid"></div>
               </div>
-              <aside class="partidas-panel admin-partidas-panel">
+              <aside class="admin-partidas-sidebar">
+              <section class="partidas-panel admin-partidas-panel">
                 <h2>Gestionar partidas</h2>
                 <button class="admin-partidas-action" type="button" data-partidas-modal-open="create">
                   <span>Crear evento</span>
@@ -687,6 +688,11 @@ $csrfToken = burnout_csrf_token();
                     <path d="M14 11v5"></path>
                   </svg>
                 </button>
+              </section>
+              <section class="partidas-panel" aria-labelledby="adminAvailableEventsTitle">
+                <h2 id="adminAvailableEventsTitle">Eventos disponibles</h2>
+                <div id="adminAvailableEvents" class="partidas-events"></div>
+              </section>
               </aside>
             </div>
 

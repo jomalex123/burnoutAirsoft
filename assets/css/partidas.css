@@ -161,12 +161,13 @@
 }
 
 .partidas-event-stack {
-  display: flex;
-  flex: 0 0 auto;
-  flex-direction: column;
+  display: grid;
+  flex: 1 1 0;
   gap: 0;
+  grid-auto-rows: minmax(0, 1fr);
   height: auto;
   margin-top: 10px;
+  min-height: 0;
   min-width: 0;
   overflow: hidden;
   width: 100%;
@@ -178,20 +179,22 @@
   box-sizing: border-box;
   color: #fff;
   cursor: pointer;
-  display: block;
-  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
   font-family: 'Yantramanav', Arial, sans-serif;
   font-size: 12px;
   font-weight: 700;
+  justify-content: center;
   line-height: 1.15;
   max-width: 100%;
-  min-height: 18px;
+  min-height: 0;
   overflow: hidden;
+  overflow-wrap: anywhere;
   padding: 3px 6px;
   text-align: left;
   text-overflow: ellipsis;
   transition: filter .2s ease;
-  white-space: nowrap;
+  white-space: normal;
   width: 100%;
 }
 
@@ -373,7 +376,7 @@
   }
 
   .partidas-event-stack {
-    flex: 0 0 auto;
+    flex: 1 1 0;
     gap: 0;
     height: auto;
     margin-top: 6px;
@@ -385,17 +388,16 @@
   .partidas-event-slice {
     border-radius: 3px;
     box-sizing: border-box;
-    display: block;
-    flex: 0 0 auto;
+    display: flex;
     font-size: 10px;
     line-height: 1.15;
     max-width: 100%;
-    min-height: 14px;
+    min-height: 0;
     overflow: hidden;
     padding: 2px 4px;
     text-align: left;
     text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
     width: 100%;
   }
 }
