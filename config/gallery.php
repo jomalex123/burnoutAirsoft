@@ -188,16 +188,16 @@ function burnout_gallery_validate_src(string $src): string
     $src = trim($src);
 
     if ($src === '') {
-        throw new RuntimeException('La ruta de imagen es obligatoria.');
+        throw new BurnoutUserException('La ruta de imagen es obligatoria.');
     }
 
     if (preg_match('/[\x00-\x1F\x7F]/', $src)) {
-        throw new RuntimeException('La ruta de imagen no es valida.');
+        throw new BurnoutUserException('La ruta de imagen no es valida.');
     }
 
     if (str_starts_with($src, 'https://scontent.')) {
         if (!filter_var($src, FILTER_VALIDATE_URL) || parse_url($src, PHP_URL_SCHEME) !== 'https') {
-            throw new RuntimeException('La URL externa de imagen no es valida.');
+            throw new BurnoutUserException('La URL externa de imagen no es valida.');
         }
 
         return $src;
@@ -206,15 +206,15 @@ function burnout_gallery_validate_src(string $src): string
     $normalized = str_replace('\\', '/', $src);
 
     if ($normalized !== $src || !str_starts_with($normalized, 'images/gallery/')) {
-        throw new RuntimeException('Las imagenes locales deben estar dentro de images/gallery/.');
+        throw new BurnoutUserException('Las imagenes locales deben estar dentro de images/gallery/.');
     }
 
     if (str_contains($normalized, '../') || str_contains($normalized, '/..') || str_starts_with($normalized, '/')) {
-        throw new RuntimeException('La ruta de imagen no puede salir de images/gallery/.');
+        throw new BurnoutUserException('La ruta de imagen no puede salir de images/gallery/.');
     }
 
     if (!preg_match('/\.(?:jpe?g|png|gif|webp|avif)$/i', $normalized)) {
-        throw new RuntimeException('La imagen debe ser JPG, PNG, GIF, WebP o AVIF.');
+        throw new BurnoutUserException('La imagen debe ser JPG, PNG, GIF, WebP o AVIF.');
     }
 
     $projectRoot = dirname(__DIR__);
@@ -222,13 +222,13 @@ function burnout_gallery_validate_src(string $src): string
     $imagePath = realpath($projectRoot . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $normalized));
 
     if ($galleryRoot === false || $imagePath === false) {
-        throw new RuntimeException('La imagen local indicada no existe.');
+        throw new BurnoutUserException('La imagen local indicada no existe.');
     }
 
     $galleryPrefix = rtrim($galleryRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 
     if (!str_starts_with($imagePath, $galleryPrefix)) {
-        throw new RuntimeException('La ruta de imagen no puede salir de images/gallery/.');
+        throw new BurnoutUserException('La ruta de imagen no puede salir de images/gallery/.');
     }
 
     return $normalized;
@@ -240,7 +240,7 @@ function burnout_gallery_delete(int $id): void
     $statement->execute(['id' => $id]);
 
     if ($statement->rowCount() === 0) {
-        throw new RuntimeException('La imagen seleccionada no existe.');
+        throw new BurnoutUserException('La imagen seleccionada no existe.');
     }
 }
 
@@ -359,14 +359,14 @@ function burnout_gallery_event_add(int $eventId, string $title, bool $isVisible)
     $event = burnout_gallery_find_source_event($eventId);
 
     if (!$event) {
-        throw new RuntimeException('La partida seleccionada no existe.');
+        throw new BurnoutUserException('La partida seleccionada no existe.');
     }
 
     $existing = burnout_pdo()->prepare('SELECT id FROM gallery_events WHERE event_id = :event_id LIMIT 1');
     $existing->execute(['event_id' => $eventId]);
 
     if ($existing->fetch()) {
-        throw new RuntimeException('Esta partida ya tiene una galeria creada.');
+        throw new BurnoutUserException('Esta partida ya tiene una galeria creada.');
     }
 
     $title = trim($title);
@@ -396,7 +396,7 @@ function burnout_gallery_event_delete(int $id): void
     $statement->execute(['id' => $id]);
 
     if ($statement->rowCount() === 0) {
-        throw new RuntimeException('La galeria seleccionada no existe.');
+        throw new BurnoutUserException('La galeria seleccionada no existe.');
     }
 }
 
@@ -405,7 +405,7 @@ function burnout_gallery_event_image_add(int $galleryEventId, array|string $imag
     burnout_gallery_event_tables();
 
     if (!burnout_gallery_event_exists($galleryEventId)) {
-        throw new RuntimeException('La galeria seleccionada no existe.');
+        throw new BurnoutUserException('La galeria seleccionada no existe.');
     }
 
     if (is_string($image)) {
@@ -429,7 +429,7 @@ function burnout_gallery_event_image_add(int $galleryEventId, array|string $imag
     $originalName = burnout_gallery_clean_original_name((string) ($image['original_name'] ?? ''));
 
     if ($imageData === '' || $mime === '' || $size <= 0 || $hash === '') {
-        throw new RuntimeException('La imagen subida no es valida.');
+        throw new BurnoutUserException('La imagen subida no es valida.');
     }
 
     $statement = burnout_pdo()->prepare(
@@ -455,18 +455,18 @@ function burnout_gallery_store_upload(array $file): ?array
     }
 
     if ($error !== UPLOAD_ERR_OK) {
-        throw new RuntimeException('No se ha podido subir la imagen.');
+        throw new BurnoutUserException('No se ha podido subir la imagen.');
     }
 
     $tmpName = (string) ($file['tmp_name'] ?? '');
     $size = (int) ($file['size'] ?? 0);
 
     if ($tmpName === '' || !is_uploaded_file($tmpName)) {
-        throw new RuntimeException('La imagen subida no es valida.');
+        throw new BurnoutUserException('La imagen subida no es valida.');
     }
 
     if ($size <= 0 || $size > 8 * 1024 * 1024) {
-        throw new RuntimeException('La imagen debe pesar como maximo 8 MB.');
+        throw new BurnoutUserException('La imagen debe pesar como maximo 8 MB.');
     }
 
     $finfo = finfo_open(FILEINFO_MIME_TYPE);
@@ -485,13 +485,13 @@ function burnout_gallery_store_upload(array $file): ?array
     ];
 
     if (!is_string($mime) || !in_array($mime, $allowedMimes, true)) {
-        throw new RuntimeException('La imagen debe ser JPG, PNG, GIF, WebP o AVIF.');
+        throw new BurnoutUserException('La imagen debe ser JPG, PNG, GIF, WebP o AVIF.');
     }
 
     $data = file_get_contents($tmpName);
 
     if (!is_string($data) || $data === '') {
-        throw new RuntimeException('No se ha podido leer la imagen subida.');
+        throw new BurnoutUserException('No se ha podido leer la imagen subida.');
     }
 
     return [
@@ -541,7 +541,7 @@ function burnout_gallery_event_image_delete(int $id): void
     $statement->execute(['id' => $id]);
 
     if ($statement->rowCount() === 0) {
-        throw new RuntimeException('La imagen seleccionada no existe.');
+        throw new BurnoutUserException('La imagen seleccionada no existe.');
     }
 }
 

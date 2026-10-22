@@ -213,7 +213,7 @@ function admin_registros_delete(int $registrationId): void
         $statement->execute(['id' => $registrationId]);
 
         if (!$statement->fetch()) {
-            throw new RuntimeException('El registro seleccionado no existe.');
+            throw new BurnoutUserException('El registro seleccionado no existe.');
         }
 
         $attendees = $pdo->prepare('DELETE FROM registration_attendees WHERE registration_id = :id');
@@ -235,7 +235,7 @@ function admin_registros_delete(int $registrationId): void
 if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         if (!burnout_check_csrf($_POST['csrf_token'] ?? null)) {
-            throw new RuntimeException('Sesión caducada. Recarga la página e inténtalo de nuevo.');
+            throw new BurnoutUserException('Sesión caducada. Recarga la página e inténtalo de nuevo.');
         }
 
         $action = $_POST['action'] ?? '';
@@ -244,7 +244,7 @@ if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
 
             if ($id === false || $id === null) {
-                throw new RuntimeException('El registro seleccionado no existe.');
+                throw new BurnoutUserException('El registro seleccionado no existe.');
             }
 
             admin_registros_delete((int) $id);
@@ -253,14 +253,19 @@ if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
 
             if ($id === false || $id === null) {
-                throw new RuntimeException('El registro seleccionado no existe.');
+                throw new BurnoutUserException('El registro seleccionado no existe.');
             }
 
             burnout_registration_notification_resend_latest((int) $id);
             burnout_set_admin_flash('success', 'Notificación reenviada correctamente.');
         }
     } catch (Throwable $exception) {
-        burnout_set_admin_flash('error', $exception->getMessage());
+        $operation = match ($action ?? '') {
+            'delete' => 'borrar la inscripción',
+            'resend_notification' => 'reenviar la notificación',
+            default => 'gestionar las inscripciones',
+        };
+        burnout_set_admin_flash('error', burnout_error_message($exception, $operation));
     }
 
     header('Location: admin_registros.php');
@@ -272,8 +277,7 @@ try {
         $registrations = admin_registros_read_all();
     }
 } catch (Throwable $exception) {
-    error_log($exception->getMessage());
-    $loadError = 'No se han podido cargar los registros.';
+    $loadError = burnout_error_message($exception, 'cargar las inscripciones');
 }
 
 $csrfToken = burnout_csrf_token();

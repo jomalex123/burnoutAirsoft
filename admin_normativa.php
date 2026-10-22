@@ -45,7 +45,7 @@ function burnout_normativa_read_html(): string
     $html = file_get_contents($path);
 
     if ($html === false) {
-        throw new RuntimeException('No se ha podido leer normativa.html.');
+        throw new BurnoutUserException('No se ha podido leer normativa.html.');
     }
 
     return $html;
@@ -54,7 +54,7 @@ function burnout_normativa_read_html(): string
 function burnout_normativa_title(string $html): string
 {
     if (!preg_match('/<h2\s+class="page-header"\s*>(.*?)<\/h2>/s', $html, $matches)) {
-        throw new RuntimeException('No se ha encontrado el titulo editable de normativa.html.');
+        throw new BurnoutUserException('No se ha encontrado el titulo editable de normativa.html.');
     }
 
     return html_entity_decode(trim(strip_tags((string) $matches[1])), ENT_QUOTES | ENT_HTML5, 'UTF-8');
@@ -65,7 +65,7 @@ function burnout_normativa_blocks(string $html): array
     $pattern = '/' . preg_quote(BURNOUT_NORMATIVA_START, '/') . '(.*?)' . preg_quote(BURNOUT_NORMATIVA_END, '/') . '/s';
 
     if (!preg_match_all($pattern, $html, $matches)) {
-        throw new RuntimeException('No se han encontrado bloques editables en normativa.html.');
+        throw new BurnoutUserException('No se han encontrado bloques editables en normativa.html.');
     }
 
     return array_map('burnout_normativa_block_content', $matches[1]);
@@ -82,7 +82,7 @@ function burnout_normativa_block_content(string $block): string
 function burnout_normativa_assert_safe_block(string $content): void
 {
     if (trim($content) === '') {
-        throw new RuntimeException('El contenido del bloque no puede estar vacio.');
+        throw new BurnoutUserException('El contenido del bloque no puede estar vacio.');
     }
 
     $blockedPatterns = [
@@ -100,7 +100,7 @@ function burnout_normativa_assert_safe_block(string $content): void
 
     foreach ($blockedPatterns as $pattern) {
         if (preg_match($pattern, $content)) {
-            throw new RuntimeException('El bloque contiene HTML no permitido para la normativa.');
+            throw new BurnoutUserException('El bloque contiene HTML no permitido para la normativa.');
         }
     }
 }
@@ -136,11 +136,11 @@ function burnout_normativa_write(string $title, array $blocks): void
     $title = trim($title);
 
     if ($title === '') {
-        throw new RuntimeException('El titulo no puede estar vacio.');
+        throw new BurnoutUserException('El titulo no puede estar vacio.');
     }
 
     if (!$blocks) {
-        throw new RuntimeException('La normativa debe tener al menos un bloque.');
+        throw new BurnoutUserException('La normativa debe tener al menos un bloque.');
     }
 
     foreach ($blocks as $block) {
@@ -161,7 +161,7 @@ function burnout_normativa_write(string $title, array $blocks): void
     );
 
     if ($updated === null || $titleReplacementCount < 1) {
-        throw new RuntimeException('No se ha podido actualizar el titulo.');
+        throw new BurnoutUserException('No se ha podido actualizar el titulo.');
     }
 
     $renderedBlocks = implode("\n", array_map(static function (string $block): string {
@@ -179,11 +179,11 @@ function burnout_normativa_write(string $title, array $blocks): void
     );
 
     if ($updatedWithBlocks === null || $blockReplacementCount < 1) {
-        throw new RuntimeException('No se han podido actualizar los bloques.');
+        throw new BurnoutUserException('No se han podido actualizar los bloques.');
     }
 
     if (file_put_contents(burnout_normativa_file(), $updatedWithBlocks, LOCK_EX) === false) {
-        throw new RuntimeException('No se ha podido escribir normativa.html.');
+        throw new BurnoutUserException('No se ha podido escribir normativa.html.');
     }
 }
 
@@ -200,7 +200,7 @@ function burnout_normativa_current(): array
 if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         if (!burnout_check_csrf($_POST['csrf_token'] ?? null)) {
-            throw new RuntimeException('Sesion caducada. Recarga la pagina e intentalo de nuevo.');
+            throw new BurnoutUserException('Sesion caducada. Recarga la pagina e intentalo de nuevo.');
         }
 
         $current = burnout_normativa_current();
@@ -216,7 +216,7 @@ if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $index = filter_input(INPUT_POST, 'index', FILTER_VALIDATE_INT);
 
             if ($index === false || $index === null || !isset($blocks[$index])) {
-                throw new RuntimeException('El bloque seleccionado no existe.');
+                throw new BurnoutUserException('El bloque seleccionado no existe.');
             }
 
             $blocks[$index] = (string) ($_POST['content'] ?? '');
@@ -226,7 +226,7 @@ if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $index = filter_input(INPUT_POST, 'index', FILTER_VALIDATE_INT);
 
             if ($index === false || $index === null || !isset($blocks[$index])) {
-                throw new RuntimeException('El bloque seleccionado no existe.');
+                throw new BurnoutUserException('El bloque seleccionado no existe.');
             }
 
             unset($blocks[$index]);
@@ -239,7 +239,7 @@ if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
             burnout_set_admin_flash('success', 'Bloque anadido correctamente.');
         }
     } catch (Throwable $exception) {
-        burnout_set_admin_flash('error', $exception->getMessage());
+        burnout_set_admin_flash('error', burnout_error_message($exception, 'guardar la normativa'));
     }
 
     header('Location: admin_normativa.php');
@@ -250,7 +250,7 @@ try {
     $normativa = $setupError ? ['title' => '', 'blocks' => []] : burnout_normativa_current();
 } catch (Throwable $exception) {
     $normativa = ['title' => '', 'blocks' => []];
-    $error = $exception->getMessage();
+    $error = burnout_error_message($exception, 'cargar la normativa');
 }
 
 $csrfToken = burnout_csrf_token();

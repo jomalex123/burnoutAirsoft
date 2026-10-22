@@ -339,11 +339,12 @@ function burnout_instagram_format_date(string $timestamp): string
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 
-$config = burnout_instagram_config();
-$GLOBALS['burnout_instagram_ca_file'] = (string) ($config['ca_file'] ?? '');
-$GLOBALS['burnout_instagram_ssl_verify'] = (bool) ($config['ssl_verify'] ?? true);
+$config = [];
 
 try {
+    $config = burnout_instagram_config();
+    $GLOBALS['burnout_instagram_ca_file'] = (string) ($config['ca_file'] ?? '');
+    $GLOBALS['burnout_instagram_ssl_verify'] = (bool) ($config['ssl_verify'] ?? true);
     $payload = burnout_instagram_cache_payload($config);
 
     if (!$payload['items']) {
@@ -363,6 +364,11 @@ try {
     } catch (Throwable $cacheException) {
         error_log($cacheException->getMessage());
         $payload = burnout_instagram_fallback($config);
+    }
+
+    if (empty($payload['items'])) {
+        http_response_code(503);
+        $payload['error'] = 'Error al cargar las publicaciones. Vuelve a intentarlo. Si el problema persiste, contacte con un administrador.';
     }
 }
 

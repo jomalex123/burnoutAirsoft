@@ -37,7 +37,7 @@ if ($flash) {
 if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         if (!burnout_check_csrf($_POST['csrf_token'] ?? null)) {
-            throw new RuntimeException('Sesion caducada. Recarga la pagina e intentalo de nuevo.');
+            throw new BurnoutUserException('Sesion caducada. Recarga la pagina e intentalo de nuevo.');
         }
 
         $action = $_POST['action'] ?? '';
@@ -46,7 +46,7 @@ if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $eventId = filter_input(INPUT_POST, 'event_id', FILTER_VALIDATE_INT);
 
             if ($eventId === false || $eventId === null) {
-                throw new RuntimeException('Selecciona una partida para crear su galeria.');
+                throw new BurnoutUserException('Selecciona una partida para crear su galeria.');
             }
 
             burnout_gallery_event_add(
@@ -59,13 +59,13 @@ if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $galleryEventId = filter_input(INPUT_POST, 'gallery_event_id', FILTER_VALIDATE_INT);
 
             if ($galleryEventId === false || $galleryEventId === null) {
-                throw new RuntimeException('Selecciona una galeria de evento.');
+                throw new BurnoutUserException('Selecciona una galeria de evento.');
             }
 
             $uploadedFiles = burnout_gallery_upload_files($_FILES['image_files'] ?? []);
 
             if (!$uploadedFiles) {
-                throw new RuntimeException('Selecciona al menos una imagen.');
+                throw new BurnoutUserException('Selecciona al menos una imagen.');
             }
 
             $savedImages = 0;
@@ -85,7 +85,7 @@ if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if ($savedImages === 0) {
-                throw new RuntimeException('No se ha podido guardar ninguna imagen.');
+                throw new BurnoutUserException('No se ha podido guardar ninguna imagen.');
             }
 
             burnout_set_admin_flash('success', $savedImages . ($savedImages === 1 ? ' imagen anadida.' : ' imagenes anadidas.'));
@@ -93,7 +93,7 @@ if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
 
             if ($id === false || $id === null) {
-                throw new RuntimeException('La imagen seleccionada no existe.');
+                throw new BurnoutUserException('La imagen seleccionada no existe.');
             }
 
             burnout_gallery_event_image_delete((int) $id);
@@ -102,14 +102,21 @@ if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
 
             if ($id === false || $id === null) {
-                throw new RuntimeException('La galeria seleccionada no existe.');
+                throw new BurnoutUserException('La galeria seleccionada no existe.');
             }
 
             burnout_gallery_event_delete((int) $id);
             burnout_set_admin_flash('success', 'Galeria de evento eliminada.');
         }
     } catch (Throwable $exception) {
-        burnout_set_admin_flash('error', $exception->getMessage());
+        $operation = match ($action ?? '') {
+            'add_event' => 'crear la galería del evento',
+            'add_image' => 'añadir imágenes a la galería',
+            'delete_image' => 'borrar la imagen',
+            'delete_event' => 'borrar la galería del evento',
+            default => 'gestionar la galería',
+        };
+        burnout_set_admin_flash('error', burnout_error_message($exception, $operation));
     }
 
     header('Location: admin_gallery.php');
@@ -122,8 +129,7 @@ try {
         $eventOptions = burnout_gallery_events_for_select();
     }
 } catch (Throwable $exception) {
-    error_log($exception->getMessage());
-    $error = 'No se han podido cargar las galerias de evento.';
+    $error = burnout_error_message($exception, 'cargar las galerías de evento');
 }
 
 $csrfToken = burnout_csrf_token();

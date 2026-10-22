@@ -109,8 +109,7 @@ try {
         $latestRegistrations = admin_latest_registrations();
     }
 } catch (Throwable $exception) {
-    error_log($exception->getMessage());
-    $setupError = 'No se ha podido conectar con la base de datos o faltan las tablas de administración.';
+    $setupError = burnout_error_message($exception, 'cargar la administración');
 }
 
 $csrfToken = burnout_csrf_token();

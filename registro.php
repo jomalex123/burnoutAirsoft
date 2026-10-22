@@ -426,14 +426,14 @@ function registro_assert_rate_limit(string $email): void
     $ipBlock = burnout_rate_limit_hit('public_registration_ip', burnout_client_ip(), 5, 60 * 60, 60 * 60);
 
     if ($ipBlock > 0) {
-        throw new RuntimeException('Demasiados intentos de registro. Espera ' . max(1, (int) ceil($ipBlock / 60)) . ' minutos e inténtalo de nuevo.');
+        throw new BurnoutUserException('Demasiados intentos de registro. Espera ' . max(1, (int) ceil($ipBlock / 60)) . ' minutos e inténtalo de nuevo.');
     }
 
     if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $emailBlock = burnout_rate_limit_hit('public_registration_email', $email, 3, 60 * 60, 60 * 60);
 
         if ($emailBlock > 0) {
-            throw new RuntimeException('Se han enviado demasiados registros con este correo. Espera ' . max(1, (int) ceil($emailBlock / 60)) . ' minutos e inténtalo de nuevo.');
+            throw new BurnoutUserException('Se han enviado demasiados registros con este correo. Espera ' . max(1, (int) ceil($emailBlock / 60)) . ' minutos e inténtalo de nuevo.');
         }
     }
 }
@@ -514,11 +514,11 @@ function registro_send_confirmation_email(array $registration): void
 function registro_assert_anti_spam(): void
 {
     if (!burnout_check_csrf($_POST['csrf_token'] ?? null)) {
-        throw new RuntimeException('Sesion caducada. Recarga la pagina e intentalo de nuevo.');
+        throw new BurnoutUserException('Sesion caducada. Recarga la pagina e intentalo de nuevo.');
     }
 
     if (trim((string) ($_POST['company_website'] ?? '')) !== '') {
-        throw new RuntimeException('No se ha podido procesar el registro.');
+        throw new BurnoutUserException('No se ha podido procesar el registro.');
     }
 }
 
@@ -527,17 +527,17 @@ function registro_save_submission(): array
     $eventId = filter_input(INPUT_POST, 'event_id', FILTER_VALIDATE_INT);
 
     if ($eventId === false || $eventId === null) {
-        throw new RuntimeException('No se ha recibido el ID de la partida.');
+        throw new BurnoutUserException('No se ha recibido el ID de la partida.');
     }
 
     $event = registro_find_event((int) $eventId);
 
     if (!$event) {
-        throw new RuntimeException('La partida seleccionada no existe.');
+        throw new BurnoutUserException('La partida seleccionada no existe.');
     }
 
     if (registro_event_registration_closed($event)) {
-        throw new RuntimeException('La inscripción está cerrada. No se admiten registros durante las 24 horas previas al evento.');
+        throw new BurnoutUserException('La inscripción está cerrada. No se admiten registros durante las 24 horas previas al evento.');
     }
 
     $email = registro_param('email', 'post');
@@ -550,34 +550,34 @@ function registro_save_submission(): array
     registro_assert_rate_limit($email);
 
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        throw new RuntimeException('Introduce una dirección electrónica válida.');
+        throw new BurnoutUserException('Introduce una dirección electrónica válida.');
     }
 
     if (!registro_is_valid_phone($phone)) {
-        throw new RuntimeException('Introduce un teléfono de contacto válido con al menos 9 números.');
+        throw new BurnoutUserException('Introduce un teléfono de contacto válido con al menos 9 números.');
     }
 
     if (!$acceptedRules) {
-        throw new RuntimeException('Debes aceptar la normativa para completar el registro.');
+        throw new BurnoutUserException('Debes aceptar la normativa para completar el registro.');
     }
 
     if (!$attendeeNames || count($attendeeNames) !== count($attendeeDocuments)) {
-        throw new RuntimeException('Completa el nombre y documento de todos los asistentes.');
+        throw new BurnoutUserException('Completa el nombre y documento de todos los asistentes.');
     }
 
     if (count($attendeeNames) > 10) {
-        throw new RuntimeException('No se pueden registrar más de 10 asistentes en el mismo formulario.');
+        throw new BurnoutUserException('No se pueden registrar más de 10 asistentes en el mismo formulario.');
     }
 
     foreach ($attendeeNames as $index => $name) {
         $document = $attendeeDocuments[$index] ?? '';
 
         if ($name === '' || $document === '') {
-            throw new RuntimeException('El nombre completo y documento son obligatorios para cada asistente.');
+            throw new BurnoutUserException('El nombre completo y documento son obligatorios para cada asistente.');
         }
 
         if (!registro_is_valid_document($document)) {
-            throw new RuntimeException('Introduce un DNI, NIE o pasaporte válido para cada asistente.');
+            throw new BurnoutUserException('Introduce un DNI, NIE o pasaporte válido para cada asistente.');
         }
     }
 
@@ -588,15 +588,15 @@ function registro_save_submission(): array
         $lockedEvent = registro_find_event_for_update($pdo, (int) $eventId);
 
         if (!$lockedEvent) {
-            throw new RuntimeException('La partida seleccionada no existe.');
+            throw new BurnoutUserException('La partida seleccionada no existe.');
         }
 
         if (registro_event_registration_closed($lockedEvent)) {
-            throw new RuntimeException('La inscripción está cerrada. No se admiten registros durante las 24 horas previas al evento.');
+            throw new BurnoutUserException('La inscripción está cerrada. No se admiten registros durante las 24 horas previas al evento.');
         }
 
         if (count($attendeeNames) > registro_event_capacity_remaining($lockedEvent)) {
-            throw new RuntimeException(registro_capacity_error_message());
+            throw new BurnoutUserException(registro_capacity_error_message());
         }
 
         $event = $lockedEvent;
@@ -667,7 +667,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         $messageSuccess = true;
         $_POST = [];
     } catch (Throwable $exception) {
-        $message = $exception->getMessage();
+        $message = burnout_error_message($exception, 'completar la inscripción');
     }
 }
 
@@ -683,7 +683,18 @@ if (!$event && ($eventId === false || $eventId === null)) {
 }
 
 if (!$event) {
-    $event = $eventId ? registro_find_event((int) $eventId) : null;
+    try {
+        $event = $eventId ? registro_find_event((int) $eventId) : null;
+    } catch (Throwable $exception) {
+        $event = null;
+        // Si la inscripción ya se guardó, conservar su confirmación.
+        if (!$messageSuccess) {
+            http_response_code(500);
+            $message = burnout_error_message($exception, 'cargar la partida');
+        } else {
+            error_log($exception->getMessage());
+        }
+    }
 }
 $hasEvent = is_array($event);
 $title = $hasEvent ? (string) $event['title'] : 'Selecciona una partida';
@@ -698,7 +709,7 @@ $html = file_get_contents(__DIR__ . '/registro.html');
 
 if ($html === false) {
     http_response_code(500);
-    echo 'No se ha podido cargar el formulario de registro.';
+    echo 'Error al cargar el formulario de inscripción. Contacte con un administrador.';
     exit;
 }
 

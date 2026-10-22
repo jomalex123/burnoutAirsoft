@@ -55,7 +55,10 @@ try {
     echo $image['image_data'];
 } catch (Throwable $exception) {
     error_log($exception->getMessage());
-    http_response_code(404);
+    http_response_code(500);
+    header('Content-Type: text/plain; charset=utf-8');
+    header('Cache-Control: no-store');
+    echo 'Error al cargar la imagen. Contacte con un administrador.';
 }
 
 function burnout_gallery_image_admin_can_preview(): bool

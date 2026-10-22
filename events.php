@@ -47,7 +47,6 @@ try {
 
     echo json_encode($events, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '[]';
 } catch (Throwable $exception) {
-    error_log($exception->getMessage());
     http_response_code(500);
-    echo '[]';
+    echo json_encode(['error' => burnout_error_message($exception, 'cargar las partidas')], JSON_UNESCAPED_UNICODE);
 }

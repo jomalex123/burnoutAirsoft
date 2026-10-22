@@ -1,5 +1,13 @@
 # Contexto del proyecto Burnout Airsoft
 
+## Entorno local actual
+
+El usuario utiliza XAMPP en local, no Docker. Usar Apache y MySQL de XAMPP, PHP en
+`D:\xampp\php\php.exe`, configuración en `config/env.php` y conexión `local` a
+`127.0.0.1:3306`. URL local: `http://localhost/burnoutAirsoft/`.
+Comprobar la conexión con `php scripts/check_database.php` (o la ruta del PHP de XAMPP).
+Las referencias a Docker de este documento describen una alternativa, no el entorno local habitual.
+
 Este fichero sirve como contexto base para nuevas sesiones de desarrollo. Antes de programar en este
 proyecto, leer este documento y contrastar los cambios con los patrones descritos aquí.
 

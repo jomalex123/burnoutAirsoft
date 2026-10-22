@@ -96,14 +96,14 @@ function burnout_registration_notification_send(int $notificationId): void
     $notification = burnout_registration_notification_find($notificationId);
 
     if (!$notification) {
-        throw new RuntimeException('La notificación seleccionada no existe.');
+        throw new BurnoutUserException('La notificación seleccionada no existe.');
     }
 
     try {
         $mailConfig = burnout_mail_config();
 
         if (empty($mailConfig['enabled'])) {
-            throw new RuntimeException('El envío de correo está desactivado.');
+            throw new BurnoutUserException('El envío de correo está desactivado.');
         }
 
         burnout_send_plain_mail(
@@ -113,7 +113,12 @@ function burnout_registration_notification_send(int $notificationId): void
         );
         burnout_registration_notification_mark_sent($notificationId);
     } catch (Throwable $exception) {
-        burnout_registration_notification_mark_failed($notificationId, $exception->getMessage());
+        try {
+            burnout_registration_notification_mark_failed($notificationId, $exception->getMessage());
+        } catch (Throwable $auditException) {
+            // Un fallo al registrar el error no debe ocultar el fallo original.
+            error_log('Error al registrar el fallo de notificación: ' . $auditException->getMessage());
+        }
         throw $exception;
     }
 }
@@ -123,7 +128,7 @@ function burnout_registration_notification_resend_latest(int $registrationId): i
     $latest = burnout_registration_notification_latest($registrationId);
 
     if (!$latest) {
-        throw new RuntimeException('No hay ninguna notificación previa para reenviar.');
+        throw new BurnoutUserException('No hay ninguna notificación previa para reenviar.');
     }
 
     $notificationId = burnout_registration_notification_create(

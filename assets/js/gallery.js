@@ -164,7 +164,7 @@ window.initGalleryPage = function () {
       '<div class="event-gallery-empty event-gallery-empty--error">',
       '<span>Error</span>',
       '<h2>No se ha podido cargar la galeria</h2>',
-      '<p>Revisa el endpoint de galerias por evento.</p>',
+      '<p>Vuelve a intentarlo. Si el problema persiste, contacte con un administrador.</p>',
       '</div>'
     ].join('');
   }

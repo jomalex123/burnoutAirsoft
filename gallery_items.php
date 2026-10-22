@@ -9,7 +9,6 @@ header('Content-Type: application/json; charset=utf-8');
 try {
     echo json_encode(burnout_gallery_public_events(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 } catch (Throwable $exception) {
-    error_log($exception->getMessage());
     http_response_code(500);
-    echo json_encode([]);
+    echo json_encode(['error' => burnout_error_message($exception, 'cargar las galerías')], JSON_UNESCAPED_UNICODE);
 }

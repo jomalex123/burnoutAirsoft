@@ -351,7 +351,7 @@ window.initAdminRegistrosPage = function () {
       await buildMergedRegistrationsPdf(rowsToExport);
     } catch (error) {
       console.error(error);
-      alert(error.message || 'No se ha podido generar el PDF.');
+      alert('Error al generar el PDF. Vuelve a intentarlo. Si el problema persiste, contacte con un administrador.');
     } finally {
       setPdfBusy(false);
     }

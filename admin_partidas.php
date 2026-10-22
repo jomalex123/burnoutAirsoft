@@ -13,8 +13,7 @@ $error = '';
 try {
     $adminUser = burnout_current_admin();
 } catch (Throwable $exception) {
-    error_log($exception->getMessage());
-    $setupError = 'No se ha podido validar la sesión de administración.';
+    $setupError = burnout_error_message($exception, 'validar la sesión de administración');
 }
 
 if (!$setupError && !$adminUser) {
@@ -60,7 +59,7 @@ function burnout_normalize_event_time(string $value): string
     ];
 
     if (!isset($map[$time])) {
-        throw new RuntimeException('Selecciona un horario válido.');
+        throw new BurnoutUserException('Selecciona un horario válido.');
     }
 
     return $map[$time];
@@ -319,7 +318,7 @@ function burnout_admin_save_late_registration(): array
     $eventId = filter_input(INPUT_POST, 'event_id', FILTER_VALIDATE_INT);
 
     if ($eventId === false || $eventId === null) {
-        throw new RuntimeException('No se ha recibido el ID de la partida.');
+        throw new BurnoutUserException('No se ha recibido el ID de la partida.');
     }
 
     $email = trim((string) ($_POST['email'] ?? ''));
@@ -329,30 +328,30 @@ function burnout_admin_save_late_registration(): array
     $attendeeDocuments = burnout_admin_clean_list(is_array($_POST['attendee_document'] ?? null) ? $_POST['attendee_document'] : []);
 
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        throw new RuntimeException('Introduce una direccion electronica valida.');
+        throw new BurnoutUserException('Introduce una direccion electronica valida.');
     }
 
     if (!burnout_admin_is_valid_phone($phone)) {
-        throw new RuntimeException('Introduce un telefono de contacto valido con al menos 9 numeros.');
+        throw new BurnoutUserException('Introduce un telefono de contacto valido con al menos 9 numeros.');
     }
 
     if (!$attendeeNames || count($attendeeNames) !== count($attendeeDocuments)) {
-        throw new RuntimeException('Completa el nombre y documento de todos los asistentes.');
+        throw new BurnoutUserException('Completa el nombre y documento de todos los asistentes.');
     }
 
     if (count($attendeeNames) > 10) {
-        throw new RuntimeException('No se pueden registrar mas de 10 asistentes en el mismo formulario.');
+        throw new BurnoutUserException('No se pueden registrar mas de 10 asistentes en el mismo formulario.');
     }
 
     foreach ($attendeeNames as $index => $name) {
         $document = $attendeeDocuments[$index] ?? '';
 
         if ($name === '' || $document === '') {
-            throw new RuntimeException('El nombre completo y documento son obligatorios para cada asistente.');
+            throw new BurnoutUserException('El nombre completo y documento son obligatorios para cada asistente.');
         }
 
         if (!burnout_admin_is_valid_document($document)) {
-            throw new RuntimeException('Introduce un DNI, NIE o pasaporte valido para cada asistente.');
+            throw new BurnoutUserException('Introduce un DNI, NIE o pasaporte valido para cada asistente.');
         }
     }
 
@@ -363,11 +362,11 @@ function burnout_admin_save_late_registration(): array
         $event = burnout_admin_find_event_for_registration($pdo, (int) $eventId);
 
         if (!$event) {
-            throw new RuntimeException('La partida seleccionada no existe.');
+            throw new BurnoutUserException('La partida seleccionada no existe.');
         }
 
         if (count($attendeeNames) > burnout_admin_event_capacity_remaining($event)) {
-            throw new RuntimeException('La inscripcion supera el maximo de aforo de la partida.');
+            throw new BurnoutUserException('La inscripcion supera el maximo de aforo de la partida.');
         }
 
         $registration = $pdo->prepare(
@@ -419,7 +418,7 @@ function burnout_admin_save_late_registration(): array
 function burnout_validate_event_data(string $date, string $title, string $time, string $maxAttendees): array
 {
     if ($date === '' || $title === '' || $time === '') {
-        throw new RuntimeException('La fecha, el titulo y el horario son obligatorios.');
+        throw new BurnoutUserException('La fecha, el titulo y el horario son obligatorios.');
     }
 
     if ($maxAttendees === '') {
@@ -434,13 +433,13 @@ function burnout_validate_event_data(string $date, string $title, string $time, 
     ]);
 
     if ($capacity === false) {
-        throw new RuntimeException('El aforo debe ser un número entre 1 y 500.');
+        throw new BurnoutUserException('El aforo debe ser un número entre 1 y 500.');
     }
 
     $dateTime = DateTime::createFromFormat('Y-m-d', $date);
 
     if (!$dateTime || $dateTime->format('Y-m-d') !== $date) {
-        throw new RuntimeException('La fecha debe tener formato YYYY-MM-DD.');
+        throw new BurnoutUserException('La fecha debe tener formato YYYY-MM-DD.');
     }
 
     return [
@@ -454,7 +453,7 @@ function burnout_validate_event_data(string $date, string $title, string $time, 
 if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         if (!burnout_check_csrf($_POST['csrf_token'] ?? null)) {
-            throw new RuntimeException('Sesión caducada. Recarga la página e inténtalo de nuevo.');
+            throw new BurnoutUserException('Sesión caducada. Recarga la página e inténtalo de nuevo.');
         }
 
         $action = $_POST['action'] ?? '';
@@ -470,13 +469,13 @@ if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
 
                 if ($id === false || $id === null || !burnout_find_event((int) $id)) {
-                    throw new RuntimeException('El evento seleccionado no existe.');
+                    throw new BurnoutUserException('El evento seleccionado no existe.');
                 }
 
                 $attendeeCount = burnout_event_attendee_count((int) $id);
 
                 if ($eventData['max_attendees'] < $attendeeCount) {
-                    throw new RuntimeException(sprintf(
+                    throw new BurnoutUserException(sprintf(
                         'No puedes bajar el aforo por debajo de los %d inscritos actuales.',
                         $attendeeCount
                     ));
@@ -522,11 +521,11 @@ if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
 
             if ($id === false || $id === null || !burnout_find_event((int) $id)) {
-                throw new RuntimeException('El evento seleccionado no existe.');
+                throw new BurnoutUserException('El evento seleccionado no existe.');
             }
 
             if (burnout_event_has_registrations((int) $id)) {
-                throw new RuntimeException('No se pueden eliminar eventos con asistentes, eliminar los registros primero.');
+                throw new BurnoutUserException('No se pueden eliminar eventos con asistentes, eliminar los registros primero.');
             }
 
             $statement = burnout_pdo()->prepare('DELETE FROM events WHERE id = :id');
@@ -534,7 +533,14 @@ if (!$setupError && $_SERVER['REQUEST_METHOD'] === 'POST') {
             burnout_set_admin_flash('success', 'Evento eliminado correctamente.');
         }
     } catch (Throwable $exception) {
-        burnout_set_admin_flash('error', $exception->getMessage());
+        $operation = match ($action ?? '') {
+            'delete' => 'borrar el evento',
+            'add' => 'crear el evento',
+            'update' => 'actualizar el evento',
+            'add_registration' => 'añadir la inscripción',
+            default => 'gestionar las partidas',
+        };
+        burnout_set_admin_flash('error', burnout_error_message($exception, $operation));
     }
 
     header('Location: admin_partidas.php');
@@ -545,7 +551,7 @@ try {
     $events = $setupError ? [] : burnout_read_events();
 } catch (Throwable $exception) {
     $events = [];
-    $error = $exception->getMessage();
+    $error = burnout_error_message($exception, 'cargar las partidas');
 }
 
 $csrfToken = burnout_csrf_token();

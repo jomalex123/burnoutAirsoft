@@ -257,7 +257,7 @@ window.initInstagramGalleryPage = function () {
 
   function renderError() {
     if (status) {
-      status.textContent = 'No se ha podido cargar la galeria.';
+      status.textContent = 'Error al cargar las publicaciones. Vuelve a intentarlo. Si el problema persiste, contacte con un administrador.';
     }
 
     grid.innerHTML = [
@@ -271,7 +271,7 @@ window.initInstagramGalleryPage = function () {
 
   function renderLoadMoreError() {
     if (status) {
-      status.textContent = 'No se han podido cargar mas publicaciones.';
+      status.textContent = 'Error al cargar más publicaciones. Vuelve a intentarlo. Si el problema persiste, contacte con un administrador.';
     }
   }
 

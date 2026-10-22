@@ -1,5 +1,6 @@
 window.initPartidasPage = function () {
   var events = [];
+  var loadFailed = false;
   var today = new Date();
   var currentDate = new Date(today.getFullYear(), today.getMonth(), 1);
   var monthNames = [
@@ -51,15 +52,19 @@ window.initPartidasPage = function () {
     return fetch('events.php', { cache: 'no-store' })
       .then(function (response) {
         if (!response.ok) {
-          return [];
+          throw new Error('No se han podido cargar las partidas.');
         }
 
         return response.json();
       })
       .then(function (data) {
-        return Array.isArray(data) ? data : [];
+        if (!Array.isArray(data)) {
+          throw new Error('Respuesta de partidas no válida.');
+        }
+        return data;
       })
       .catch(function () {
+        loadFailed = true;
         return [];
       });
   }
@@ -84,7 +89,7 @@ window.initPartidasPage = function () {
       grid.appendChild(createDayCell(year, month, day));
     }
 
-    renderEventList(year, month);
+    renderEventList();
   }
 
   function createDayCell(year, month, day) {
@@ -125,23 +130,33 @@ window.initPartidasPage = function () {
     return cell;
   }
 
-  function renderEventList(year, month) {
-    var monthEvents = events.filter(function (event) {
-      var parts = event.date.split('-');
-      return Number(parts[0]) === year && Number(parts[1]) === month + 1;
+  function renderEventList() {
+    if (loadFailed) {
+      eventList.innerHTML = '';
+      var error = document.createElement('p');
+      error.className = 'partidas-empty';
+      error.setAttribute('role', 'alert');
+      error.textContent = 'Error al cargar las partidas. Vuelve a intentarlo. Si el problema persiste, contacte con un administrador.';
+      eventList.appendChild(error);
+      return;
+    }
+    var now = new Date();
+    var todayKey = formatDate(now.getFullYear(), now.getMonth(), now.getDate());
+    var upcomingEvents = events.filter(function (event) {
+      return event.date >= todayKey;
     }).sort(compareEvents);
 
     eventList.innerHTML = '';
 
-    if (!monthEvents.length) {
+    if (!upcomingEvents.length) {
       var empty = document.createElement('p');
       empty.className = 'partidas-empty';
-      empty.textContent = 'No hay partidas programadas este mes.';
+      empty.textContent = 'No hay partidas programadas';
       eventList.appendChild(empty);
       return;
     }
 
-    monthEvents.forEach(function (event) {
+    upcomingEvents.forEach(function (event) {
       var card = document.createElement('button');
       card.className = 'partidas-event-card';
       card.type = 'button';

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/env_loader.php';
+require_once __DIR__ . '/errors.php';
 
 function burnout_database_config(): array
 {
