@@ -750,6 +750,62 @@
   min-width: 1px;
 }
 
+.admin-registrations-pagination {
+  background: transparent;
+  border-top: 1px solid rgba(21, 21, 21, .1);
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 18px;
+}
+
+.admin-registrations-pagination[hidden] {
+  display: none;
+}
+
+.admin-registration-pages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.admin-registration-pages button {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #df1f29;
+  color: #df1f29;
+  cursor: pointer;
+  display: inline-flex;
+  font-family: 'Yantramanav', Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  height: 34px;
+  justify-content: center;
+  min-width: 34px;
+  padding: 0 10px;
+  transition: background .2s ease, border-color .2s ease, color .2s ease;
+}
+
+.admin-registration-pages button.is-active {
+  background: #df1f29;
+  border-color: #df1f29;
+  color: #fff;
+}
+
+.admin-registration-pages button:hover,
+.admin-registration-pages button:focus-visible {
+  background: #151515;
+  border-color: #151515;
+  color: #fff;
+}
+
+.admin-registrations-pagination [role="status"] {
+  color: #555;
+  font-size: 13px;
+  text-align: center;
+}
+
 .admin-gallery-pages {
   display: flex;
   flex-wrap: wrap;

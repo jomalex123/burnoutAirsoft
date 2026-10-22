@@ -408,6 +408,13 @@ $attendeeTotal = array_sum(array_map(static function (array $registration): int 
                 <div class="admin-table-controls">
                   <span class="admin-table-count" id="registrationCount"><?= count($registrations) ?> registros</span>
                   <span class="admin-table-count" id="registrationAttendeeCount"><?= (int) $attendeeTotal ?> asistentes</span>
+                  <label class="admin-gallery-page-size" for="registrationPageSize">
+                    <select id="registrationPageSize" aria-label="Registros por página">
+                      <option value="10" selected>10</option>
+                      <option value="20">20</option>
+                      <option value="30">30</option>
+                    </select>
+                  </label>
                 </div>
                 <div class="admin-table-scroll">
                   <table class="admin-table admin-table--wide" id="registrationsTable">
@@ -487,6 +494,10 @@ $attendeeTotal = array_sum(array_map(static function (array $registration): int 
                     </tbody>
                   </table>
                   </div>
+                <nav class="admin-registrations-pagination" id="registrationPagination" aria-label="Paginación de registros" hidden>
+                  <div class="admin-registration-pages" id="registrationPages"></div>
+                  <span id="registrationPageStatus" role="status" aria-live="polite"></span>
+                </nav>
                 <?php foreach ($registrations as $registration): ?>
                   <?php $notification = $registration['notification']; ?>
                   <div class="admin-gallery-modal" id="registrationAttendees<?= (int) $registration['id'] ?>" aria-hidden="true">

@@ -3,6 +3,12 @@ window.initAdminRegistrosPage = function () {
   var filtersForm = document.getElementById('registrationFiltersForm');
   var count = document.getElementById('registrationCount');
   var attendeeCount = document.getElementById('registrationAttendeeCount');
+  var pageSizeSelect = document.getElementById('registrationPageSize');
+  var pageButtons = document.getElementById('registrationPages');
+  var pagination = document.getElementById('registrationPagination');
+  var pageStatus = document.getElementById('registrationPageStatus');
+  var currentPage = 1;
+  var pageSize = 10;
   var exportToggle = document.getElementById('registrationExportToggle');
   var exportOptions = document.getElementById('registrationExportOptions');
   var exportCsvButton = document.getElementById('exportRegistrationsCsv');
@@ -36,6 +42,7 @@ window.initAdminRegistrosPage = function () {
     filtersForm.addEventListener('submit', function (event) {
       event.preventDefault();
       readFilters();
+      currentPage = 1;
       renderRows();
       closeModals();
     });
@@ -43,6 +50,7 @@ window.initAdminRegistrosPage = function () {
     filtersForm.addEventListener('reset', function () {
       setTimeout(function () {
         readFilters();
+        currentPage = 1;
         renderRows();
       }, 0);
     });
@@ -60,9 +68,20 @@ window.initAdminRegistrosPage = function () {
       }
 
       updateSortButtons();
+      currentPage = 1;
       renderRows();
     });
   });
+
+  if (pageSizeSelect) {
+    pageSizeSelect.value = '10';
+    pageSizeSelect.addEventListener('change', function () {
+      var requestedSize = parseInt(pageSizeSelect.value, 10);
+      pageSize = [10, 20, 30].indexOf(requestedSize) !== -1 ? requestedSize : 10;
+      currentPage = 1;
+      renderRows();
+    });
+  }
 
   if (exportToggle && exportOptions) {
     exportToggle.addEventListener('click', function (event) {
@@ -237,40 +256,70 @@ window.initAdminRegistrosPage = function () {
 
   function renderRows() {
     var tbody = table.querySelector('tbody');
-    var visibleCount = 0;
-    var visibleAttendees = 0;
+    var filteredRows = matchingRows();
+    var totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+    if (pagination) {
+      pagination.hidden = totalPages <= 1;
+    }
+    currentPage = Math.min(currentPage, totalPages);
+    var start = (currentPage - 1) * pageSize;
+    var pageRows = filteredRows.slice(start, start + pageSize);
+    var totalAttendees = filteredRows.reduce(function (total, row) {
+      return total + (parseInt(row.dataset.attendeeCount || '0', 10) || 0);
+    }, 0);
 
-    rows.slice().sort(compareRows).forEach(function (row) {
-      var isVisible = rowMatches(row);
-
-      row.style.display = isVisible ? '' : 'none';
-      row.setAttribute('aria-hidden', isVisible ? 'false' : 'true');
-
-      if (isVisible) {
-        visibleCount++;
-        visibleAttendees += parseInt(row.dataset.attendeeCount || '0', 10) || 0;
-      }
-
+    rows.forEach(function (row) {
+      row.style.display = 'none';
+      row.setAttribute('aria-hidden', 'true');
+    });
+    pageRows.forEach(function (row) {
+      row.style.display = '';
+      row.setAttribute('aria-hidden', 'false');
       tbody.appendChild(row);
     });
 
     if (count) {
-      count.textContent = visibleCount + (visibleCount === 1 ? ' registro' : ' registros');
+      count.textContent = filteredRows.length + (filteredRows.length === 1 ? ' registro' : ' registros');
     }
 
     if (attendeeCount) {
-      attendeeCount.textContent = visibleAttendees + (visibleAttendees === 1 ? ' asistente' : ' asistentes');
+      attendeeCount.textContent = totalAttendees + (totalAttendees === 1 ? ' asistente' : ' asistentes');
+    }
+
+    if (pageStatus) {
+      pageStatus.textContent = filteredRows.length
+        ? 'Página ' + currentPage + ' de ' + totalPages + ' · ' + (start + 1) + '–' + Math.min(start + pageSize, filteredRows.length) + ' de ' + filteredRows.length
+        : 'No hay registros para este filtro';
+    }
+    if (pageButtons) {
+      pageButtons.innerHTML = '';
+      if (filteredRows.length) {
+        for (var page = 1; page <= totalPages; page++) {
+          var button = document.createElement('button');
+          button.type = 'button';
+          button.textContent = page;
+          button.setAttribute('data-page', page);
+          button.setAttribute('aria-label', 'Página ' + page);
+          if (page === currentPage) {
+            button.className = 'is-active';
+            button.setAttribute('aria-current', 'page');
+          }
+          button.addEventListener('click', function () {
+            currentPage = Number(this.getAttribute('data-page'));
+            renderRows();
+          });
+          pageButtons.appendChild(button);
+        }
+      }
     }
   }
 
-  function visibleRows() {
-    return rows.filter(function (row) {
-      return row.style.display !== 'none';
-    });
+  function matchingRows() {
+    return rows.filter(rowMatches).sort(compareRows);
   }
 
   function exportRows() {
-    return visibleRows().reduce(function (items, row) {
+    return matchingRows().reduce(function (items, row) {
       var cells = row.querySelectorAll('td');
       var registrationId = row.dataset.registrationId;
       var attendeeRows = Array.prototype.slice.call(document.querySelectorAll('#registrationAttendees' + registrationId + ' tbody tr'));

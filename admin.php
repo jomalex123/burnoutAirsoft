@@ -35,7 +35,7 @@ function admin_format_event_date(string $value): string
     return $date->format('d/m/Y');
 }
 
-function admin_latest_registrations(int $limit = 10): array
+function admin_latest_registrations(): array
 {
     $statement = burnout_pdo()->prepare(
         'SELECT
@@ -51,9 +51,8 @@ function admin_latest_registrations(int $limit = 10): array
          LEFT JOIN registration_attendees ra ON ra.registration_id = r.id
          GROUP BY r.id, r.email, r.created_at, e.title, e.event_date, e.time_slot
          ORDER BY r.created_at DESC, r.id DESC
-         LIMIT :limit'
+         LIMIT 10'
     );
-    $statement->bindValue('limit', $limit, PDO::PARAM_INT);
     $statement->execute();
 
     return array_map(static function (array $registration): array {

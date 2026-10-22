@@ -221,6 +221,14 @@ docker compose exec web php scripts/check_error_messages.php
 
 Los fallos técnicos se registran en el servidor y se muestran mediante mensajes breves. Los errores de validación usan `BurnoutUserException`; no utilizar esa clase para detalles SQL, SMTP u otros diagnósticos internos.
 
+Con Node.js disponible, comprobar paginación, filtros, totales y exportación CSV con datos ficticios:
+
+```sh
+node scripts/check_registration_pagination.js
+```
+
+El inicio de administración muestra los últimos 10 registros sin paginación. El listado completo permite 10, 20 o 30 registros por página (10 por defecto); los contadores y las exportaciones CSV/PDF incluyen todos los resultados del filtro, independientemente de la página visible.
+
 Diagnóstico del intérprete y extensiones:
 
 ```sh
