@@ -496,7 +496,6 @@ $attendeeTotal = array_sum(array_map(static function (array $registration): int 
                   </div>
                 <nav class="admin-registrations-pagination" id="registrationPagination" aria-label="Paginación de registros" hidden>
                   <div class="admin-registration-pages" id="registrationPages"></div>
-                  <span id="registrationPageStatus" role="status" aria-live="polite"></span>
                 </nav>
                 <?php foreach ($registrations as $registration): ?>
                   <?php $notification = $registration['notification']; ?>

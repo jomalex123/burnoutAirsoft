@@ -793,17 +793,11 @@
   color: #fff;
 }
 
-.admin-registration-pages button:hover,
-.admin-registration-pages button:focus-visible {
+.admin-registration-pages button:not(.is-active):hover,
+.admin-registration-pages button:not(.is-active):focus-visible {
   background: #151515;
   border-color: #151515;
   color: #fff;
-}
-
-.admin-registrations-pagination [role="status"] {
-  color: #555;
-  font-size: 13px;
-  text-align: center;
 }
 
 .admin-gallery-pages {

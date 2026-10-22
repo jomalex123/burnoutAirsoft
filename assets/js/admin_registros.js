@@ -6,7 +6,6 @@ window.initAdminRegistrosPage = function () {
   var pageSizeSelect = document.getElementById('registrationPageSize');
   var pageButtons = document.getElementById('registrationPages');
   var pagination = document.getElementById('registrationPagination');
-  var pageStatus = document.getElementById('registrationPageStatus');
   var currentPage = 1;
   var pageSize = 10;
   var exportToggle = document.getElementById('registrationExportToggle');
@@ -286,11 +285,6 @@ window.initAdminRegistrosPage = function () {
       attendeeCount.textContent = totalAttendees + (totalAttendees === 1 ? ' asistente' : ' asistentes');
     }
 
-    if (pageStatus) {
-      pageStatus.textContent = filteredRows.length
-        ? 'Página ' + currentPage + ' de ' + totalPages + ' · ' + (start + 1) + '–' + Math.min(start + pageSize, filteredRows.length) + ' de ' + filteredRows.length
-        : 'No hay registros para este filtro';
-    }
     if (pageButtons) {
       pageButtons.innerHTML = '';
       if (filteredRows.length) {
