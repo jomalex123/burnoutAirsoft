@@ -6,7 +6,8 @@ El usuario utiliza XAMPP en local, no Docker. Usar Apache y MySQL de XAMPP, PHP 
 `D:\xampp\php\php.exe`, configuración en `config/env.php` y conexión `local` a
 `127.0.0.1:3306`. URL local: `http://localhost/burnoutAirsoft/`.
 Comprobar la conexión con `php scripts/check_database.php` (o la ruta del PHP de XAMPP).
-Las referencias a Docker de este documento describen una alternativa, no el entorno local habitual.
+No arrancar Docker para trabajar en local. Los archivos Docker del repositorio son una alternativa
+documentada en `README.md`, no el entorno utilizado en este equipo.
 
 Este fichero sirve como contexto base para nuevas sesiones de desarrollo. Antes de programar en este
 proyecto, leer este documento y contrastar los cambios con los patrones descritos aquí.
@@ -15,21 +16,22 @@ proyecto, leer este documento y contrastar los cambios con los patrones descrito
 
 - Proyecto PHP/HTML/CSS/JS sin framework.
 - Páginas públicas en la raíz: `index.html`, `burnout.html`, `campo.html`, `galeria.html`,
-  `galeria_bk.html`, `partidas.html`, `registro.html`, `normativa.html`, `privacidad.html`.
+  `partidas.html`, `registro.html`, `normativa.html`, `privacidad.html`.
 - Endpoints/controladores PHP en la raíz: `events.php`, `gallery_items.php`, `instagram_feed.php`,
   `registro.php`, `admin.php`, `admin_partidas.php`, `admin_registros.php`, `admin_gallery.php`,
   `admin_normativa.php`.
 - CSS propio en `assets/css/`; JS propio en `assets/js/`.
 - Configuración y helpers en `config/`.
 - Base de datos MySQL definida en `database/schema.sql`.
-- Imágenes de contenido en `images/resources/` y galería administrable en `images/gallery/`.
+- Imágenes de contenido en `images/resources/`; las imágenes subidas a las galerías se almacenan
+  en base de datos y se sirven mediante `gallery_event_image.php`.
 
 ## Stack y dependencias
 
-- PHP 8.3 en Docker, con Apache y extensión `pdo_mysql`.
-- En este equipo puede no haber PHP local. Antes de lanzar cualquier comando PHP, comprobar si `php`
-  está disponible; si no lo está, usar el PHP del contenedor Docker del servicio `web`.
-- MySQL 8.4 en `docker-compose.yml`.
+- Apache, PHP con PDO y `pdo_mysql`, y MySQL del entorno XAMPP local.
+- Antes de lanzar comandos PHP, comprobar si `php` está en el PATH; si no lo está, usar
+  `D:\xampp\php\php.exe`.
+- Conexión local en `config/env.php`, entorno `local`, host `127.0.0.1` y puerto `3306`.
 - Frontend sin bundler: HTML, CSS y JavaScript directo.
 - Librerías JS/CSS locales:
   - jQuery 3.7.1.
@@ -55,9 +57,8 @@ proyecto, leer este documento y contrastar los cambios con los patrones descrito
 - `assets/css/registro.css`: formulario público de inscripción y modales de normativa/confirmación.
 - `assets/css/burnout.css`: página "Nosotros".
 - `assets/css/campo.css`: página "Campo" y pantalla de mantenimiento del campo.
-- `assets/css/gallery.css`: galería y pantalla de mantenimiento de galería.
-- `assets/css/instagram_gallery.css`: galería actual conectada a Instagram con grid de 6 columnas y
-  modal estilo `galeria_bk.html`.
+- `assets/css/gallery.css`: galerías por evento y estilos de los modales de imágenes.
+- `assets/css/instagram_gallery.css`: grid y modal de Instagram en `burnout.html`.
 - `assets/css/privacidad.css`: política de privacidad.
 - `assets/css/normativa.css`: normativa, pensada también para cargarse dentro del modal de registro.
 - `assets/css/template.css`: placeholder para páginas generadas desde `template.html`.
@@ -66,14 +67,15 @@ proyecto, leer este documento y contrastar los cambios con los patrones descrito
 - `assets/js/partidas.js`: calendario público que consume `events.php`.
 - `assets/js/registro.js`: validación del formulario público, modal de normativa y asistentes
   dinámicos.
-- `assets/js/instagram_gallery.js`: carga `instagram_feed.php` para pintar la galería Instagram
-  actual.
+- `assets/js/gallery.js`: carga las galerías por evento desde `gallery_items.php` en `galeria.html`.
+- `assets/js/instagram_gallery.js`: carga `instagram_feed.php` para pintar Instagram en `burnout.html`.
 - `assets/js/admin_*.js`: interacciones de administración.
 - `config/database.php`: crea un singleton PDO con `PDO::ERRMODE_EXCEPTION`, fetch assoc y prepares
   reales.
 - `config/auth.php`: sesiones admin, login, logout, CSRF y rate limit de login.
 - `config/rate_limit.php`: límites por tabla `rate_limits`.
-- `config/gallery.php`: CRUD/validación de items de galería.
+- `config/gallery.php`: gestión de galerías por evento, validación de subidas y almacenamiento de
+  imágenes en base de datos; conserva funciones de la galería heredada.
 - `config/mail.php`: envío de correo por `mail()` o SMTP manual.
 - `config/registration_notifications.php`: auditoría y reenvío de notificaciones de inscripción.
 - `config/env_loader.php`: busca el fichero `env.php` según entorno.
@@ -128,7 +130,7 @@ Para crear nuevas páginas públicas, copiar el header/footer de una página act
 Referencias recomendadas:
 
 - Para página pública normal: `burnout.html`, `partidas.html` o `privacidad.html`.
-- Para pantalla de mantenimiento/hero oscuro: `campo.html` o `galeria_bk.html`.
+- Para pantalla de mantenimiento/hero oscuro: `campo.html`.
 - Para página legal embebible en modal: `normativa.html`.
 - Para página dinámica de inscripción: `registro.html` + `registro.php`.
 - Para base genérica: `template.html`, aunque contiene textos con codificación corrupta y debe
@@ -263,7 +265,7 @@ Usada en `burnout.html`, `partidas.html`, `registro.html`, `privacidad.html`.
 
 ### Hero oscuro / mantenimiento
 
-Usado en `campo.html` y `galeria_bk.html`.
+Usado en `campo.html`.
 
 - Página con fondo `#151515`.
 - Sección full viewport con media absoluta, overlay y contenido encima.
@@ -375,7 +377,11 @@ Tablas principales:
 - `registrations`: inscripciones.
 - `registration_attendees`: asistentes de cada inscripción.
 - `registration_email_notifications`: auditoría de emails.
-- `gallery`: items de galería.
+- `gallery`: items de la galería heredada.
+- `gallery_events`: galerías asociadas a partidas.
+- `gallery_event_images`: imágenes de cada galería, incluidos los datos binarios de las subidas.
+- `instagram_cache_items` e `instagram_cache_state`: publicaciones, imágenes y estado de la caché
+  de Instagram.
 
 ### Entornos
 
@@ -397,18 +403,31 @@ Paginas:
 - `admin_partidas.php`: CRUD de eventos/partidas y calendario administrable.
 - `admin_registros.php`: listado de registros, filtros, ordenación, borrado, detalle, reenvío de
   notificaciones, export CSV/PDF.
-- `admin_gallery.php`: alta/borrado/listado/paginación de imágenes de galería.
+- `admin_gallery.php`: creación de galerías asociadas a partidas, visibilidad, subida de imágenes,
+  listado/paginación y borrado de galerías e imágenes.
 - `admin_normativa.php`: editor del título y de los bloques HTML de `normativa.html`.
 
-### Galería Instagram
+### Galerías por evento
 
-- `galeria.html` es la galería actual con el mismo header/footer y estética Burnout.
-- Visualmente replica el patrón de `galeria_bk.html`: miniaturas cuadradas, 6 imágenes por fila en
-  escritorio, 3 en móvil y modal con imagen + texto de la publicación.
+- `galeria.html` muestra tarjetas de galerías por evento con el header/footer y estética Burnout.
+- `assets/js/gallery.js` carga `gallery_items.php`, que obtiene las galerías públicas mediante
+  `config/gallery.php`. Las imágenes se abren en un modal con navegación anterior/siguiente.
+- `admin_gallery.php` admite subidas desde la interfaz; las imágenes se guardan en
+  `gallery_event_images` y se sirven con `gallery_event_image.php`, respetando la visibilidad de
+  la galería y la previsualización administrativa.
+- Revisar `database/schema.sql` y las migraciones de galerías antes de modificar este flujo.
+- `galeria_bk.html` no existe en el repositorio actual y no debe usarse como referencia.
+
+### Instagram en Nosotros
+
+- La integración de Instagram está en `burnout.html`, con `assets/css/instagram_gallery.css` y
+  `assets/js/instagram_gallery.js`; es independiente de las galerías por evento.
 - El grid carga datos desde `instagram_feed.php` mediante `data-instagram-source`.
 - La carga inicial trae 12 publicaciones y el botón `Cargar más` solicita 12 adicionales usando
   `pagination.nextCursor` del endpoint.
 - `instagram_feed.php` devuelve `assets/data/instagram_gallery.json` si la API no está configurada.
+- Las publicaciones e imágenes se almacenan también en caché de base de datos; `instagram_image.php`
+  sirve las imágenes almacenadas y `scripts/sync_instagram_gallery.php` permite sincronizarlas.
 - Para automatizar publicaciones reales, configurar en `env.php` la clave `instagram` con `enabled`,
   `graph_version`, `user_id`, `access_token`, `limit` y `profile_url`.
 - En local XAMPP puede ser necesario `instagram.ca_file` o, solo para pruebas locales,
@@ -500,8 +519,9 @@ Usar estas páginas como base según el caso:
 - Nueva página con calendario o panel lateral: `partidas.html` + `assets/css/partidas.css`.
 - Nueva página con formulario público: `registro.html` + `assets/css/registro.css` + patrón servidor
   de `registro.php`.
-- Nueva pantalla de mantenimiento o landing oscura: `campo.html` o `galeria_bk.html`.
-- Nueva galería conectable a Instagram: `galeria.html` + `assets/css/instagram_gallery.css` +
+- Nueva pantalla de mantenimiento o landing oscura: `campo.html`.
+- Nueva galería por evento: `galeria.html` + `assets/css/gallery.css` + `assets/js/gallery.js`.
+- Nueva sección conectable a Instagram: `burnout.html` + `assets/css/instagram_gallery.css` +
   `assets/js/instagram_gallery.js`.
 - Nueva página admin: `admin_gallery.php` si necesita modal/form/listado simple;
   `admin_registros.php` si necesita tabla/filtros/export; `admin_partidas.php` si necesita
@@ -538,57 +558,43 @@ Usar estas páginas como base según el caso:
 - El CSS global mezcla plantilla original con overrides del proyecto.
 - El endpoint `events.php` devuelve todos los eventos sin paginación/filtro; suficiente para volumen
   bajo, pero a vigilar si crece.
-- La galería valida rutas locales existentes; para subir imágenes reales todavía haría falta un
-  flujo de upload si se quiere administrar desde UI.
+- Las imágenes subidas a galerías y la caché de Instagram se almacenan en base de datos; incluirlas
+  en las copias de seguridad y revisar los límites de subida de PHP al gestionar imágenes grandes.
 
 ## Comandos útiles
 
-Local con Docker:
+Ejecutar desde la raíz del proyecto en PowerShell, con Apache y MySQL activados en el panel XAMPP.
+No arrancar contenedores Docker para estas tareas.
 
-```bash
-docker compose up --build
+Comprobar disponibilidad de PHP y conexión local:
+
+```powershell
+Get-Command php -ErrorAction SilentlyContinue
+& 'D:\xampp\php\php.exe' scripts/check_database.php
 ```
 
-Crear tablas:
+Crear tablas en una instalación nueva:
 
-```bash
-docker compose exec -T db sh -c \
-  'mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' \
-  < database/schema.sql
-```
-
-En la primera creación del contenedor MySQL, `database/schema.sql` se importa automáticamente desde
-`/docker-entrypoint-initdb.d/01-schema.sql`. Si la base ya existe, importar el esquema manualmente
-solo cuando haga falta.
-
-Migraciones:
-
-```bash
-docker compose exec -T db sh -c \
-  'mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' \
-  < database/migrations/archivo.sql
-```
+- Crear la base local e importar `database/schema.sql` mediante phpMyAdmin de XAMPP o su cliente MySQL.
+- Usar `config/env.example.php` como plantilla para `config/env.php`, con entorno `local`, host
+  `127.0.0.1` y puerto `3306`, sin publicar credenciales.
+- En bases existentes, revisar `database/migrations/` e importar solo las migraciones necesarias.
+  Hacer copia de seguridad antes de modificar datos; no reimportar el esquema indiscriminadamente.
 
 Crear admin:
 
-```bash
-php scripts/create_admin_user.php admin "password-seguro" "Burnout Admin"
+```powershell
+& 'D:\xampp\php\php.exe' scripts/create_admin_user.php admin "CAMBIA_ESTA_CLAVE" "Burnout Admin"
 ```
 
-Si no hay PHP local, usar Docker:
+Comprobar sintaxis de un archivo PHP modificado:
 
-```bash
-docker compose run --rm web php scripts/create_admin_user.php \
-  admin "password-seguro" "Burnout Admin"
+```powershell
+& 'D:\xampp\php\php.exe' -l registro.php
 ```
 
-Patrón general para comandos PHP en este equipo:
-
-```bash
-command -v php >/dev/null 2>&1 \
-  && php ruta/al/script.php \
-  || docker compose run --rm web php ruta/al/script.php
-```
+Si `php` está disponible en el PATH, puede utilizarse en lugar de la ruta completa de XAMPP.
+La configuración alternativa de Docker se describe en `README.md`.
 
 ## Instrucción para futuras sesiones
 
