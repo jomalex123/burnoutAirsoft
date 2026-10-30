@@ -211,9 +211,9 @@ La galería pública actual es por eventos. Instagram se integra en `burnout.htm
 
 ## Comprobaciones
 
-### Mapa interactivo de administración
+### HQ de administración
 
-Desde el panel, **Mapa interactivo** abre `admin_mapainteractivo.php` (requiere sesión administrativa). La barra de iconos permite dibujar con lápiz, líneas, rectángulos y círculos, elegir color y grosor, borrar, deshacer/rehacer hasta 15 cambios y limpiar el lienzo. Los controles incluyen etiquetas accesibles y títulos. En pantallas estrechas, la barra se desplaza horizontalmente para mantener una sola fila.
+Desde el panel, **Gestionar HQ** abre `admin_hq.php`, con el título **HQ** (requiere sesión administrativa). La barra de iconos permite dibujar con lápiz, líneas, rectángulos y círculos, elegir color y grosor, borrar, deshacer/rehacer hasta 15 cambios y limpiar el lienzo. Los controles incluyen etiquetas accesibles y títulos. En pantallas estrechas, la barra se desplaza horizontalmente para mantener una sola fila.
 
 La herramienta de flecha está junto a la línea y se utiliza arrastrando. «Aa», después del borrador, añade texto libre al pulsar sobre el lienzo: solicita el texto y utiliza el color seleccionado y un tamaño proporcional al grosor. El selector de color se muestra sin icono adicional. Las flechas y los textos admiten deshacer y rehacer.
 

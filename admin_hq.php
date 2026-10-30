@@ -22,7 +22,7 @@ $csrfToken = burnout_csrf_token();
 <!DOCTYPE html>
 <html lang="es">
   <head>
-    <title>Mapa interactivo - Burnout Airsoft</title>
+    <title>Gestión HQ - Burnout Airsoft</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/png" href="images/resources/logoBurnout-4.png" />
@@ -89,7 +89,7 @@ $csrfToken = burnout_csrf_token();
           <div class="admin-header">
             <div class="admin-header__title">
               <span class="admin-kicker">Burnout Airsoft</span>
-              <h1>Mapa interactivo</h1>
+              <h1>GESTIÓN HQ</h1>
             </div>
             <?php if ($adminUser): ?>
               <div class="admin-header-actions">
@@ -108,13 +108,12 @@ $csrfToken = burnout_csrf_token();
             <div class="admin-login-error" role="alert"><?= htmlspecialchars($setupError, ENT_QUOTES, 'UTF-8') ?></div>
           <?php else: ?>
           <div class="admin-map-workspace">
-            <aside class="admin-map-sidebar" aria-label="Secciones del mapa interactivo">
-              <div class="admin-map-brand">HQ</div>
+            <aside class="admin-map-sidebar" aria-label="Secciones del HQ">
               <nav aria-label="Herramientas de operaciones">
-                <button type="button" class="is-active" data-map-section="mapa" aria-pressed="true">Mapa</button>
-                <button type="button" data-map-section="misiones" aria-pressed="false">Misiones</button>
-                <button type="button" data-map-section="canales" aria-pressed="false">Canales</button>
-                <button type="button" data-map-section="ajustes" aria-pressed="false">Ajustes</button>
+                <button type="button" class="is-active" data-map-section="mapa" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 22s8-8.5 8-14a8 8 0 0 0-16 0c0 5.5 8 14 8 14Z"/><circle cx="12" cy="8" r="3" fill="#151515"/></svg><span>Mapa</span></button>
+                <button type="button" data-map-section="misiones" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 3h2V1h4v2h2v2h5l-1 17H4L3 5h5Z"/><path d="M12 7v10m-4-4 4 4 4-4" fill="none" stroke="#151515" stroke-width="2"/></svg><span>Misiones</span></button>
+                <button type="button" data-map-section="canales" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="10" r="2"/><path d="M12 14v7M7 5a7 7 0 0 0 0 10M17 5a7 7 0 0 1 0 10M4 2a11 11 0 0 0 0 16M20 2a11 11 0 0 1 0 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Canales</span></button>
+                <button type="button" data-map-section="ajustes" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9 1-.6 3-2 .9-2.6-1.6-3 5.2L3.2 11v2L.8 15.5l3 5.2 2.6-1.6 2 .9.6 3h6l.6-3 2-.9 2.6 1.6 3-5.2-2.4-2.5v-2l2.4-2.5-3-5.2-2.6 1.6-2-.9L15 1Z"/><circle cx="12" cy="12" r="4" fill="#151515"/></svg><span>Ajustes</span></button>
               </nav>
             </aside>
             <div class="admin-map-content">

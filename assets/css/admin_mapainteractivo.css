@@ -3,21 +3,24 @@
 .admin-map-brand { font-size: 40px; font-weight: 700; padding: 0 12px 28px; }
 .admin-map-brand span { display: block; font-size: 12px; color: #bbb; font-weight: 400; }
 .admin-map-sidebar nav { display: grid; gap: 8px; }
-.admin-map-sidebar button { text-align: left; padding: 15px; border-radius: 6px; color: #fff; background: transparent; }
+.admin-map-sidebar button { display: flex; align-items: center; gap: 14px; text-align: left; padding: 15px; border-radius: 0; color: #fff; background: transparent; }
+.admin-map-sidebar button svg { width: 20px; height: 20px; flex-shrink: 0; fill: currentColor; }
 .admin-map-sidebar p { color: #aaa; font-size: 14px; padding: 28px 12px 0; }
 .admin-map-content { padding: 28px; min-width: 0; }
-.admin-map-page button { font-family: inherit; cursor: pointer; font-weight: 700; }
+.admin-map-page button { font-family: inherit; cursor: pointer; font-weight: 700; border-radius: 0; transition: background .2s ease, color .2s ease, border-color .2s ease; }
 .admin-map-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
 .admin-map-heading h2 { font-size: 30px; margin: 0 0 8px; }
 .admin-map-heading p { color: #555; margin: 0; }
 .admin-map-heading .admin-kicker { font-size: 12px; margin-bottom: 8px; }
-.admin-map-heading > button, .admin-map-maintenance button { background: #df1f29; color: #fff; padding: 12px 18px; border-radius: 6px; flex-shrink: 0; }
+.admin-map-heading > button, .admin-map-maintenance button { background: #df1f29; color: #fff; padding: 12px 18px; border-radius: 0; flex-shrink: 0; }
 .admin-map-toolbar { display: flex; flex-wrap: nowrap; overflow-x: auto; align-items: center; gap: 8px; padding: 12px; margin-bottom: 18px; background: #f4f4f4; border: 1px solid #e5e5e5; }
-.admin-map-toolbar button { background: #fff; color: #151515; border: 1px solid #ddd; padding: 8px 12px; border-radius: 5px; font-size: 14px; margin: 0; }
+.admin-map-toolbar button { background: #fff; color: #151515; border: 1px solid #ddd; padding: 8px 12px; border-radius: 0; font-size: 14px; margin: 0; }
 .admin-map-toolbar label { display: inline-flex; align-items: center; gap: 8px; margin: 0 4px; font-size: 14px; }
 .admin-map-toolbar input[type=color] { width: 32px; height: 32px; padding: 2px; border: 1px solid #ccc; cursor: pointer; }
 .admin-map-toolbar input[type=range] { width: 80px; accent-color: #df1f29; }
 .admin-map-page button.is-active { background: #df1f29; color: #fff; border-color: #df1f29; }
+.admin-map-sidebar button:not(:disabled):hover, .admin-map-sidebar button:focus-visible, .admin-map-toolbar button:not(:disabled):hover { background: #df1f29; color: #fff; border-color: #df1f29; }
+.admin-map-heading > button:hover, .admin-map-maintenance button:hover { background: #151515; }
 .admin-map-page button:disabled { opacity: .4; cursor: default; }
 .admin-map-page button:focus-visible, .admin-map-toolbar input:focus-visible { outline: 2px solid #df1f29; outline-offset: 3px; }
 .admin-map-canvas-wrap { border: 1px solid #ddd; background: #eaeaea; padding: 12px; }
@@ -30,7 +33,7 @@
 .admin-map-maintenance p { color: #555; }
 .admin-map-content [hidden] { display: none; }
 @media (max-width: 900px) { .admin-map-workspace { grid-template-columns: 150px minmax(0,1fr); } .admin-map-content { padding: 18px; } .admin-map-heading { align-items: flex-start; flex-direction: column; } }
-@media (max-width: 640px) { .admin-map-workspace { grid-template-columns: minmax(0,1fr); } .admin-map-sidebar { padding: 12px; } .admin-map-brand, .admin-map-sidebar p { display: none; } .admin-map-sidebar nav { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 4px; } .admin-map-sidebar button { text-align: center; padding: 12px 4px; font-size: 14px; } .admin-map-content { padding: 14px; } .admin-map-heading h2 { font-size: 26px; } .admin-map-canvas-wrap { padding: 4px; } }
+@media (max-width: 640px) { .admin-map-workspace { grid-template-columns: minmax(0,1fr); } .admin-map-sidebar { padding: 12px; } .admin-map-brand, .admin-map-sidebar p { display: none; } .admin-map-sidebar nav { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 4px; } .admin-map-sidebar button { flex-direction: column; justify-content: center; gap: 6px; text-align: center; padding: 12px 4px; font-size: 14px; } .admin-map-content { padding: 14px; } .admin-map-heading h2 { font-size: 26px; } .admin-map-canvas-wrap { padding: 4px; } }
 
 .admin-map-toolbar > * { flex-shrink: 0; }
 .admin-map-toolbar button { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 8px; }
