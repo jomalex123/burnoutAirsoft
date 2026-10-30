@@ -211,6 +211,18 @@ La galería pública actual es por eventos. Instagram se integra en `burnout.htm
 
 ## Comprobaciones
 
+### Mapa interactivo de administración
+
+Desde el panel, **Mapa interactivo** abre `admin_mapainteractivo.php` (requiere sesión administrativa). La barra de iconos permite dibujar con lápiz, líneas, rectángulos y círculos, elegir color y grosor, borrar, deshacer/rehacer hasta 15 cambios y limpiar el lienzo. Los controles incluyen etiquetas accesibles y títulos. En pantallas estrechas, la barra se desplaza horizontalmente para mantener una sola fila.
+
+La herramienta de flecha está junto a la línea y se utiliza arrastrando. «Aa», después del borrador, añade texto libre al pulsar sobre el lienzo: solicita el texto y utiliza el color seleccionado y un tamaño proporcional al grosor. El selector de color se muestra sin icono adicional. Las flechas y los textos admiten deshacer y rehacer.
+
+El lienzo utiliza como fondo el plano `assets/maps/carto-orto-detalle.png`, generado desde el original `assets/maps/Carto-Orto_Detalle.pdf`. Las anotaciones se dibujan en una capa transparente: el borrador y «Limpiar mapa» eliminan solo las anotaciones y mantienen el plano. Si cambia el PDF, regenerar también la imagen y ajustar las proporciones del lienzo si fuese necesario.
+
+El icono del extremo derecho de la barra abre el lienzo y sus herramientas en pantalla completa. Se sale con el mismo botón o con `Esc`, conservando las anotaciones. El botón se desactiva si el navegador no admite pantalla completa.
+
+El mapa permanece durante la sesión de la página; no se guarda en el navegador. Misiones, Canales y Ajustes muestran «En mantenimiento».
+
 El repositorio incluye una comprobación específica de mensajes de error, pero no una suite general de pruebas automatizadas. Realizar las verificaciones apropiadas al cambio y registrar cuáles se han ejecutado.
 
 Comprobar mensajes seguros y respuestas de excepciones sin conectar con MySQL:

@@ -238,6 +238,7 @@ $csrfToken = burnout_csrf_token();
                   <a href="admin_partidas.php">Gestionar Partidas</a>
                   <a href="admin_registros.php">Gestionar Registros</a>
                   <a href="admin_normativa.php">Gestionar Normativa</a>
+                  <a href="admin_mapainteractivo.php" data-type="page-transition">Mapa interactivo</a>
                 </aside>
               </div>
             </section>

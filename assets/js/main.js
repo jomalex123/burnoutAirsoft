@@ -25,6 +25,9 @@
 })(window);
 
 function InitPage() {
+    if (typeof window.initAdminMapaInteractivoPage === 'function') {
+        window.initAdminMapaInteractivoPage();
+    }
     UpdateCopyrightYear();
     ms_home_slider();
     Sort();
