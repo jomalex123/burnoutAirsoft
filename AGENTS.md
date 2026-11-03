@@ -40,6 +40,10 @@ La documentación puede estar desactualizada. Si difiere del código, contrastar
 - Seguir los layouts existentes con Grid y Flexbox, tarjetas blancas, bordes sutiles, radio habitual de 8px y sombras suaves cuando corresponda.
 - Mantener el enfoque responsive con media queries. Revisar los breakpoints del archivo afectado; son frecuentes 900px, 700px y 640px, pero hay otros.
 - Evitar reglas globales que alteren páginas ajenas a la tarea.
+- Los botones de texto de administración usan mayúsculas y `--admin-button-height: 44px`
+  de `admin.css`. Respetar los tamaños propios de iconos compactos, cierres y paginación.
+- Reutilizar `.burnout-popup*` de `style.css` para ventanas nuevas. Los títulos y el cierre
+  comparten estilo; no sobrescribirlos desde CSS de página. Gestionar foco, Tab, Escape y retorno del foco.
 
 ## JavaScript y navegación parcial
 
@@ -64,6 +68,29 @@ La documentación puede estar desactualizada. Si difiere del código, contrastar
 - Devolver JSON con `Content-Type: application/json; charset=utf-8`, códigos HTTP adecuados y las opciones de codificación existentes.
 - Capturar errores siguiendo el patrón con `Throwable`, registrar detalles mediante `error_log()` y devolver mensajes seguros al usuario.
 - Respetar `.htaccess` y su CSP al añadir recursos, rutas o servicios externos.
+- Validar identificadores como enteros antes de consultar: no convertir arrays o cadenas
+  arbitrarias con `(int)`. Validar también tipo, longitud y límites de los datos.
+- Los cambios de varias consultas deben ser transaccionales. Si una acción depende del
+  estado de una operación, bloquear y releer ese estado antes de modificar sus datos.
+
+## HQ: tecnologías y reglas de conservación
+
+- Leer `docs/hq.md` y `database/README.md` para el comportamiento e instalación actuales.
+- Usa PHP/PDO, sesiones y MySQL; Canvas 2D, Pointer Events, Fullscreen API y Fetch/JSON
+  nativos. No necesita frameworks nuevos, Node en servidor, WebSockets ni cron para el chat.
+- Mapa, Misiones, Canales y Ajustes comparten la partida. Las anotaciones del mapa se guardan
+  por operación, separadas del plano. Esperar el guardado antes de cambiar de partida o navegar;
+  conservar cambios y avisar si falla. Limpiar temporizadores y listeners al salir.
+- Inicializar `initAdminMapaInteractivoPage` antes de `initHqPage` y comprobar carga directa y parcial.
+- Solo una misión por equipo puede estar en curso: bloquear primero la operación en las mutaciones
+  del guion. Las nuevas quedan Pendientes; Reiniciar limpia la recepción, sin borrar el texto.
+- Eliminar una misión asignada mantiene su fila e historial. Borrar una entrada de catálogo la
+  desactiva (`is_available = 0`), conservando las copias de las partidas. No añadir DELETE físicos.
+- No enviar catálogo ni metadatos administrativos al enlace de equipo. Validar rol, equipo,
+  sesión revocada, CSRF y vigencia del evento también en servidor.
+- Clasificar solo por Categoría. Importar usa 5 filas fijas; Gestionar Misiones usa 5/10/15 y
+  filtros en popup. Mantener independientes filtros, selección y confirmaciones.
+- Node.js se usa únicamente en scripts de prueba con módulos integrados, sin npm ni bundler.
 
 ## Referencias actuales y documentación
 
@@ -77,8 +104,18 @@ La documentación puede estar desactualizada. Si difiere del código, contrastar
 
 - Leer y guardar texto como UTF-8; no copiar secuencias de texto corruptas de plantillas antiguas.
 - Mantener las entidades HTML cuando sea la convención del bloque editado. Usar identificadores de código ASCII.
-- Antes de ejecutar PHP, comprobar si está disponible localmente. Si no lo está, utilizar el PHP del servicio Docker `web` cuando esté disponible.
+- Antes de ejecutar PHP, comprobar si está disponible localmente; usar `D:\xampp\php\php.exe`
+  si falta en PATH. Si tampoco existe, comunicar la limitación; no arrancar Docker en este equipo.
 - Realizar las comprobaciones apropiadas al cambio. Para PHP, comprobar sintaxis de los archivos modificados cuando se disponga del intérprete.
 - Para cambios de interfaz, verificar carga directa, navegación parcial y adaptación móvil cuando sea posible.
 - Para cambios de datos, revisar coherencia entre esquema, migraciones y consultas; no ejecutar migraciones sobre entornos remotos sin autorización.
 - No afirmar que se han ejecutado pruebas o verificaciones que no se hayan realizado. Indicar cualquier limitación relevante.
+- Comprobaciones HQ: `scripts/check_hq.php` (integración local con datos ficticios que limpia),
+  `scripts/check_http_security.php` (HTTP local), `node scripts/check_hq_catalog_tables.js` y
+  `node scripts/check_hq_map_state.js`. `--install-local` modifica esquema: revisar migraciones y copia previa.
+- `node scripts/check_rate_limit_concurrency.js` comprueba incrementos con procesos PHP/MySQL
+  locales concurrentes y limpia su fila ficticia; no requiere paquetes npm.
+- El diagnóstico local del 03/11/2026 detectó PHP 8.0.30, fuera de soporte. Mantener compatibilidad
+  con el entorno disponible, pero no presentarlo como versión segura o recomendada para desplegar.
+- La revisión de seguridad documentada está en `docs/security-review-2026-11-03.md`; distinguir
+  correcciones comprobadas, limitaciones de pruebas y pendientes del entorno.

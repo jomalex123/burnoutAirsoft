@@ -1,0 +1,94 @@
+<?php
+declare(strict_types=1);
+require_once __DIR__ . '/config/auth.php';
+$csrfToken = burnout_csrf_token();
+$hqTeamView = true;
+header('Cache-Control: no-store');
+?>
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <title>Enlace HQ - Burnout Airsoft</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/png" href="images/resources/logoBurnout-4.png" />
+    <link rel="stylesheet" href="assets/css/plugins.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/admin.css">
+    <link rel="stylesheet" href="assets/css/admin_mapainteractivo.css">
+    <link rel="stylesheet" href="assets/css/hq.css">
+  </head>
+  <body>
+    <div class="ms-main-container">
+      <div class="ms-preloader"></div>
+      <header class="ms-header">
+        <nav class="ms-nav">
+          <div class="ms-logo">
+            <a class="logonav" href="./" data-type="page-transition">
+              <div class="logo-dark"><img src="images/resources/logoBurnout-2.png" alt="logo image"></div>
+              <div class="logo-light current"><img src="images/resources/logoBurnout-2.png" alt="logo image"></div>
+            </a>
+          </div>
+          <button class="hamburger" type="button" data-toggle="navigation">
+          <span class="hamburger-box">
+            <span class="hamburger-label">menu</span>
+            <span class="hamburger-inner"></span>
+          </span>
+          </button>
+          <div class="height-full-viewport">
+            <ul class="ms-navbar">
+              <li class="nav-item">
+                <a href="./" data-type="page-transition">
+                  <span class="ms-btn">Inicio</span>
+                  <span class="nav-item__label">Vuelve a la pagina principal</span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="galeria.html" data-type="page-transition">
+                  <span class="ms-btn">Galeria</span>
+                  <span class="nav-item__label">Ver nuestros momentos</span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="burnout.html" data-type="page-transition">
+                  <span class="ms-btn">Nosotros</span>
+                  <span class="nav-item__label">Conoce al equipo</span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="campo.html" data-type="page-transition">
+                  <span class="ms-btn">Campo</span>
+                  <span class="nav-item__label">Descubre el terreno</span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="partidas.html" data-type="page-transition">
+                  <span class="ms-btn">Partidas</span>
+                  <span class="nav-item__label">Calendario de partidas</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+        </nav>
+      </header>
+      <main class="ms-container admin-page admin-map-page hq-team-page"><section class="ms-section__block"><div class="admin-header" data-hq-team-heading hidden><div><span class="admin-kicker">Burnout Airsoft</span><h1>Enlace HQ</h1></div></div><?php require __DIR__ . '/config/hq_panels.php'; ?></section></main>
+      <footer>
+        <div class="ms-footer">
+          <div class="copyright" data-copyright-start="2025">Copyright &copy; 2025-2026. Designed by Alex Serret</div>
+          <span class="footer-links">
+            <a href="privacidad.html" data-type="page-transition">Politica de Privacidad de datos</a>
+          </span>
+          <ul class="socials">
+            <li><a href="#" class="socicon-instagram"></a></li>
+            <li><a href="#" class="socicon-youtube"></a></li>
+          </ul>
+        </div>
+      </footer>
+    </div>
+    <script type="text/javascript" src="assets/js/jquery-3.7.1.min.js"></script>
+    <script type="text/javascript" src='assets/js/plugins.min.js'></script>
+    <script type="text/javascript" src="assets/js/main.js"></script>
+
+    <script src="assets/js/hq.js"></script>
+  </body>
+</html>

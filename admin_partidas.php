@@ -696,12 +696,12 @@ $csrfToken = burnout_csrf_token();
               </aside>
             </div>
 
-            <div class="admin-gallery-modal" id="createEventModal" aria-hidden="true">
-              <div class="admin-gallery-modal__overlay" data-partidas-modal-close></div>
-              <div class="admin-gallery-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="createEventTitle">
-                <div class="admin-gallery-modal__header">
+            <div class="admin-gallery-modal burnout-popup" id="createEventModal" aria-hidden="true">
+              <div class="admin-gallery-modal__overlay burnout-popup__overlay" data-partidas-modal-close></div>
+              <div class="admin-gallery-modal__dialog burnout-popup__dialog" role="dialog" aria-modal="true" aria-labelledby="createEventTitle">
+                <div class="admin-gallery-modal__header burnout-popup__header">
                   <h2 id="createEventTitle">Crear evento</h2>
-                  <button type="button" data-partidas-modal-close aria-label="Cerrar ventana">x</button>
+                  <button class="burnout-popup__close" type="button" data-partidas-modal-close aria-label="Cerrar ventana"><span aria-hidden="true">&#215;</span></button>
                 </div>
                 <form class="admin-gallery-form" method="post" action="admin_partidas.php">
                   <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
@@ -735,19 +735,19 @@ $csrfToken = burnout_csrf_token();
                       </label>
                     </div>
                   </div>
-                  <div class="admin-gallery-modal__actions">
+                  <div class="admin-gallery-modal__actions burnout-popup__actions">
                     <button class="admin-login-submit" type="submit">Guardar evento</button>
                   </div>
                 </form>
               </div>
             </div>
 
-            <div class="admin-gallery-modal" id="deleteEventModal" aria-hidden="true">
-              <div class="admin-gallery-modal__overlay" data-partidas-modal-close></div>
-              <div class="admin-gallery-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="deleteEventTitle">
-                <div class="admin-gallery-modal__header">
+            <div class="admin-gallery-modal burnout-popup" id="deleteEventModal" aria-hidden="true">
+              <div class="admin-gallery-modal__overlay burnout-popup__overlay" data-partidas-modal-close></div>
+              <div class="admin-gallery-modal__dialog burnout-popup__dialog" role="dialog" aria-modal="true" aria-labelledby="deleteEventTitle">
+                <div class="admin-gallery-modal__header burnout-popup__header">
                   <h2 id="deleteEventTitle">Borrar evento</h2>
-                  <button type="button" data-partidas-modal-close aria-label="Cerrar ventana">x</button>
+                  <button class="burnout-popup__close" type="button" data-partidas-modal-close aria-label="Cerrar ventana"><span aria-hidden="true">&#215;</span></button>
                 </div>
                 <?php if (!$events): ?>
                   <div class="admin-empty">No hay eventos creados.</div>
@@ -780,12 +780,12 @@ $csrfToken = burnout_csrf_token();
               </div>
             </div>
 
-            <div class="admin-gallery-modal" id="editEventModal" aria-hidden="true">
-              <div class="admin-gallery-modal__overlay" data-partidas-modal-close></div>
-              <div class="admin-gallery-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="editEventTitle">
-                <div class="admin-gallery-modal__header">
+            <div class="admin-gallery-modal burnout-popup" id="editEventModal" aria-hidden="true">
+              <div class="admin-gallery-modal__overlay burnout-popup__overlay" data-partidas-modal-close></div>
+              <div class="admin-gallery-modal__dialog burnout-popup__dialog" role="dialog" aria-modal="true" aria-labelledby="editEventTitle">
+                <div class="admin-gallery-modal__header burnout-popup__header">
                   <h2 id="editEventTitle">Modificar evento</h2>
-                  <button type="button" data-partidas-modal-close aria-label="Cerrar ventana">x</button>
+                  <button class="burnout-popup__close" type="button" data-partidas-modal-close aria-label="Cerrar ventana"><span aria-hidden="true">&#215;</span></button>
                 </div>
                 <form class="admin-gallery-form" method="post" action="admin_partidas.php" id="editEventForm">
                   <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
@@ -819,7 +819,7 @@ $csrfToken = burnout_csrf_token();
                       </label>
                     </div>
                   </div>
-                  <div class="admin-gallery-modal__actions admin-gallery-modal__actions--split admin-event-edit-actions">
+                  <div class="admin-gallery-modal__actions admin-gallery-modal__actions--split admin-event-edit-actions burnout-popup__actions burnout-popup__actions--split">
                     <button class="admin-danger-submit" type="submit" name="action" value="delete">Borrar evento</button>
                     <button class="admin-secondary-submit admin-event-registration-button" type="button" data-open-late-registration>A&ntilde;adir registro</button>
                     <button class="admin-login-submit" type="submit" name="action" value="update">Guardar evento</button>
@@ -828,14 +828,14 @@ $csrfToken = burnout_csrf_token();
               </div>
             </div>
 
-            <div class="admin-gallery-modal" id="lateRegistrationModal" aria-hidden="true">
-              <div class="admin-gallery-modal__overlay" data-partidas-modal-close></div>
-              <div class="admin-gallery-modal__dialog admin-late-registration-dialog" role="dialog" aria-modal="true" aria-labelledby="lateRegistrationTitle">
-                <div class="admin-gallery-modal__header">
+            <div class="admin-gallery-modal burnout-popup" id="lateRegistrationModal" aria-hidden="true">
+              <div class="admin-gallery-modal__overlay burnout-popup__overlay" data-partidas-modal-close></div>
+              <div class="admin-gallery-modal__dialog admin-late-registration-dialog burnout-popup__dialog" role="dialog" aria-modal="true" aria-labelledby="lateRegistrationTitle">
+                <div class="admin-gallery-modal__header burnout-popup__header">
                   <h2 id="lateRegistrationTitle">A&ntilde;adir registro</h2>
-                  <button type="button" data-partidas-modal-close aria-label="Cerrar ventana">x</button>
+                  <button class="burnout-popup__close" type="button" data-partidas-modal-close aria-label="Cerrar ventana"><span aria-hidden="true">&#215;</span></button>
                 </div>
-                <div class="admin-gallery-modal__body admin-late-registration-summary">
+                <div class="admin-gallery-modal__body admin-late-registration-summary burnout-popup__body">
                   <p><strong>Evento:</strong> <span id="lateRegistrationEventTitle">Selecciona un evento</span></p>
                   <p><strong>Fecha:</strong> <span id="lateRegistrationEventDate">-</span></p>
                   <p><strong>Turno:</strong> <span id="lateRegistrationEventTime">-</span></p>
@@ -876,7 +876,7 @@ $csrfToken = burnout_csrf_token();
                     <label for="lateRegistrationTeam">Equipo</label>
                     <input id="lateRegistrationTeam" name="equipo" type="text" autocomplete="organization" placeholder="Nombre del equipo">
                   </div>
-                  <div class="admin-gallery-modal__actions admin-gallery-modal__actions--split">
+                  <div class="admin-gallery-modal__actions admin-gallery-modal__actions--split burnout-popup__actions burnout-popup__actions--split">
                     <button class="admin-secondary-submit" type="reset">Limpiar</button>
                     <button class="admin-login-submit" type="submit">Guardar registro</button>
                   </div>

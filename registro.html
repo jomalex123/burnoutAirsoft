@@ -135,27 +135,27 @@
           </form>
         </section>
 
-        <div class="registro-modal" id="normativaModal" aria-hidden="true">
-          <div class="registro-modal__overlay" data-close-modal></div>
-          <div class="registro-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="normativaTitulo">
-            <div class="registro-modal__header">
+        <div class="registro-modal burnout-popup" id="normativaModal" aria-hidden="true">
+          <div class="registro-modal__overlay burnout-popup__overlay" data-close-modal></div>
+          <div class="registro-modal__dialog burnout-popup__dialog" role="dialog" aria-modal="true" aria-labelledby="normativaTitulo">
+            <div class="registro-modal__header burnout-popup__header">
               <h2 id="normativaTitulo"> </h2>
-              <button class="registro-modal__close" type="button" data-close-modal aria-label="Cerrar normativa">x</button>
+              <button class="registro-modal__close burnout-popup__close" type="button" data-close-modal aria-label="Cerrar normativa"><span aria-hidden="true">&#215;</span></button>
             </div>
             <div class="registro-modal__body registro-normativa-body" id="normativaModalBody" data-normativa-source="normativa.html" tabindex="0">
               <p class="registro-normativa-loading">Cargando normativa...</p>
             </div>
-            <div class="registro-modal__actions">
+            <div class="registro-modal__actions burnout-popup__actions">
               <button class="registro-clear" type="button" data-close-modal>Cancelar</button>
               <button class="registro-submit registro-rules-submit" type="button" id="aceptarNormativa" disabled>Aceptar normativa</button>
             </div>
           </div>
         </div>
 
-        <div class="registro-modal registro-confirmation-modal" id="registroConfirmationModal" aria-hidden="true">
-          <div class="registro-modal__overlay"></div>
-          <div class="registro-modal__dialog registro-confirmation-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="registroConfirmationTitle">
-            <div class="registro-modal__header">
+        <div class="registro-modal registro-confirmation-modal burnout-popup" id="registroConfirmationModal" aria-hidden="true">
+          <div class="registro-modal__overlay burnout-popup__overlay"></div>
+          <div class="registro-modal__dialog registro-confirmation-modal__dialog burnout-popup__dialog" role="dialog" aria-modal="true" aria-labelledby="registroConfirmationTitle">
+            <div class="registro-modal__header burnout-popup__header">
               <h2 id="registroConfirmationTitle">Inscripción recibida</h2>
             </div>
             <div class="registro-modal__body registro-confirmation-modal__body">
@@ -167,7 +167,7 @@
               </p>
               <p>Su incumplimiento podrá ser sancionado por la organización, incluyendo la expulsión del terreno de juego.</p>
             </div>
-            <div class="registro-modal__actions">
+            <div class="registro-modal__actions burnout-popup__actions">
               <a class="registro-submit" href="partidas.html">Volver a partidas</a>
             </div>
           </div>

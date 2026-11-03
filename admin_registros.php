@@ -499,12 +499,12 @@ $attendeeTotal = array_sum(array_map(static function (array $registration): int 
                 </nav>
                 <?php foreach ($registrations as $registration): ?>
                   <?php $notification = $registration['notification']; ?>
-                  <div class="admin-gallery-modal" id="registrationAttendees<?= (int) $registration['id'] ?>" aria-hidden="true">
-                    <div class="admin-gallery-modal__overlay" data-registros-modal-close></div>
-                    <div class="admin-gallery-modal__dialog admin-registrations-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="registrationAttendeesTitle<?= (int) $registration['id'] ?>">
-                      <div class="admin-gallery-modal__header">
+                  <div class="admin-gallery-modal burnout-popup" id="registrationAttendees<?= (int) $registration['id'] ?>" aria-hidden="true">
+                    <div class="admin-gallery-modal__overlay burnout-popup__overlay" data-registros-modal-close></div>
+                    <div class="admin-gallery-modal__dialog admin-registrations-modal__dialog burnout-popup__dialog" role="dialog" aria-modal="true" aria-labelledby="registrationAttendeesTitle<?= (int) $registration['id'] ?>">
+                      <div class="admin-gallery-modal__header burnout-popup__header">
                         <h2 id="registrationAttendeesTitle<?= (int) $registration['id'] ?>">Asistentes</h2>
-                        <button type="button" data-registros-modal-close aria-label="Cerrar ventana">x</button>
+                        <button class="burnout-popup__close" type="button" data-registros-modal-close aria-label="Cerrar ventana"><span aria-hidden="true">&#215;</span></button>
                       </div>
                       <div class="admin-registrations-modal__meta">
                         <strong><?= htmlspecialchars($registration['event'], ENT_QUOTES, 'UTF-8') ?></strong>
@@ -536,12 +536,12 @@ $attendeeTotal = array_sum(array_map(static function (array $registration): int 
                       <?php endif; ?>
                     </div>
                   </div>
-                  <div class="admin-gallery-modal" id="registrationNotification<?= (int) $registration['id'] ?>" aria-hidden="true">
-                    <div class="admin-gallery-modal__overlay" data-registros-modal-close></div>
-                    <div class="admin-gallery-modal__dialog admin-registrations-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="registrationNotificationTitle<?= (int) $registration['id'] ?>">
-                      <div class="admin-gallery-modal__header">
+                  <div class="admin-gallery-modal burnout-popup" id="registrationNotification<?= (int) $registration['id'] ?>" aria-hidden="true">
+                    <div class="admin-gallery-modal__overlay burnout-popup__overlay" data-registros-modal-close></div>
+                    <div class="admin-gallery-modal__dialog admin-registrations-modal__dialog burnout-popup__dialog" role="dialog" aria-modal="true" aria-labelledby="registrationNotificationTitle<?= (int) $registration['id'] ?>">
+                      <div class="admin-gallery-modal__header burnout-popup__header">
                         <h2 id="registrationNotificationTitle<?= (int) $registration['id'] ?>">Notificación</h2>
-                        <button type="button" data-registros-modal-close aria-label="Cerrar ventana">x</button>
+                        <button class="burnout-popup__close" type="button" data-registros-modal-close aria-label="Cerrar ventana"><span aria-hidden="true">&#215;</span></button>
                       </div>
                       <dl class="admin-notification-detail">
                         <div>
@@ -562,7 +562,7 @@ $attendeeTotal = array_sum(array_map(static function (array $registration): int 
                         </div>
                       </dl>
                       <?php if ($notification['status'] === 'failed'): ?>
-                        <form class="admin-gallery-modal__actions" method="post" action="admin_registros.php">
+                        <form class="admin-gallery-modal__actions burnout-popup__actions" method="post" action="admin_registros.php">
                           <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                           <input type="hidden" name="action" value="resend_notification">
                           <input type="hidden" name="id" value="<?= (int) $registration['id'] ?>">
@@ -572,12 +572,12 @@ $attendeeTotal = array_sum(array_map(static function (array $registration): int 
                     </div>
                   </div>
                 <?php endforeach; ?>
-                <div class="admin-gallery-modal" id="registrationFiltersModal" aria-hidden="true">
-                  <div class="admin-gallery-modal__overlay" data-registros-modal-close></div>
-                  <div class="admin-gallery-modal__dialog admin-registrations-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="registrationFiltersTitle">
-                    <div class="admin-gallery-modal__header">
+                <div class="admin-gallery-modal burnout-popup" id="registrationFiltersModal" aria-hidden="true">
+                  <div class="admin-gallery-modal__overlay burnout-popup__overlay" data-registros-modal-close></div>
+                  <div class="admin-gallery-modal__dialog admin-registrations-modal__dialog burnout-popup__dialog" role="dialog" aria-modal="true" aria-labelledby="registrationFiltersTitle">
+                    <div class="admin-gallery-modal__header burnout-popup__header">
                       <h2 id="registrationFiltersTitle">Filtrar registros</h2>
-                      <button type="button" data-registros-modal-close aria-label="Cerrar ventana">x</button>
+                      <button class="burnout-popup__close" type="button" data-registros-modal-close aria-label="Cerrar ventana"><span aria-hidden="true">&#215;</span></button>
                     </div>
                     <form class="admin-gallery-form" id="registrationFiltersForm">
                       <div class="admin-login-field">
@@ -613,22 +613,22 @@ $attendeeTotal = array_sum(array_map(static function (array $registration): int 
                         <label for="filterDocument">Número Documento</label>
                         <input id="filterDocument" name="document" type="text" autocomplete="off">
                       </div>
-                      <div class="admin-gallery-modal__actions admin-gallery-modal__actions--split">
+                      <div class="admin-gallery-modal__actions admin-gallery-modal__actions--split burnout-popup__actions burnout-popup__actions--split">
                         <button class="admin-danger-submit" type="reset">Limpiar filtros</button>
                         <button class="admin-login-submit" type="submit">Aplicar filtros</button>
                       </div>
                     </form>
                   </div>
                 </div>
-                <div class="admin-gallery-modal" id="registrationDeleteConfirmModal" aria-hidden="true">
-                  <div class="admin-gallery-modal__overlay" data-registration-delete-cancel></div>
-                  <div class="admin-gallery-modal__dialog admin-registrations-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="registrationDeleteConfirmTitle">
-                    <div class="admin-gallery-modal__header">
+                <div class="admin-gallery-modal burnout-popup" id="registrationDeleteConfirmModal" aria-hidden="true">
+                  <div class="admin-gallery-modal__overlay burnout-popup__overlay" data-registration-delete-cancel></div>
+                  <div class="admin-gallery-modal__dialog admin-registrations-modal__dialog burnout-popup__dialog" role="dialog" aria-modal="true" aria-labelledby="registrationDeleteConfirmTitle">
+                    <div class="admin-gallery-modal__header burnout-popup__header">
                       <h2 id="registrationDeleteConfirmTitle">Eliminar registro</h2>
-                      <button type="button" data-registration-delete-cancel aria-label="Cerrar ventana">x</button>
+                      <button class="burnout-popup__close" type="button" data-registration-delete-cancel aria-label="Cerrar ventana"><span aria-hidden="true">&#215;</span></button>
                     </div>
                     <p class="admin-confirmation-text">Vas a eliminar el registro y todos sus asistentes. Esta acción no se puede deshacer.</p>
-                    <div class="admin-gallery-modal__actions admin-gallery-modal__actions--split">
+                    <div class="admin-gallery-modal__actions admin-gallery-modal__actions--split burnout-popup__actions burnout-popup__actions--split">
                       <button class="admin-back-link" type="button" data-registration-delete-cancel>Cancelar</button>
                       <button class="admin-danger-submit" type="button" id="confirmRegistrationDelete">Eliminar registro</button>
                     </div>

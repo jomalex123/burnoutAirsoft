@@ -328,12 +328,12 @@ $csrfToken = burnout_csrf_token();
                 <?php endif; ?>
               </section>
             </div>
-            <div class="admin-gallery-modal" id="galleryEventModal" aria-hidden="true">
-              <div class="admin-gallery-modal__overlay" data-gallery-modal-close></div>
-              <div class="admin-gallery-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="galleryEventModalTitle">
-                <div class="admin-gallery-modal__header">
+            <div class="admin-gallery-modal burnout-popup" id="galleryEventModal" aria-hidden="true">
+              <div class="admin-gallery-modal__overlay burnout-popup__overlay" data-gallery-modal-close></div>
+              <div class="admin-gallery-modal__dialog burnout-popup__dialog" role="dialog" aria-modal="true" aria-labelledby="galleryEventModalTitle">
+                <div class="admin-gallery-modal__header burnout-popup__header">
                   <h2 id="galleryEventModalTitle">Crear feed de evento</h2>
-                  <button type="button" data-gallery-modal-close aria-label="Cerrar ventana">x</button>
+                  <button class="burnout-popup__close" type="button" data-gallery-modal-close aria-label="Cerrar ventana"><span aria-hidden="true">&#215;</span></button>
                 </div>
                 <form class="admin-gallery-form" method="post" action="admin_gallery.php">
                   <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
@@ -357,18 +357,18 @@ $csrfToken = burnout_csrf_token();
                     <input name="is_visible" type="checkbox" value="1" checked>
                     <span>Mostrar en la galeria publica</span>
                   </label>
-                  <div class="admin-gallery-modal__actions">
+                  <div class="admin-gallery-modal__actions burnout-popup__actions">
                     <button class="admin-login-submit" type="submit">Crear feed</button>
                   </div>
                 </form>
               </div>
             </div>
-            <div class="admin-gallery-modal" id="galleryImageModal" aria-hidden="true">
-              <div class="admin-gallery-modal__overlay" data-gallery-modal-close></div>
-              <div class="admin-gallery-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="galleryImageModalTitle">
-                <div class="admin-gallery-modal__header">
+            <div class="admin-gallery-modal burnout-popup" id="galleryImageModal" aria-hidden="true">
+              <div class="admin-gallery-modal__overlay burnout-popup__overlay" data-gallery-modal-close></div>
+              <div class="admin-gallery-modal__dialog burnout-popup__dialog" role="dialog" aria-modal="true" aria-labelledby="galleryImageModalTitle">
+                <div class="admin-gallery-modal__header burnout-popup__header">
                   <h2 id="galleryImageModalTitle">Anadir imagenes</h2>
-                  <button type="button" data-gallery-modal-close aria-label="Cerrar ventana">x</button>
+                  <button class="burnout-popup__close" type="button" data-gallery-modal-close aria-label="Cerrar ventana"><span aria-hidden="true">&#215;</span></button>
                 </div>
                 <form class="admin-gallery-form" method="post" action="admin_gallery.php" enctype="multipart/form-data">
                   <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
@@ -386,23 +386,23 @@ $csrfToken = burnout_csrf_token();
                     <label for="image_files">Subir imagenes</label>
                     <input id="image_files" name="image_files[]" type="file" accept="image/jpeg,image/png,image/gif,image/webp,image/avif" multiple required>
                   </div>
-                  <div class="admin-gallery-modal__actions">
+                  <div class="admin-gallery-modal__actions burnout-popup__actions">
                     <button class="admin-login-submit" type="submit">Guardar imagenes</button>
                   </div>
                 </form>
               </div>
             </div>
-            <div class="admin-gallery-modal" id="galleryDeleteModal" aria-hidden="true">
-              <div class="admin-gallery-modal__overlay" data-gallery-delete-cancel></div>
-              <div class="admin-gallery-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="galleryDeleteTitle">
-                <div class="admin-gallery-modal__header">
+            <div class="admin-gallery-modal burnout-popup" id="galleryDeleteModal" aria-hidden="true">
+              <div class="admin-gallery-modal__overlay burnout-popup__overlay" data-gallery-delete-cancel></div>
+              <div class="admin-gallery-modal__dialog burnout-popup__dialog" role="dialog" aria-modal="true" aria-labelledby="galleryDeleteTitle">
+                <div class="admin-gallery-modal__header burnout-popup__header">
                   <h2 id="galleryDeleteTitle">Eliminar</h2>
-                  <button type="button" data-gallery-delete-cancel aria-label="Cerrar ventana">x</button>
+                  <button class="burnout-popup__close" type="button" data-gallery-delete-cancel aria-label="Cerrar ventana"><span aria-hidden="true">&#215;</span></button>
                 </div>
-                <div class="admin-gallery-modal__body">
+                <div class="admin-gallery-modal__body burnout-popup__body">
                   <p id="galleryDeleteMessage">Eliminar elemento de la galeria?</p>
                 </div>
-                <div class="admin-gallery-modal__actions admin-gallery-modal__actions--split">
+                <div class="admin-gallery-modal__actions admin-gallery-modal__actions--split burnout-popup__actions burnout-popup__actions--split">
                   <button class="admin-back-link" type="button" data-gallery-delete-cancel>Cancelar</button>
                   <button class="admin-danger-submit" type="button" data-gallery-delete-confirm>Eliminar</button>
                 </div>

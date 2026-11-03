@@ -63,83 +63,41 @@ function burnout_rate_limit_block_seconds(string $scope, string $identifier): in
 function burnout_rate_limit_hit(string $scope, string $identifier, int $maxAttempts, int $windowSeconds, int $blockSeconds): int
 {
     burnout_rate_limit_table();
-
     $pdo = burnout_pdo();
-    $identifierHash = burnout_rate_limit_hash($identifier);
-    $now = date('Y-m-d H:i:s');
-    $statement = $pdo->prepare(
-        'SELECT id, attempts, window_started_at, blocked_until
-         FROM rate_limits
-         WHERE scope = :scope AND identifier_hash = :identifier_hash
-         LIMIT 1'
-    );
-    $statement->execute([
-        'scope' => $scope,
-        'identifier_hash' => $identifierHash,
-    ]);
-    $row = $statement->fetch();
-
-    if ($row && !empty($row['blocked_until'])) {
-        $remaining = burnout_rate_limit_seconds_until((string) $row['blocked_until']);
-
+    $ownsTransaction = !$pdo->inTransaction();
+    if ($ownsTransaction) $pdo->beginTransaction();
+    try {
+        $identifierHash = burnout_rate_limit_hash($identifier);
+        $now = date('Y-m-d H:i:s');
+        // Crear o bloquear la fila antes de contar evita perder intentos concurrentes.
+        $seed = $pdo->prepare('INSERT INTO rate_limits (scope, identifier_hash, attempts, window_started_at) VALUES (?, ?, 0, ?) ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)');
+        $seed->execute([$scope, $identifierHash, $now]);
+        $statement = $pdo->prepare('SELECT id, attempts, window_started_at, blocked_until FROM rate_limits WHERE scope = ? AND identifier_hash = ? FOR UPDATE');
+        $statement->execute([$scope, $identifierHash]);
+        $row = $statement->fetch();
+        $remaining = empty($row['blocked_until']) ? 0 : burnout_rate_limit_seconds_until((string) $row['blocked_until']);
         if ($remaining > 0) {
+            if ($ownsTransaction) $pdo->commit();
             return $remaining;
         }
-    }
-
-    $attempts = 1;
-    $windowStartedAt = $now;
-
-    if ($row) {
         $windowAge = time() - (strtotime((string) $row['window_started_at']) ?: 0);
-
-        if ($windowAge <= $windowSeconds) {
-            $attempts = (int) $row['attempts'] + 1;
-            $windowStartedAt = (string) $row['window_started_at'];
-        }
+        $inWindow = $windowAge <= $windowSeconds;
+        $attempts = $inWindow ? (int) $row['attempts'] + 1 : 1;
+        $windowStartedAt = $inWindow ? $row['window_started_at'] : $now;
+        $blockedUntil = $attempts >= $maxAttempts ? date('Y-m-d H:i:s', time() + $blockSeconds) : null;
+        $update = $pdo->prepare('UPDATE rate_limits SET attempts = ?, window_started_at = ?, blocked_until = ? WHERE id = ?');
+        $update->execute([$attempts, $windowStartedAt, $blockedUntil, $row['id']]);
+        if ($ownsTransaction) $pdo->commit();
+        return $blockedUntil ? $blockSeconds : 0;
+    } catch (Throwable $exception) {
+        if ($ownsTransaction && $pdo->inTransaction()) $pdo->rollBack();
+        throw $exception;
     }
-
-    $blockedUntil = $attempts >= $maxAttempts ? date('Y-m-d H:i:s', time() + $blockSeconds) : null;
-
-    if ($row) {
-        $update = $pdo->prepare(
-            'UPDATE rate_limits
-             SET attempts = :attempts, window_started_at = :window_started_at, blocked_until = :blocked_until
-             WHERE id = :id'
-        );
-        $update->execute([
-            'attempts' => $attempts,
-            'window_started_at' => $windowStartedAt,
-            'blocked_until' => $blockedUntil,
-            'id' => (int) $row['id'],
-        ]);
-    } else {
-        $insert = $pdo->prepare(
-            'INSERT INTO rate_limits (scope, identifier_hash, attempts, window_started_at, blocked_until)
-             VALUES (:scope, :identifier_hash, :attempts, :window_started_at, :blocked_until)'
-        );
-        $insert->execute([
-            'scope' => $scope,
-            'identifier_hash' => $identifierHash,
-            'attempts' => $attempts,
-            'window_started_at' => $windowStartedAt,
-            'blocked_until' => $blockedUntil,
-        ]);
-    }
-
-    return $blockedUntil ? $blockSeconds : 0;
 }
 
 function burnout_rate_limit_clear(string $scope, string $identifier): void
 {
     burnout_rate_limit_table();
-
-    $statement = burnout_pdo()->prepare(
-        'DELETE FROM rate_limits WHERE scope = :scope AND identifier_hash = :identifier_hash'
-    );
-    $statement->execute([
-        'scope' => $scope,
-        'identifier_hash' => burnout_rate_limit_hash($identifier),
-    ]);
+    $statement = burnout_pdo()->prepare('DELETE FROM rate_limits WHERE scope = ? AND identifier_hash = ?');
+    $statement->execute([$scope, burnout_rate_limit_hash($identifier)]);
 }
-

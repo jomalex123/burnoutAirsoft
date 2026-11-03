@@ -12,18 +12,25 @@ El entorno local habitual del proyecto utiliza **XAMPP**: Apache y MySQL locales
 - Galerías por evento con imágenes administrables.
 - Publicaciones de Instagram en la página «Nosotros», con carga adicional y visualización en modal.
 - Administración de partidas, registros, galerías y contenido de la normativa.
+- HQ por partida: mapa persistente, misiones secuenciales, catálogo y canales Alpha/Bravo.
 - Consulta, filtrado, ordenación, eliminación y exportación CSV/PDF de inscripciones, además de reenvío de notificaciones.
 
 ## Tecnologías
 
 | Área | Implementación |
 | --- | --- |
-| Backend | PHP; imagen Docker con PHP 8.3 y Apache |
-| Base de datos | MySQL 8.4 en Docker y acceso mediante PDO |
+| Backend | PHP procedural con Apache; local XAMPP, alternativa Docker con PHP 8.3 |
+| Base de datos | MySQL compatible y PDO con consultas preparadas; Docker alternativo con MySQL 8.4 |
 | Frontend | HTML, CSS propio y JavaScript nativo con jQuery 3.7.1 |
 | Interacciones | Anime.js, Swiper y librerías locales de galería |
 | Exportación PDF | PDFLib en el navegador |
-| Desarrollo local | Docker Compose o Apache/PHP/MySQL mediante XAMPP |
+| HQ | Canvas 2D, Pointer Events, Fullscreen API, Fetch y JSON; persistencia en MySQL |
+| Pruebas | Scripts PHP (cURL/DOM) y Node.js integrado, sin dependencias npm |
+| Desarrollo local | Apache/PHP/MySQL de XAMPP; Docker es una alternativa |
+
+El diagnóstico local del 03/11/2026 detectó PHP 8.0.30. Es compatible con la sintaxis actual,
+pero esa rama está fuera de soporte: planificar una actualización a una
+[rama con soporte de PHP](https://www.php.net/supported-versions.php). No se ha actualizado XAMPP.
 
 El proyecto no utiliza framework de aplicación, Composer, npm ni un proceso de compilación del frontend. Las librerías se incluyen directamente desde `assets/`.
 
@@ -64,6 +71,29 @@ burnoutAirsoft/
 └── .htaccess                   # Protección de archivos y cabeceras HTTP
 ```
 
+## Puesta en marcha con XAMPP
+
+1. Situar el proyecto dentro de `htdocs`, por ejemplo en `D:\xampp\htdocs\burnoutAirsoft`.
+2. Activar Apache y MySQL y comprobar que PHP tiene PDO y `pdo_mysql` disponibles.
+3. Crear una base de datos e importar `database/schema.sql` mediante phpMyAdmin o el cliente MySQL.
+4. Copiar `config/env.example.php` a `config/env.php` y ajustar la conexión `local` con los datos de esa base. Mantener `default` en `local` o seleccionar el entorno mediante `BURNOUT_ENV`.
+5. Comprobar que no haya una configuración privada de mayor prioridad que sustituya el archivo local; el orden de carga se describe abajo.
+6. Crear el administrador desde la raíz:
+
+   ```powershell
+   php scripts/create_admin_user.php admin "CAMBIA_ESTA_CLAVE" "Burnout Admin"
+   ```
+
+   Si PHP no está en el `PATH`, utilizar la ruta del ejecutable de XAMPP:
+
+   ```powershell
+   & 'D:\xampp\php\php.exe' scripts/create_admin_user.php admin "CAMBIA_ESTA_CLAVE" "Burnout Admin"
+   ```
+
+7. Abrir [http://localhost/burnoutAirsoft/](http://localhost/burnoutAirsoft/) y entrar al panel mediante `admin.php`.
+
+Apache debe permitir las directivas de `.htaccess` y disponer de los módulos correspondientes para aplicar las cabeceras de seguridad.
+
 ## Puesta en marcha con Docker
 
 Requisitos: Docker y Docker Compose. Ejecutar los comandos desde la raíz del repositorio.
@@ -97,29 +127,6 @@ docker compose down
 ```
 
 `docker compose down` detiene los servicios y conserva el volumen de datos.
-
-## Puesta en marcha con XAMPP
-
-1. Situar el proyecto dentro de `htdocs`, por ejemplo en `D:\xampp\htdocs\burnoutAirsoft`.
-2. Activar Apache y MySQL y comprobar que PHP tiene PDO y `pdo_mysql` disponibles.
-3. Crear una base de datos e importar `database/schema.sql` mediante phpMyAdmin o el cliente MySQL.
-4. Copiar `config/env.example.php` a `config/env.php` y ajustar la conexión `local` con los datos de esa base. Mantener `default` en `local` o seleccionar el entorno mediante `BURNOUT_ENV`.
-5. Comprobar que no haya una configuración privada de mayor prioridad que sustituya el archivo local; el orden de carga se describe abajo.
-6. Crear el administrador desde la raíz:
-
-   ```powershell
-   php scripts/create_admin_user.php admin "CAMBIA_ESTA_CLAVE" "Burnout Admin"
-   ```
-
-   Si PHP no está en el `PATH`, utilizar la ruta del ejecutable de XAMPP:
-
-   ```powershell
-   & 'D:\xampp\php\php.exe' scripts/create_admin_user.php admin "CAMBIA_ESTA_CLAVE" "Burnout Admin"
-   ```
-
-7. Abrir [http://localhost/burnoutAirsoft/](http://localhost/burnoutAirsoft/) y entrar al panel mediante `admin.php`.
-
-Apache debe permitir las directivas de `.htaccess` y disponer de los módulos correspondientes para aplicar las cabeceras de seguridad.
 
 ## Configuración y entornos
 
@@ -213,22 +220,34 @@ La galería pública actual es por eventos. Instagram se integra en `burnout.htm
 
 ### HQ de administración
 
-Desde el panel, **Gestionar HQ** abre `admin_hq.php`, con el título **HQ** (requiere sesión administrativa). La barra de iconos permite dibujar con lápiz, líneas, rectángulos y círculos, elegir color y grosor, borrar, deshacer/rehacer hasta 15 cambios y limpiar el lienzo. Los controles incluyen etiquetas accesibles y títulos. En pantallas estrechas, la barra se desplaza horizontalmente para mantener una sola fila.
+El HQ incluye mapa guardado por partida, guiones secuenciales Alpha/Bravo, chat por equipo y
+catálogo global de misiones clasificado por categoría. El enlace accede en `hq_equipo.php`
+solo con su código. La referencia actual de interfaz, API y tecnologías está en
+[docs/hq.md](docs/hq.md); el orden de migraciones está en [database/README.md](database/README.md).
 
-La herramienta de flecha está junto a la línea y se utiliza arrastrando. «Aa», después del borrador, añade texto libre al pulsar sobre el lienzo: solicita el texto y utiliza el color seleccionado y un tamaño proporcional al grosor. El selector de color se muestra sin icono adicional. Las flechas y los textos admiten deshacer y rehacer.
+Con Apache/MySQL de XAMPP encendidos, desde la raíz:
 
-El lienzo utiliza como fondo el plano `assets/maps/carto-orto-detalle.png`, generado desde el original `assets/maps/Carto-Orto_Detalle.pdf`. Las anotaciones se dibujan en una capa transparente: el borrador y «Limpiar mapa» eliminan solo las anotaciones y mantienen el plano. Si cambia el PDF, regenerar también la imagen y ajustar las proporciones del lienzo si fuese necesario.
+```powershell
+& 'D:\xampp\php\php.exe' scripts/check_hq.php
+& 'D:\xampp\php\php.exe' scripts/check_http_security.php
+node scripts/check_hq_catalog_tables.js
+node scripts/check_hq_map_state.js
+node scripts/check_rate_limit_concurrency.js
+```
 
-El icono del extremo derecho de la barra abre el lienzo y sus herramientas en pantalla completa. Se sale con el mismo botón o con `Esc`, conservando las anotaciones. El botón se desactiva si el navegador no admite pantalla completa.
-
-El mapa permanece durante la sesión de la página; no se guarda en el navegador. Misiones, Canales y Ajustes muestran «En mantenimiento».
+La integración HQ crea datos ficticios y los elimina al terminar; requiere acceso al directorio
+de sesiones de XAMPP. HTTP comprueba cabeceras, rutas privadas, autenticación y métodos sin
+modificar partidas. Las pruebas Node de tablas y mapa no necesitan navegador, MySQL ni paquetes instalados.
+La prueba concurrente del contador usa PHP/MySQL locales y elimina su fila ficticia.
+`check_hq.php --install-local` instala cambios pendientes solo en local; revisar las migraciones
+y realizar copia previa antes de usar esa opción. No se han aplicado cambios a PRE/producción.
 
 El repositorio incluye una comprobación específica de mensajes de error, pero no una suite general de pruebas automatizadas. Realizar las verificaciones apropiadas al cambio y registrar cuáles se han ejecutado.
 
 Comprobar mensajes seguros y respuestas de excepciones sin conectar con MySQL:
 
-```sh
-docker compose exec web php scripts/check_error_messages.php
+```powershell
+& 'D:\xampp\php\php.exe' scripts/check_error_messages.php
 ```
 
 Los fallos técnicos se registran en el servidor y se muestran mediante mensajes breves. Los errores de validación usan `BurnoutUserException`; no utilizar esa clase para detalles SQL, SMTP u otros diagnósticos internos.
@@ -243,14 +262,14 @@ El inicio de administración muestra los últimos 10 registros sin paginación. 
 
 Diagnóstico del intérprete y extensiones:
 
-```sh
-docker compose exec web php scripts/check_php_extensions.php
+```powershell
+& 'D:\xampp\php\php.exe' scripts/check_php_extensions.php
 ```
 
 Comprobación de sintaxis de un archivo PHP modificado:
 
-```sh
-docker compose exec web php -l registro.php
+```powershell
+& 'D:\xampp\php\php.exe' -l registro.php
 ```
 
 Con PHP local, los equivalentes son `php scripts/check_php_extensions.php` y `php -l registro.php`. Antes de usarlos, comprobar si PHP está disponible con `Get-Command php` en PowerShell.
@@ -262,3 +281,7 @@ Para cambios de interfaz, verificar navegación directa y parcial, consola del n
 `.htaccess` desactiva el listado de directorios, restringe archivos y directorios privados y configura cabeceras de seguridad, incluida una política CSP. Revisar esa política si se añaden recursos externos.
 
 Para desplegar, configurar el entorno y la base de datos del servidor, aplicar los cambios de esquema necesarios y comprobar autenticación, correo y tareas programadas. Las imágenes de galerías e Instagram se almacenan en base de datos, por lo que deben incluirse en las copias de seguridad de MySQL.
+
+La [revisión de seguridad y regresiones del 03/11/2026](docs/security-review-2026-11-03.md)
+detalla las correcciones, comprobaciones y límites de verificación. El guardado del mapa no
+fusiona ediciones simultáneas de varios administradores. No se ha auditado el servidor remoto.

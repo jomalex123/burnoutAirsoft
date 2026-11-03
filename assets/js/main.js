@@ -28,6 +28,9 @@ function InitPage() {
     if (typeof window.initAdminMapaInteractivoPage === 'function') {
         window.initAdminMapaInteractivoPage();
     }
+    if (typeof window.initHqPage === 'function') {
+        window.initHqPage();
+    }
     UpdateCopyrightYear();
     ms_home_slider();
     Sort();
@@ -91,6 +94,7 @@ function UpdateCopyrightYear() {
 ---------------------*/
 function PageTransition() {
     var isNavigating = false;
+    var loadedPageUrl = window.location.href;
 
     var preload = anime({
         targets: '.ms-preloader',
@@ -145,12 +149,18 @@ function PageTransition() {
         navigateToPage(new URL(url, window.location.href).href, true);
     };
 
-    function navigateToPage(url, pushState) {
+    async function navigateToPage(url, pushState) {
         if (isNavigating) {
             return;
         }
 
         isNavigating = true;
+        var map = document.querySelector('.admin-map-page')?.hqMap;
+        if (map && !await map.flush()) {
+            isNavigating = false;
+            if (!pushState) history.replaceState({}, document.title, loadedPageUrl);
+            return;
+        }
         closeNavigation();
 
         anime({
@@ -193,6 +203,7 @@ function PageTransition() {
                                 if (pushState) {
                                     history.pushState({}, document.title, url);
                                 }
+                                loadedPageUrl = url;
 
                                 anime({
                                     targets: '.ms-container',

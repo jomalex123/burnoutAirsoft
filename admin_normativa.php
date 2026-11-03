@@ -361,7 +361,7 @@ $csrfToken = burnout_csrf_token();
                   <label for="normativaTitle">Titulo</label>
                   <input id="normativaTitle" name="title" type="text" required value="<?= htmlspecialchars((string) $normativa['title'], ENT_QUOTES, 'UTF-8') ?>">
                 </div>
-                <div class="admin-gallery-modal__actions">
+                <div class="admin-gallery-modal__actions burnout-popup__actions">
                   <button class="admin-login-submit" type="submit">Guardar titulo</button>
                 </div>
               </form>
@@ -386,7 +386,7 @@ $csrfToken = burnout_csrf_token();
                     <div class="admin-normativa-preview-pane" data-normativa-web-pane hidden>
                       <div class="admin-normativa-preview" data-normativa-preview></div>
                     </div>
-                    <div class="admin-gallery-modal__actions admin-gallery-modal__actions--split">
+                    <div class="admin-gallery-modal__actions admin-gallery-modal__actions--split burnout-popup__actions burnout-popup__actions--split">
                       <button class="admin-login-submit" type="submit" name="action" value="update_block">Guardar bloque</button>
                       <button class="admin-danger-submit" type="submit" name="action" value="delete_block" formnovalidate>Eliminar bloque</button>
                     </div>
@@ -412,7 +412,7 @@ $csrfToken = burnout_csrf_token();
                 <div class="admin-normativa-preview-pane" data-normativa-web-pane hidden>
                   <div class="admin-normativa-preview" data-normativa-preview></div>
                 </div>
-                <div class="admin-gallery-modal__actions">
+                <div class="admin-gallery-modal__actions burnout-popup__actions">
                   <button class="admin-login-submit" type="submit">Anadir bloque</button>
                 </div>
               </form>

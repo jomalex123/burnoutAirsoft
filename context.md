@@ -19,7 +19,7 @@ proyecto, leer este documento y contrastar los cambios con los patrones descrito
   `partidas.html`, `registro.html`, `normativa.html`, `privacidad.html`.
 - Endpoints/controladores PHP en la raíz: `events.php`, `gallery_items.php`, `instagram_feed.php`,
   `registro.php`, `admin.php`, `admin_partidas.php`, `admin_registros.php`, `admin_gallery.php`,
-  `admin_normativa.php`.
+  `admin_normativa.php`, `admin_hq.php`, `hq_equipo.php` y `hq_api.php`.
 - CSS propio en `assets/css/`; JS propio en `assets/js/`.
 - Configuración y helpers en `config/`.
 - Base de datos MySQL definida en `database/schema.sql`.
@@ -33,6 +33,10 @@ proyecto, leer este documento y contrastar los cambios con los patrones descrito
   `D:\xampp\php\php.exe`.
 - Conexión local en `config/env.php`, entorno `local`, host `127.0.0.1` y puerto `3306`.
 - Frontend sin bundler: HTML, CSS y JavaScript directo.
+- HQ usa Canvas 2D, Pointer Events, Fullscreen API, Fetch, URLSearchParams y JSON nativos.
+  No requiere Node en servidor, WebSockets ni nuevos paquetes.
+- Node.js solo ejecuta scripts de regresión con sus módulos integrados.
+- Diagnóstico local 03/11/2026: PHP 8.0.30; actualizar el entorno a una rama con soporte.
 - Librerías JS/CSS locales:
   - jQuery 3.7.1.
   - `plugins.min.js` y `plugins.min.css`.
@@ -302,6 +306,33 @@ Usado en `registro.html`.
 
 ## Navegación parcial y ciclo de vida JS
 
+### Componente visual compartido de popup
+
+Todos los popups nuevos deben reutilizar el componente `.burnout-popup` de `assets/css/style.css`, ya aplicado en administración, HQ, inscripción, galería e Instagram. No copiar los estilos de otra página ni crear otro estilo de cierre. Las clases antiguas se mantienen como hooks de JavaScript o variantes de contenido.
+
+- Estructura: `.burnout-popup`, `.burnout-popup__overlay`, `.burnout-popup__dialog`, `.burnout-popup__header`, `.burnout-popup__body` y `.burnout-popup__actions`. Usar `.burnout-popup__actions--split` para dos acciones separadas.
+- Cierre: botón `type="button"` con `.burnout-popup__close`, `aria-label="Cerrar ventana"` y `<span aria-hidden="true">&times;</span>`. Es cuadrado, blanco, con borde gris y cruz negra; al hacer hover, borde y cruz pasan a rojo `#df1f29`, como «Volver al panel». Mantener el indicador de foco accesible. No sobrescribir su estilo desde CSS de página.
+- Diálogo: `role="dialog"`, `aria-modal="true"` y `aria-labelledby` apuntando a un título único. El formulario y sus validaciones pertenecen a la funcionalidad; las acciones quedan abajo a la derecha con separación respecto al contenido.
+- Estado estándar: `.is-open` y `aria-hidden="false"` al abrir; retirar la clase y poner `aria-hidden="true"` al cerrar. Mantener el código de apertura/cierre existente si se amplía un popup actual. Las galerías conservan su apertura por `display` y sus variantes para imágenes.
+- Al implementar la interacción, gestionar el foco inicial, su retorno al cerrar, Tab y Escape. No sustituir confirmaciones obligatorias por cierres accidentales.
+- Colocar el popup dentro de `main.ms-container`; si se usa en pantalla completa, dentro del elemento que llama a `requestFullscreen()`. Para elementos fuera del main, revisar `collectDetachedPageElements()` y `syncDetachedPageElements()` en `main.js`.
+
+Plantilla mínima (añadir los eventos de la funcionalidad sin duplicar inicializaciones):
+
+```html
+<div class="burnout-popup" aria-hidden="true">
+  <div class="burnout-popup__overlay" data-popup-close></div>
+  <div class="burnout-popup__dialog" role="dialog" aria-modal="true" aria-labelledby="miPopupTitulo">
+    <div class="burnout-popup__header">
+      <h2 id="miPopupTitulo">Título</h2>
+      <button class="burnout-popup__close" type="button" data-popup-close aria-label="Cerrar ventana"><span aria-hidden="true">&times;</span></button>
+    </div>
+    <div class="burnout-popup__body">Contenido</div>
+    <div class="burnout-popup__actions"><button type="button">Aceptar</button></div>
+  </div>
+</div>
+```
+
 `assets/js/main.js` implementa una navegación parcial:
 
 - Intercepta clicks en enlaces con `data-type="page-transition"`.
@@ -406,6 +437,31 @@ Paginas:
 - `admin_gallery.php`: creación de galerías asociadas a partidas, visibilidad, subida de imágenes,
   listado/paginación y borrado de galerías e imágenes.
 - `admin_normativa.php`: editor del título y de los bloques HTML de `normativa.html`.
+- `admin_hq.php`: HQ por evento; `hq_equipo.php`: acceso de enlace solo con código; `hq_api.php`: API JSON.
+
+### HQ: referencia actual
+
+El comportamiento y las tecnologías del HQ se documentan en [docs/hq.md](docs/hq.md).
+Leer esa referencia y [database/README.md](database/README.md) antes de cambiar este flujo.
+
+- Mapa, Misiones, Canales y Ajustes comparten la partida (evento de hoy/futuro, Europe/Madrid).
+- Mapa guarda PNG transparentes por operación en MySQL. Agrupa cambios, serializa escrituras,
+  reintenta fallos y espera el guardado antes de cambiar de partida o navegar parcialmente.
+- Cada equipo tiene una única misión en curso. Las nuevas quedan Pendientes; Reiniciar vuelve
+  a Pendiente y borra la recepción. Eliminar conserva el historial, no ejecuta DELETE.
+- Ajustes contiene GESTIONAR GUION, ENLACES DE EQUIPO y GESTIONAR MISIONES, siempre visibles.
+- El catálogo usa Categoría. Nueva misión y lápiz comparten popup; la papelera exige confirmar
+  y desactiva la entrada sin modificar las misiones asignadas. Los formularios no están bajo la tabla.
+- Importar muestra siempre 5 filas con filtros directos. Gestionar Misiones usa 5/10/15 y
+  un popup de filtros independiente. Mantener el contador a la derecha y la paginación de Registros.
+- Recursos: `config/hq.php`, `config/hq_panels.php`, `config/hq_catalog_table.php`,
+  `assets/js/hq.js`, `assets/js/admin_mapainteractivo.js` y sus CSS. Inicializar mapa antes de HQ.
+- El servidor valida enteros, rol/equipo, CSRF, estado y disponibilidad; mutaciones del guion
+  bloquean primero la operación. El catálogo se actualiza en transacción y los límites de acceso son atómicos.
+- Usar `textContent` para datos dinámicos, escapar HTML en PHP y limpiar listeners/temporizadores
+  al abandonar la página. Conservar foco, Escape y retorno del foco en cada popup.
+- Acciones de texto: mayúsculas y `--admin-button-height: 44px`. Mantener compactos iconos,
+  cierres y paginación. Los títulos de popup reutilizan el estilo compartido de Registros.
 
 ### Galerías por evento
 
@@ -442,7 +498,7 @@ Patrones UI admin:
 - Panels/cards con fondo blanco, border, radius 8 y sombra.
 - Botón principal rojo: `.admin-login-submit`, `.admin-add-image-button`.
 - Boton peligro: `.admin-danger-submit`.
-- Modales reutilizan clases `.admin-gallery-modal*` incluso fuera de galería.
+- Popups: reutilizar el componente visual `.burnout-popup*` de `style.css`; las clases `.admin-gallery-modal*` existentes se conservan como hooks y variantes.
 - Tablas con `.admin-table`, `.admin-table-scroll`, botones de sort `data-sort-key`.
 
 Patrones PHP admin:
@@ -553,7 +609,7 @@ Usar estas páginas como base según el caso:
 - `template.html` no es una fuente perfecta porque contiene textos corruptos.
 - `main.js` tiene una lista fija de modales externos; nuevos modales fuera del main pueden romperse
   en navegación parcial si no se sincronizan.
-- El proyecto no tiene pruebas automatizadas.
+- Hay scripts de regresión PHP/Node, pero no una suite general ni pruebas completas de navegador.
 - No hay gestor de dependencias frontend/backend; las librerías están vendorizadas manualmente.
 - El CSS global mezcla plantilla original con overrides del proyecto.
 - El endpoint `events.php` devuelve todos los eventos sin paginación/filtro; suficiente para volumen
@@ -565,6 +621,13 @@ Usar estas páginas como base según el caso:
 
 Ejecutar desde la raíz del proyecto en PowerShell, con Apache y MySQL activados en el panel XAMPP.
 No arrancar contenedores Docker para estas tareas.
+
+Regresiones: `scripts/check_hq.php`, `scripts/check_http_security.php`,
+`node scripts/check_hq_catalog_tables.js`, `node scripts/check_hq_map_state.js` y
+`node scripts/check_registration_pagination.js`. Para el contador concurrente:
+`node scripts/check_rate_limit_concurrency.js` (usa PHP/MySQL locales y limpia su fila ficticia).
+Integración HQ usa datos ficticios y limpia al terminar.
+Detalle de verificación: [docs/security-review-2026-11-03.md](docs/security-review-2026-11-03.md).
 
 Comprobar disponibilidad de PHP y conexión local:
 

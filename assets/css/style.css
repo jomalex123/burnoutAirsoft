@@ -1445,3 +1445,123 @@ footer {
         display: none;
     }
 }
+
+/* Shared popup component: page scripts keep their own opening and closing hooks. */
+.burnout-popup {
+  align-items: center;
+  display: none;
+  inset: 0;
+  justify-content: center;
+  padding: 24px;
+  position: fixed;
+  z-index: 9999;
+}
+
+.burnout-popup.is-open {
+  display: flex;
+}
+
+.burnout-popup__overlay {
+  background: rgba(21, 21, 21, .72);
+  inset: 0;
+  position: absolute;
+}
+
+.burnout-popup__dialog {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 22px 70px rgba(0, 0, 0, .3);
+  max-height: calc(100vh - 48px);
+  max-width: 560px;
+  overflow-y: auto;
+  padding: 24px;
+  position: relative;
+  width: min(100%, 560px);
+  z-index: 1;
+}
+
+.burnout-popup__header {
+  align-items: center;
+  border-bottom: 1px solid rgba(21, 21, 21, .1);
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+}
+
+.burnout-popup__header h2 {
+  font-size: 24px;
+  margin: 0;
+}
+
+.burnout-popup .burnout-popup__close {
+  align-items: center;
+  border: 1px solid rgba(21, 21, 21, .18);
+  border-radius: 0;
+  color: #151515;
+  cursor: pointer;
+  display: inline-flex;
+  font-family: Arial, sans-serif;
+  font-size: 18px;
+  height: 34px;
+  justify-content: center;
+  line-height: 1;
+  width: 34px;
+}
+
+.burnout-popup__body {
+  color: #444;
+  font-size: 16px;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.burnout-popup__body p {
+  margin: 0;
+}
+
+.burnout-popup__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.burnout-popup__actions--split {
+  gap: 12px;
+  justify-content: space-between;
+}
+
+
+.burnout-popup .burnout-popup__close {
+  background: #fff;
+  color: #151515;
+  border: 1px solid rgba(21, 21, 21, .18);
+  border-radius: 0;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  padding: 0;
+  margin: 0;
+  flex-shrink: 0;
+  opacity: 1;
+  transform: none;
+  transition: border-color .2s ease, color .2s ease;
+}
+.burnout-popup .burnout-popup__close:hover,
+.burnout-popup .burnout-popup__close:active,
+.burnout-popup button.burnout-popup__close:not(:disabled):hover {
+  background: #fff;
+  border-color: #df1f29;
+  color: #df1f29;
+}
+.burnout-popup .burnout-popup__close:focus-visible { outline: 2px solid #df1f29; outline-offset: 3px; }
+.burnout-popup .burnout-popup__close span { line-height: 1; pointer-events: none; }
+body.burnout-popup-open { overflow: hidden; }
+.burnout-popup__actions { margin-top: 20px; }
+.burnout-popup.registro-modal .burnout-popup__dialog,
+.burnout-popup.modal .burnout-popup__dialog { padding: 0; }
+.burnout-popup.registro-modal .burnout-popup__header,
+.burnout-popup.registro-modal .burnout-popup__actions { margin: 0; }
+@media (max-width: 640px) {
+  .burnout-popup { padding: 12px; }
+  .burnout-popup__actions--split { flex-direction: column; align-items: stretch; }
+}

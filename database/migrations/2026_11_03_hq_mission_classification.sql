@@ -1,0 +1,3 @@
+ALTER TABLE hq_mission_catalog
+ ADD COLUMN category VARCHAR(80) NOT NULL DEFAULT '',
+ ADD COLUMN mission_type VARCHAR(80) NOT NULL DEFAULT '';

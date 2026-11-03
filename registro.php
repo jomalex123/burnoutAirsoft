@@ -293,8 +293,8 @@ function registro_set_confirmation_modal(string $html, bool $success): string
     ) ?? $html;
 
     return preg_replace(
-        '/<div class="registro-modal registro-confirmation-modal" id="registroConfirmationModal" aria-hidden="true">/',
-        '<div class="registro-modal registro-confirmation-modal is-open" id="registroConfirmationModal" aria-hidden="false" data-registration-success="true">',
+        '/<div class="registro-modal registro-confirmation-modal burnout-popup" id="registroConfirmationModal" aria-hidden="true">/',
+        '<div class="registro-modal registro-confirmation-modal burnout-popup is-open" id="registroConfirmationModal" aria-hidden="false" data-registration-success="true">',
         $html,
         1
     ) ?? $html;
