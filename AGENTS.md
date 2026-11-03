@@ -118,6 +118,11 @@ La documentación puede estar desactualizada. Si difiere del código, contrastar
 - `scripts/migrate_hq_pre.php` es la herramienta explícita de PRE: por defecto solo inspecciona.
   `--apply` requiere autorización para modificar PRE, realiza copia y verifica las migraciones.
   No ejecutarla como prueba rutinaria ni quitar las restricciones locales de otros scripts.
+- `scripts/migrate_hq_pro.php` es exclusivamente para PRO, y rechaza conexiones coincidentes
+  con local o PRE. Sin argumentos solo inspecciona; `--apply` requiere autorización expresa
+  de producción, comprueba una copia SQL gzip antes del DDL y verifica esquema y datos.
+  No ejecutarlo como prueba rutinaria. Las siete migraciones HQ se aplicaron y verificaron
+  en PRE y PRO el 03/11/2026; inspeccionar siempre el estado antes de intentar repetirlas.
 - El diagnóstico local del 03/11/2026 detectó PHP 8.0.30, fuera de soporte. Mantener compatibilidad
   con el entorno disponible, pero no presentarlo como versión segura o recomendada para desplegar.
 - La revisión de seguridad documentada está en `docs/security-review-2026-11-03.md`; distinguir

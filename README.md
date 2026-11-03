@@ -241,8 +241,10 @@ modificar partidas. Las pruebas Node de tablas y mapa no necesitan navegador, My
 La prueba concurrente del contador usa PHP/MySQL locales y elimina su fila ficticia.
 `check_hq.php --install-local` instala cambios pendientes solo en local; revisar las migraciones
 y realizar copia previa antes de usar esa opción. Las siete migraciones HQ se aplicaron también
-en PRE el 03/11/2026, con copia previa y comprobaciones de integridad; producción no se ha modificado.
-El procedimiento y la herramienta específica de PRE están en [database/README.md](database/README.md).
+en PRE y PRO el 03/11/2026, con autorización, copias previas y comprobaciones de integridad.
+Las herramientas específicas son `scripts/migrate_hq_pre.php` y `scripts/migrate_hq_pro.php`:
+sin argumentos inspeccionan; `--apply` modifica el entorno correspondiente y no es una prueba
+rutinaria. El procedimiento está en [database/README.md](database/README.md).
 
 El repositorio incluye una comprobación específica de mensajes de error, pero no una suite general de pruebas automatizadas. Realizar las verificaciones apropiadas al cambio y registrar cuáles se han ejecutado.
 

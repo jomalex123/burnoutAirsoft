@@ -83,12 +83,17 @@ Aplicar en este orden, omitiendo las que ya estén instaladas:
 | 7 | `2026_11_03_hq_mission_classification.sql` | Categoría y campo histórico `mission_type` |
 
 El esquema nuevo ya incluye todos estos cambios. Las siete migraciones HQ están aplicadas
-en XAMPP local y en PRE. PRE se actualizó el 03/11/2026 tras autorización expresa, con copia
+en XAMPP local, PRE y PRO. PRE se actualizó el 03/11/2026 tras autorización expresa, con copia
 SQL comprimida de las 12 tablas previas. Se verificaron las seis tablas HQ, las claves foráneas,
 los estados, las 45 misiones y sus hashes. Las pruebas de escritura se revirtieron con rollback
 y la comparación de las tablas previas confirmó que sus datos y estructura se conservaron.
 Los INSERT de prueba pueden avanzar contadores AUTO_INCREMENT, aunque sus filas se reviertan.
-Producción no se ha modificado. Para cualquier instalación pendiente hacer copia previa,
+PRO se actualizó posteriormente el mismo 03/11/2026, también con autorización expresa,
+copia SQL gzip de sus 12 tablas previas y comprobación de la copia antes del primer SQL.
+Se verificaron las seis tablas HQ, las seis claves foráneas, las 45 misiones y sus hashes,
+los estados y las escrituras de mapa/chat/misiones mediante rollback. Se conservaron los
+datos y estructura de las tablas previas. Una segunda inspección detectó las siete migraciones
+como instaladas, sin repetirlas. Para cualquier instalación pendiente hacer copia previa,
 aplicar solo los SQL necesarios y subir también los PHP/JS/CSS.
 
 ## Comprobaciones y mantenimiento
@@ -123,3 +128,19 @@ Con `--apply`, y únicamente con autorización para modificar PRE, guarda una co
 en el directorio temporal privado, aplica las migraciones pendientes y verifica el resultado.
 No ejecutar esta opción como una prueba rutinaria. No utiliza la conexión PRO ni elimina
 misiones activas; no sustituye las pruebas HTTP o de navegador del sitio desplegado.
+
+### Herramienta específica de PRO
+
+`scripts/migrate_hq_pro.php` fija `BURNOUT_ENV=pro` solo para su proceso y lee la conexión
+`pro` de `config/env.php`, sin imprimir credenciales. Rechaza un destino coincidente con local
+o PRE. Sin argumentos inspecciona. `--apply` requiere autorización explícita de producción:
+
+1. Comprueba que las tablas previas sean InnoDB y crea una copia SQL gzip en el directorio
+   temporal privado, conservando campos binarios y valores de columnas con DEFAULT_GENERATED.
+2. Verifica las escrituras y lee la copia completa antes de ejecutar las migraciones pendientes.
+3. Comprueba columnas, claves, unicidad de evento, estados y catálogo.
+4. Prueba las escrituras en una transacción con rollback y compara los datos y estructura previos.
+
+No ejecutarlo como comprobación rutinaria, ni repetir DDL tras un fallo sin inspeccionar el
+estado. Las pruebas pueden avanzar AUTO_INCREMENT, aunque sus filas no persistan. La copia
+no se guarda en el repositorio. Esto verifica la base de datos, no el sitio PRO en navegador.

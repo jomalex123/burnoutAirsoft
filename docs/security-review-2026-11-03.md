@@ -76,8 +76,8 @@ Los scripts PHP verifican HTML servido y peticiones reales a Apache, no el dise�
    y planificar una actualización de XAMPP o del runtime con copia y prueba de compatibilidad.
    Esta revisión no instala ni actualiza software fuera del repositorio.
 2. No se han revisado la configuración efectiva de Hostalia, HTTPS, copias de seguridad ni
-   las versiones reales del servidor remoto. Las migraciones HQ pendientes allí se aplican
-   por un administrador, con copia previa y sin reimportar el esquema completo.
+   las versiones reales del servidor remoto. Las actuaciones de base de datos posteriores
+   en PRE y PRO se documentan más abajo; no equivalen a revisar el servidor web o su TLS.
 3. No se ha realizado pentest externo, escaneo de dependencias vendorizadas, prueba de carga
    ni prueba visual completa en navegadores/móvil. La comprobación concurrente se limita
    al contador; el bloqueo de misiones se ha verificado funcionalmente en integración.
@@ -101,5 +101,28 @@ claves foráneas, unicidad de evento, catálogo de 45 entradas y hashes de conte
 Las pruebas directas de inserción/estados/mapa/chat se hicieron en una transacción con
 rollback; no quedaron el evento ni la operación ficticios. Los contadores AUTO_INCREMENT
 pueden avanzar como consecuencia de esas pruebas. Una segunda inspección detectó las siete
-migraciones como instaladas, sin repetirlas. Producción sigue sin modificarse. Estas
+migraciones como instaladas, sin repetirlas. En esa actuación no se modificó producción. Estas
 comprobaciones de base de datos no equivalen a probar el sitio PRE en navegador.
+
+## Despliegue posterior en PRO
+
+Tras autorización expresa, el 03/11/2026 se preparó `scripts/migrate_hq_pro.php` y se aplicaron
+en PRO las siete migraciones HQ pendientes. La herramienta fija únicamente su conexión de
+proceso a PRO y comprueba que no coincida con local ni PRE. No se modifican las credenciales
+ni el entorno por defecto de la aplicación.
+
+Antes del primer DDL se guardó una copia SQL gzip de las 12 tablas existentes, se comprobaron
+las escrituras y se leyó el archivo completo para verificar su integridad. La copia conserva
+binarios y campos con DEFAULT_GENERATED; solo omite columnas calculadas. Quedó en el directorio
+temporal privado, fuera del repositorio. Se comprobó también con un descompresor independiente.
+
+Resultado: seis tablas HQ completas, seis claves foráneas con sus reglas de conservación,
+unicidad de operación por evento, estados correctos y catálogo inicial de 45 misiones con hashes
+coherentes. Pasaron las escrituras de misiones, mapa y chat en una transacción revertida:
+no quedaron evento ni operación ficticios. Las 12 tablas previas conservaron datos y estructura;
+los contadores AUTO_INCREMENT pueden avanzar por los INSERT con rollback.
+
+Una segunda inspección detectó las siete migraciones como instaladas, sin aplicar SQL de nuevo.
+La sintaxis PHP de la herramienta se verificó. No se ejecutaron los scripts de reinicio de
+misiones ni las pruebas limitadas a local sobre producción. Las comprobaciones realizadas son
+de base de datos; no se ha probado el sitio PRO desplegado en navegador.

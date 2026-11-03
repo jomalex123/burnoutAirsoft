@@ -444,6 +444,11 @@ Paginas:
 El comportamiento y las tecnologías del HQ se documentan en [docs/hq.md](docs/hq.md).
 Leer esa referencia y [database/README.md](database/README.md) antes de cambiar este flujo.
 
+Las siete migraciones HQ están aplicadas y verificadas en local, PRE y PRO (remotos actualizados
+el 03/11/2026 con autorización y copia previa). `scripts/migrate_hq_pre.php` y
+`scripts/migrate_hq_pro.php` solo inspeccionan si se ejecutan sin argumentos; `--apply` modifica
+el entorno correspondiente y requiere autorización. No son pruebas rutinarias.
+
 - Mapa, Misiones, Canales y Ajustes comparten la partida (evento de hoy/futuro, Europe/Madrid).
 - Mapa guarda PNG transparentes por operación en MySQL. Agrupa cambios, serializa escrituras,
   reintenta fallos y espera el guardado antes de cambiar de partida o navegar parcialmente.
