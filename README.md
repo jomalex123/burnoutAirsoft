@@ -240,7 +240,9 @@ de sesiones de XAMPP. HTTP comprueba cabeceras, rutas privadas, autenticación y
 modificar partidas. Las pruebas Node de tablas y mapa no necesitan navegador, MySQL ni paquetes instalados.
 La prueba concurrente del contador usa PHP/MySQL locales y elimina su fila ficticia.
 `check_hq.php --install-local` instala cambios pendientes solo en local; revisar las migraciones
-y realizar copia previa antes de usar esa opción. No se han aplicado cambios a PRE/producción.
+y realizar copia previa antes de usar esa opción. Las siete migraciones HQ se aplicaron también
+en PRE el 03/11/2026, con copia previa y comprobaciones de integridad; producción no se ha modificado.
+El procedimiento y la herramienta específica de PRE están en [database/README.md](database/README.md).
 
 El repositorio incluye una comprobación específica de mensajes de error, pero no una suite general de pruebas automatizadas. Realizar las verificaciones apropiadas al cambio y registrar cuáles se han ejecutado.
 

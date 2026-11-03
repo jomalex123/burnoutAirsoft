@@ -89,3 +89,17 @@ Los scripts PHP verifican HTML servido y peticiones reales a Apache, no el dise�
 
 La revisión confirma estos controles y regresiones en el entorno indicado; no constituye
 una garantía de ausencia de vulnerabilidades en toda la aplicación.
+
+## Despliegue de base de datos posterior a la revisión
+
+Tras autorización expresa, el mismo 03/11/2026 se aplicaron en PRE las siete migraciones HQ
+documentadas en `database/README.md`. Antes se guardó una copia SQL gzip de las 12 tablas
+existentes. Se comprobó la integridad del archivo comprimido y que los datos y estructura
+previos se conservaran. Se crearon las seis tablas HQ y se verificaron sus columnas, seis
+claves foráneas, unicidad de evento, catálogo de 45 entradas y hashes de contenido.
+
+Las pruebas directas de inserción/estados/mapa/chat se hicieron en una transacción con
+rollback; no quedaron el evento ni la operación ficticios. Los contadores AUTO_INCREMENT
+pueden avanzar como consecuencia de esas pruebas. Una segunda inspección detectó las siete
+migraciones como instaladas, sin repetirlas. Producción sigue sin modificarse. Estas
+comprobaciones de base de datos no equivalen a probar el sitio PRE en navegador.

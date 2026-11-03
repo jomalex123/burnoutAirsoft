@@ -82,9 +82,14 @@ Aplicar en este orden, omitiendo las que ya estén instaladas:
 | 6 | `2026_11_03_hq_mission_order.sql` | `sort_order`, conservando inicialmente el orden anterior |
 | 7 | `2026_11_03_hq_mission_classification.sql` | Categoría y campo histórico `mission_type` |
 
-El esquema nuevo ya incluye todos estos cambios. Las migraciones HQ se han aplicado en
-XAMPP local; no se han aplicado desde esta sesión a PRE ni producción. En Hostalia hacer
-copia previa, importar los SQL pendientes desde phpMyAdmin y subir también los PHP/JS/CSS.
+El esquema nuevo ya incluye todos estos cambios. Las siete migraciones HQ están aplicadas
+en XAMPP local y en PRE. PRE se actualizó el 03/11/2026 tras autorización expresa, con copia
+SQL comprimida de las 12 tablas previas. Se verificaron las seis tablas HQ, las claves foráneas,
+los estados, las 45 misiones y sus hashes. Las pruebas de escritura se revirtieron con rollback
+y la comparación de las tablas previas confirmó que sus datos y estructura se conservaron.
+Los INSERT de prueba pueden avanzar contadores AUTO_INCREMENT, aunque sus filas se reviertan.
+Producción no se ha modificado. Para cualquier instalación pendiente hacer copia previa,
+aplicar solo los SQL necesarios y subir también los PHP/JS/CSS.
 
 ## Comprobaciones y mantenimiento
 
@@ -109,3 +114,12 @@ invocarla como comprobación ni ejecutarla durante una partida en marcha.
 Los límites de solicitudes de `config/rate_limit.php` actualizan contadores bajo bloqueo
 transaccional. Las sesiones administrativas y de enlace no exigen tablas ni migraciones nuevas
 por la revisión de seguridad. Detalle funcional: [docs/hq.md](../docs/hq.md).
+
+### Herramienta específica de PRE
+
+`scripts/migrate_hq_pre.php` usa explícitamente la conexión `pre` de `config/env.php`, sin
+cambiar el entorno de la aplicación. Sin argumentos inspecciona las migraciones pendientes.
+Con `--apply`, y únicamente con autorización para modificar PRE, guarda una copia SQL gzip
+en el directorio temporal privado, aplica las migraciones pendientes y verifica el resultado.
+No ejecutar esta opción como una prueba rutinaria. No utiliza la conexión PRO ni elimina
+misiones activas; no sustituye las pruebas HTTP o de navegador del sitio desplegado.

@@ -115,6 +115,9 @@ La documentación puede estar desactualizada. Si difiere del código, contrastar
   `node scripts/check_hq_map_state.js`. `--install-local` modifica esquema: revisar migraciones y copia previa.
 - `node scripts/check_rate_limit_concurrency.js` comprueba incrementos con procesos PHP/MySQL
   locales concurrentes y limpia su fila ficticia; no requiere paquetes npm.
+- `scripts/migrate_hq_pre.php` es la herramienta explícita de PRE: por defecto solo inspecciona.
+  `--apply` requiere autorización para modificar PRE, realiza copia y verifica las migraciones.
+  No ejecutarla como prueba rutinaria ni quitar las restricciones locales de otros scripts.
 - El diagnóstico local del 03/11/2026 detectó PHP 8.0.30, fuera de soporte. Mantener compatibilidad
   con el entorno disponible, pero no presentarlo como versión segura o recomendada para desplegar.
 - La revisión de seguridad documentada está en `docs/security-review-2026-11-03.md`; distinguir
