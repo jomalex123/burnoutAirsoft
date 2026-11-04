@@ -120,6 +120,7 @@ try {
             }
         } elseif ($action === 'catalog') {
             $result['missions'] = burnout_hq_catalog();
+            $result['categories'] = burnout_hq_categories();
         } elseif ($action === 'catalog_save') {
             $catalogId = burnout_hq_id($input, 'catalog_id', true);
             $title = burnout_hq_text($input, 'title', 180);
@@ -129,6 +130,13 @@ try {
                 $value = $input[$field] ?? '';
                 if (!is_string($value)) throw new BurnoutUserException('Revisa la categoria de la mision.');
                 $classification[$field] = trim($value) === '' ? '' : burnout_hq_text($input, $field, 80);
+            }
+            if ($classification['category'] !== '') {
+                $categoryQuery = $pdo->prepare('SELECT name FROM hq_mission_categories WHERE name = ?');
+                $categoryQuery->execute([$classification['category']]);
+                $categoryName = $categoryQuery->fetchColumn();
+                if ($categoryName === false) throw new BurnoutUserException('Selecciona una categoria del listado.');
+                $classification['category'] = $categoryName;
             }
             $pdo->beginTransaction();
             if ($catalogId) {

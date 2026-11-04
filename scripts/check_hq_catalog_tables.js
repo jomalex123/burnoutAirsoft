@@ -83,3 +83,22 @@ context.operation.status = 'closed';
 context.renderScript(catalog.slice(0, 2));
 assert.equal(scriptList.children[0].children[1].children.every(button => button.disabled), true);
 console.log('Catalogo HQ: filtros combinados, acentos, clasificacion vacia, orden, paginacion, seleccion y tablas independientes correctos.');
+
+// All dropdowns include categories with no missions, supplied by the database.
+const makeSelect = () => {
+    const select = element(); select.value = '';
+    Object.defineProperty(select, 'firstElementChild', { get() { return this.children[0]; } });
+    return select;
+};
+const filterSelect = makeSelect(), editorSelect = makeSelect();
+context.catalogCategories = ['Defensa', 'Rescate', 'Categoria sin misiones'];
+context.catalogTables = [{ element: state.element, filters: {}, filterRoot: { querySelector() { return filterSelect; } } }];
+context.renderCatalogTable = () => {};
+context.root = { querySelector() { return { elements: { category: editorSelect } }; } };
+vm.runInContext(source.slice(source.indexOf('        function syncCatalogTables('), source.indexOf('        async function loadCatalog(')), context);
+context.syncCatalogTables();
+assert.ok(filterSelect.children.some(option => option.value === 'Categoria sin misiones'));
+assert.ok(editorSelect.children.some(option => option.value === 'Categoria sin misiones'));
+assert.ok(filterSelect.children.some(option => option.value === 'Sin clasificar'));
+assert.equal(editorSelect.children[0].value, '');
+console.log('Categorias independientes: filtros y editor incluyen categorias sin misiones.');

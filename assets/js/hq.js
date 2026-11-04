@@ -14,7 +14,7 @@
         var statusLabels = { draft: 'Pendiente', active: 'En curso', completed: 'Completada', failed: 'Fallida', deleted: 'Eliminada' };
         var feedback = root.querySelector('[data-hq-feedback]');
         var signal = root.querySelector('[data-hq-signal]');
-        var catalog = [], catalogGeneration = 0, importTarget = null, importOpener = null;
+        var catalog = [], catalogCategories = [], catalogGeneration = 0, importTarget = null, importOpener = null;
         var importPopup = root.querySelector('[data-hq-import-popup]');
         var filterPopup = root.querySelector('[data-hq-catalog-filter-popup]');
         var filterOpener = null;
@@ -91,7 +91,7 @@
             catalogTables.forEach(function (state) {
                 ['category'].forEach(function (field) {
                     var select = state.filterRoot.querySelector('[data-hq-filter="' + field + '"]'), selected = select.value;
-                    var options = Array.from(new Set(catalog.map(function (item) { return classificationLabel(item[field]); }))).sort(function (a, b) { return a.localeCompare(b, 'es'); });
+                    var options = Array.from(new Set(catalogCategories.concat(['Sin clasificar']))).sort(function (a, b) { return a.localeCompare(b, 'es'); });
                     if (selected && !options.includes(selected)) options.push(selected);
                     select.replaceChildren(node('option', '', field === 'category' ? 'Todas' : 'Todos')); select.firstElementChild.value = '';
                     options.forEach(function (value) { var option = node('option', '', value); option.value = value; select.append(option); }); select.value = selected;
@@ -100,7 +100,7 @@
             });
             var categorySelect = root.querySelector('[data-hq-form="catalog_save"]').elements.category;
             var selected = categorySelect.value;
-            var categories = Array.from(new Set(catalog.map(function (item) { return item.category; }).filter(Boolean))).sort(function (a, b) { return a.localeCompare(b, 'es'); });
+            var categories = catalogCategories.slice().sort(function (a, b) { return a.localeCompare(b, 'es'); });
             if (selected && !categories.includes(selected)) categories.push(selected);
             categorySelect.replaceChildren(node('option', '', 'Sin clasificar')); categorySelect.firstElementChild.value = '';
             categories.forEach(function (category) { var option = node('option', '', category); option.value = category; categorySelect.append(option); });
@@ -109,7 +109,7 @@
         async function loadCatalog() {
             var request = ++catalogGeneration, data = await api('catalog');
             if (!root.isConnected || request !== catalogGeneration) return false;
-            catalog = data.missions; syncCatalogTables(); return true;
+            catalog = data.missions; catalogCategories = data.categories; syncCatalogTables(); return true;
         }
         function closeCatalogFilters() {
             if (!filterPopup) return;

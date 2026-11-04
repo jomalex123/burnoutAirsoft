@@ -450,8 +450,9 @@ el 03/11/2026 con autorización y copia previa). `scripts/migrate_hq_pre.php` y
 el entorno correspondiente y requiere autorización. No son pruebas rutinarias.
 
 - Mapa, Misiones, Canales y Ajustes comparten la partida (evento de hoy/futuro, Europe/Madrid).
-- Mapa guarda PNG transparentes por operación en MySQL. Agrupa cambios, serializa escrituras,
-  reintenta fallos y espera el guardado antes de cambiar de partida o navegar parcialmente.
+- Mapa conserva anotaciones por partida solo en memoria mientras el HQ permanece abierto.
+  Recargar o abandonar la pagina descarta los dibujos. No hay guardado en servidor.
+  Pantalla completa incluye lienzo y botonera, sin cabecera ni selector.
 - Cada equipo tiene una única misión en curso. Las nuevas quedan Pendientes; Reiniciar vuelve
   a Pendiente y borra la recepción. Eliminar conserva el historial, no ejecuta DELETE.
 - Ajustes contiene GESTIONAR GUION, ENLACES DE EQUIPO y GESTIONAR MISIONES, siempre visibles.

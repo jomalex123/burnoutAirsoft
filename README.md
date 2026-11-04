@@ -12,7 +12,7 @@ El entorno local habitual del proyecto utiliza **XAMPP**: Apache y MySQL locales
 - Galerías por evento con imágenes administrables.
 - Publicaciones de Instagram en la página «Nosotros», con carga adicional y visualización en modal.
 - Administración de partidas, registros, galerías y contenido de la normativa.
-- HQ por partida: mapa persistente, misiones secuenciales, catálogo y canales Alpha/Bravo.
+- HQ por partida: mapa temporal en memoria, misiones secuenciales, catálogo y canales Alpha/Bravo.
 - Consulta, filtrado, ordenación, eliminación y exportación CSV/PDF de inscripciones, además de reenvío de notificaciones.
 
 ## Tecnologías
@@ -220,7 +220,7 @@ La galería pública actual es por eventos. Instagram se integra en `burnout.htm
 
 ### HQ de administración
 
-El HQ incluye mapa guardado por partida, guiones secuenciales Alpha/Bravo, chat por equipo y
+El HQ incluye mapa temporal en memoria por partida, guiones secuenciales Alpha/Bravo, chat por equipo y
 catálogo global de misiones clasificado por categoría. El enlace accede en `hq_equipo.php`
 solo con su código. La referencia actual de interfaz, API y tecnologías está en
 [docs/hq.md](docs/hq.md); el orden de migraciones está en [database/README.md](database/README.md).

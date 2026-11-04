@@ -47,6 +47,7 @@ no ejecutan DDL. El esquema completo y las migraciones deben producir estructura
 | `hq_missions` | Copia del nombre y guion asignados, equipo, estado, recepción, origen y orden |
 | `hq_messages` | Historial de chat por operación/equipo; remitente determinado por servidor |
 | `hq_mission_catalog` | Catálogo global, categoría, hash de contenido y disponibilidad |
+| `hq_mission_categories` | Lista independiente de categorías para filtros y creación/edición |
 | `hq_maps` | Anotaciones PNG transparentes en MEDIUMBLOB, una fila por operación |
 
 Eliminar un evento conserva la operación y sus datos HQ con `event_id = NULL`. Esas operaciones
@@ -63,6 +64,53 @@ asignadas y sus textos se conservan. Los duplicados exactos usan SHA-256 de tít
 línea y guion; las variantes se mantienen. Crear un guion manual con contenido idéntico puede
 reutilizar y reactivar una entrada existente. Editar nombre, guion y categoría es transaccional.
 `mission_type` es histórico: la interfaz clasifica solo por categoría y no lo modifica.
+
+Desde el 04/11/2026 las categorías se leen de `hq_mission_categories`, incluso si no
+tienen misiones. Para añadir una, ejecutar manualmente en el entorno deseado:
+
+```sql
+INSERT INTO hq_mission_categories (name) VALUES ('Nueva categoría');
+```
+
+`name` es único y admite hasta 80 caracteres. Recargar HQ para actualizar los desplegables.
+«Sin clasificar» corresponde al valor vacío del catálogo, no a una fila de categorías.
+No renombrar categorías en uso sin actualizar también `hq_mission_catalog.category`
+en una misma transacción. No hay interfaz de gestión de categorías.
+
+La migración `2026_11_04_hq_mission_categories.sql` crea la lista, conserva categorías
+previas y clasifica las 45 misiones por su hash exacto, sin cambiar títulos ni guiones.
+Se aplicó y verificó en local, PRE y PRO el 04/11/2026. En ambos remotos se comprobó
+la coincidencia exacta de las 45 misiones, se creó y leyó una copia SQL gzip de todas
+las tablas antes del DDL y se verificó que solo cambiaran las categorías previstas.
+El resto de tablas conservó su esquema y datos. Las copias quedan en el directorio
+temporal privado del equipo, fuera del repositorio.
+El esquema completo ya la incluye. Para revisar o aplicar exclusivamente en XAMPP local:
+
+```powershell
+& 'D:\xampp\php\php.exe' scripts/update_hq_categories_local.php
+& 'D:\xampp\php\php.exe' scripts/update_hq_categories_local.php --apply
+```
+
+La herramienta compara ambos documentos con el catálogo, exige coincidencia exacta,
+guarda y verifica una copia JSON previa en el directorio temporal y actualiza los datos
+en transacción. No usarla como prueba rutinaria: `--apply` reasigna esas categorías.
+
+Para esta migración concreta en PRE o PRO se utiliza `--categories` en las herramientas
+del entorno. Sin `--apply` solo inspeccionan; con `--apply` requieren autorización
+expresa del entorno correspondiente y hacen copia completa antes de modificarlo:
+
+```powershell
+& 'D:\xampp\php\php.exe' scripts/migrate_hq_pre.php --categories
+& 'D:\xampp\php\php.exe' scripts/migrate_hq_pro.php --categories
+# Solo con autorización; ya aplicadas el 04/11/2026:
+& 'D:\xampp\php\php.exe' scripts/migrate_hq_pre.php --categories --apply
+& 'D:\xampp\php\php.exe' scripts/migrate_hq_pro.php --categories --apply
+```
+
+Estas opciones comparten `scripts/migrate_hq_categories.php`. Si el catálogo cambia
+durante la copia se aborta antes de actualizar los datos. Una segunda inspección
+verifica la instalación sin repetir el SQL. El modo sin `--categories` conserva el
+procedimiento de las siete migraciones HQ anteriores.
 
 Los mapas admiten data URLs PNG limitadas a 4.000.000 bytes y dimensiones máximas de
 2000 × 2000. El guardado no mezcla cambios de varios administradores: prevalece el último.

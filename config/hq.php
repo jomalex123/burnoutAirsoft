@@ -115,6 +115,11 @@ function burnout_hq_state(int $operationId, ?string $team, string $channel, int 
     return ['operation' => $operation, 'missions' => $missions, 'messages' => $messages, 'channel' => $channel];
 }
 
+function burnout_hq_categories(): array
+{
+    return burnout_pdo()->query('SELECT name FROM hq_mission_categories ORDER BY name')->fetchAll(PDO::FETCH_COLUMN);
+}
+
 function burnout_hq_catalog(): array
 {
     return burnout_pdo()->query('SELECT id, title, briefing, category, mission_type FROM hq_mission_catalog WHERE is_available = 1 ORDER BY title, id')->fetchAll();

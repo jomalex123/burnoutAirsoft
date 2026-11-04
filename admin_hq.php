@@ -121,6 +121,7 @@ header('Cache-Control: no-store');
             <div class="admin-map-content">
               <section data-map-panel="mapa" aria-label="Editor de mapa">
                 <div class="hq-console"><div class="hq-operation-bar"><div><h2 class="hq-eyebrow">Centro de Operaciones / Mapa de Operaciones</h2></div><label><select data-hq-map-operation aria-label="Evento del calendario"><option value="">Selecciona una partida</option></select></label></div></div>
+                <div class="admin-map-editor" data-map-editor>
                 <div class="admin-map-toolbar" role="group" aria-label="Herramientas de dibujo">
                   <button type="button" data-map-tool="pan" title="Mover mapa" aria-label="Mover mapa" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 12V5a1.5 1.5 0 0 1 3 0v6-8a1.5 1.5 0 0 1 3 0v8-6a1.5 1.5 0 0 1 3 0v7-3a1.5 1.5 0 0 1 3 0v6c0 4-2 7-6 7h-2c-2 0-3-1-4-3l-4-6a1.5 1.5 0 0 1 2-2Z"/></svg></button>
                   <button type="button" data-map-tool="pen" title="Lápiz" aria-label="Lápiz" aria-pressed="true" class="is-active"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m16 3 5 5-12 12-6 1 1-6Z"/><path d="m14 5 5 5"/></svg></button>
@@ -149,7 +150,6 @@ header('Cache-Control: no-store');
                     <button type="button" data-map-action="zoom-out" title="Alejar mapa" aria-label="Alejar mapa" disabled>−</button>
                   </div>
                 </div>
-                <div class="hq-console admin-map-save"><p data-map-save-status role="status"></p></div>
                 <p class="admin-map-load-error" role="alert" hidden>No se ha podido cargar el plano del campo. Recarga la página para volver a intentarlo.</p>
                 <div class="admin-gallery-modal admin-map-text-modal burnout-popup" data-map-text-modal aria-hidden="true">
                   <div class="admin-gallery-modal__overlay burnout-popup__overlay" data-map-text-close></div>
@@ -168,6 +168,7 @@ header('Cache-Control: no-store');
                       </div>
                     </form>
                   </div>
+                </div>
                 </div>
               </section>
               <?php require __DIR__ . '/config/hq_panels.php'; ?>

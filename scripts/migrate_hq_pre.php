@@ -2,10 +2,12 @@
 declare(strict_types=1);
 
 // Uso CLI: sin argumentos inspecciona; --apply hace backup, migra y verifica PRE.
+// --categories selecciona exclusivamente la migracion de categorias del 04/11/2026.
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 putenv('BURNOUT_ENV_FILE=' . dirname(__DIR__) . '/config/env.php');
 putenv('BURNOUT_ENV=pre');
 require_once __DIR__ . '/../config/database.php';
+if (in_array('--categories', $argv, true)) { require __DIR__ . '/migrate_hq_categories.php'; exit; }
 
 function burnout_pre_identifier(string $name): string
 {

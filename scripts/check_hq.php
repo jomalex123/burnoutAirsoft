@@ -50,6 +50,8 @@ if (in_array('--install-local', $argv, true)) {
     if (!$column) $pdo->exec(file_get_contents(__DIR__ . '/../database/migrations/2026_11_03_hq_mission_order.sql'));
     $column = $pdo->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hq_mission_catalog' AND COLUMN_NAME = 'category'")->fetchColumn();
     if (!$column) $pdo->exec(file_get_contents(__DIR__ . '/../database/migrations/2026_11_03_hq_mission_classification.sql'));
+    $table = $pdo->query("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hq_mission_categories'")->fetchColumn();
+    if (!$table) $pdo->exec(file_get_contents(__DIR__ . '/../database/migrations/2026_11_04_hq_mission_categories.sql'));
     echo "Migración HQ aplicada en local.\n";
 }
 $operations = [];
@@ -269,15 +271,17 @@ try {
     [$status, $createdCatalog] = hq_request($admin, 'catalog_save', ['title' => $testTitle, 'briefing' => 'Guion de catálogo de prueba'], true);
     $catalogId = (int) $createdCatalog['catalog_id'];
     hq_check($status === 200 && $catalogId > 0, 'Ajustes crea una misión de catálogo sin depender de un evento');
-    [$status] = hq_request($admin, 'catalog_save', ['catalog_id' => $catalogId, 'title' => $testTitle, 'briefing' => 'Guion de catálogo editado', 'category' => 'Inteligencia', 'mission_type' => 'Reconocimiento'], true);
+    [$status] = hq_request($admin, 'catalog_save', ['catalog_id' => $catalogId, 'title' => $testTitle, 'briefing' => 'Guion de catálogo editado', 'category' => $catalogState['categories'][0], 'mission_type' => 'Reconocimiento'], true);
     hq_check($status === 200, 'Ajustes edita un guion del catálogo');
     [$status, $classified] = hq_request($admin, 'catalog');
     $classifiedItem = array_values(array_filter($classified['missions'], static fn ($mission) => (int) $mission['id'] === $catalogId))[0];
-    hq_check($status === 200 && $classifiedItem['category'] === 'Inteligencia', 'El catalogo devuelve la categoria persistida');
+    hq_check($status === 200 && $classifiedItem['category'] === $catalogState['categories'][0], 'El catalogo devuelve la categoria persistida');
     [$status] = hq_request($admin, 'catalog_save', ['catalog_id' => $catalogId, 'title' => $testTitle, 'briefing' => 'Guion de catalogo', 'category' => str_repeat('x', 81)], true);
     hq_check($status === 422, 'Valida el limite de categoria');
     [$status] = hq_request($admin, 'catalog_save', ['catalog_id' => $catalogId, 'title' => $testTitle, 'briefing' => 'Guion de catalogo', 'category' => ['no valido']], true);
     hq_check($status === 422, 'Rechaza categorias invalidas');
+    [$status] = hq_request($admin, 'catalog_save', ['catalog_id' => $catalogId, 'title' => $testTitle, 'briefing' => 'Guion de catalogo', 'category' => 'NO EXISTE ' . bin2hex(random_bytes(8))], true);
+    hq_check($status === 422, 'Rechaza categorias que no figuran en la tabla');
     [$status] = hq_request($admin, 'catalog_save', ['catalog_id' => $catalogId, 'title' => $testTitle, 'briefing' => ' ', 'csrf_token' => 'incorrecto'], true);
     hq_check($status === 403, 'CSRF protege la gestión del catálogo');
     [$status] = hq_request($admin, 'mission', ['operation_id' => $id, 'team' => 'alpha', 'status' => 'draft', 'catalog_id' => $catalogId, 'title' => 'Manipulado', 'briefing' => 'Manipulado'], true);

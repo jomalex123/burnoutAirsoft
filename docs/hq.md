@@ -13,7 +13,7 @@ paquetes npm, Composer, WebSockets, servicios externos ni procesos permanentes.
 | Dibujo | Canvas 2D, Pointer Events y captura del puntero |
 | Plano | PNG local generado previamente desde el PDF; no se procesa el PDF en cada petición |
 | Navegación del mapa | CSS, desplazamiento nativo, zoom del 100 al 300 % y Fullscreen API |
-| Anotaciones | PNG transparente mediante `canvas.toDataURL()`; MySQL `MEDIUMBLOB` |
+| Anotaciones | Memoria local por partida |
 | Peticiones | Fetch, URLSearchParams y JSON, con cookies del mismo origen |
 | Chat y estados | Consulta incremental cada cinco segundos; se pausa con la pestaña oculta |
 | Tablas del catálogo | JavaScript nativo, filtros y paginación en cliente |
@@ -44,18 +44,11 @@ duplicados de las pestañas se han retirado.
 - La capa transparente admite lápiz, línea, flecha, rectángulo, círculo, texto y borrador.
 - Deshacer y rehacer guardan hasta 15 cambios durante la sesión del mapa seleccionado.
 - Limpiar borra anotaciones, nunca el plano. La mano permite desplazar el mapa ampliado.
-- Las anotaciones se conservan por operación en `hq_maps` y se recuperan al seleccionar
-  otra vez la partida o recargar. Zoom, herramienta e historial no se guardan en MySQL.
-- El guardado agrupa cambios durante 300 ms y mantiene una sola escritura simultánea.
-  Si falla, reintenta cada cinco segundos y conserva el dibujo en memoria.
-- Cambiar de partida o realizar navegación parcial espera a guardar. Si el guardado
-  falla, se bloquea ese cambio. Al cerrar o recargar con cambios pendientes se avisa.
-- No hay botón de guardado ni mensaje permanente de carga correcta. Los errores y
-  el estado de guardado aparecen bajo el mapa.
-- El servidor admite PNG de hasta 4.000.000 bytes en su representación data URL y
-  dimensiones máximas de 2000 × 2000. No se admite SVG ni HTML como anotación.
-- No existe fusión entre dos administradores que dibujen simultáneamente: prevalece
-  el último guardado. No se ha validado carga concurrente en Hostalia.
+- Las anotaciones se conservan en memoria por partida mientras el HQ permanece abierto.
+  Recargar o abandonar la página descarta los dibujos.
+- No hay carga ni guardado en servidor, ni mensajes de guardado bajo el mapa.
+- Pantalla completa incluye lienzo, botonera y popup de texto, sin cabecera ni selector.
+- La tabla hq_maps y sus endpoints se conservan por compatibilidad; el editor no los usa.
 
 ## Misiones y guion
 
@@ -99,6 +92,12 @@ abre un popup con Nombre, Categoría (desplegable de valores existentes o Sin cl
 y Guion. No hay formulario debajo de la tabla. Los lápices abren ese mismo popup con
 los datos actuales. La papelera abre una confirmación y desactiva `is_available`; no
 borra la entrada ni modifica las copias ya asignadas. Pulsar la fila solo la selecciona.
+
+Filtros y editor cargan la lista independiente `hq_mission_categories`, también para
+categorías sin misiones. El servidor valida la categoría contra esa lista. Se mantiene
+directamente en MySQL, sin pantalla de gestión; instrucciones en `database/README.md`.
+Las 45 misiones de `misiones.md` y `misiones_por_categorias.md` coinciden exactamente
+en nombre y guion; el segundo documento asigna las 17 categorías iniciales.
 
 | Vista | Filtros | Paginación y acciones |
 | --- | --- | --- |
