@@ -25,6 +25,9 @@
 })(window);
 
 function InitPage() {
+    if (typeof window.initBurnoutAnalyticsPage === 'function') {
+        window.initBurnoutAnalyticsPage();
+    }
     if (typeof window.initAdminMapaInteractivoPage === 'function') {
         window.initAdminMapaInteractivoPage();
     }
@@ -161,6 +164,12 @@ function PageTransition() {
             if (!pushState) history.replaceState({}, document.title, loadedPageUrl);
             return;
         }
+        // Unload public analytics when crossing into administration or team HQ.
+        // Keep the HQ save check above this full navigation too.
+        if (isPrivatePagePath(new URL(url, window.location.href).pathname) !== isPrivatePagePath(new URL(loadedPageUrl, window.location.href).pathname)) {
+            navigateWithFullReload(url);
+            return;
+        }
         closeNavigation();
 
         anime({
@@ -204,6 +213,7 @@ function PageTransition() {
                                     history.pushState({}, document.title, url);
                                 }
                                 loadedPageUrl = url;
+                                document.dispatchEvent(new CustomEvent('burnout:pageview'));
 
                                 anime({
                                     targets: '.ms-container',
@@ -261,6 +271,10 @@ function getPageTransitionTarget(link, event) {
         url: url,
         partial: !isIndexPath(url.pathname) && !isIndexPath(window.location.pathname)
     };
+}
+
+function isPrivatePagePath(pathname) {
+    return /\/(?:admin[^/]*|hq_equipo)\.php$/i.test(pathname);
 }
 
 function isIndexPath(pathname) {

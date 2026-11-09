@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS registrations (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
+  UNIQUE KEY registrations_id_event_unique (id, event_id),
   KEY registrations_event_id_index (event_id),
   KEY registrations_email_index (email),
   CONSTRAINT registrations_event_id_foreign
@@ -72,11 +73,17 @@ CREATE TABLE IF NOT EXISTS registrations (
 CREATE TABLE IF NOT EXISTS registration_attendees (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   registration_id BIGINT UNSIGNED NOT NULL,
+  event_id INT UNSIGNED NOT NULL,
   full_name VARCHAR(160) NOT NULL,
   document VARCHAR(40) NOT NULL,
+  document_key VARCHAR(40) GENERATED ALWAYS AS (REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(UPPER(document), ' ', ''), '-', ''), CHAR(9), ''), CHAR(10), ''), CHAR(11), ''), CHAR(12), ''), CHAR(13), '')) STORED,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
+  UNIQUE KEY registration_attendees_event_document_unique (event_id, document_key),
   KEY registration_attendees_registration_id_index (registration_id),
+  CONSTRAINT registration_attendees_registration_event_foreign
+    FOREIGN KEY (registration_id, event_id) REFERENCES registrations (id, event_id)
+    ON UPDATE CASCADE ON DELETE CASCADE,
   CONSTRAINT registration_attendees_registration_id_foreign
     FOREIGN KEY (registration_id) REFERENCES registrations (id)
     ON UPDATE CASCADE

@@ -9,6 +9,7 @@ El entorno local habitual del proyecto utiliza **XAMPP**: Apache y MySQL locales
 - Páginas públicas de inicio, equipo, campo, normativa y privacidad.
 - Calendario de partidas con turnos de mañana, tarde y noche, aforo y asistentes inscritos.
 - Inscripción a partidas con varios asistentes, validación y notificaciones por correo.
+- Control de documentos repetidos dentro de una inscripción y entre inscripciones de la misma partida, con normalización y restricción única en MySQL. Una persona puede inscribirse en otras partidas.
 - Galerías por evento con imágenes administrables.
 - Publicaciones de Instagram en la página «Nosotros», con carga adicional y visualización en modal.
 - Administración de partidas, registros, galerías y contenido de la normativa.
@@ -129,6 +130,12 @@ docker compose down
 `docker compose down` detiene los servicios y conserva el volumen de datos.
 
 ## Configuración y entornos
+
+La integración de estadísticas públicas mediante el contenedor Google Tag Manager
+`GTM-W2FVT27Q`, el consentimiento de cookies y la configuración de GA4 se describen
+en [docs/analytics.md](docs/analytics.md). Solo carga Google en el dominio de
+producción tras aceptar; es necesario configurar y publicar las etiquetas de
+Analytics en el contenedor.
 
 La configuración es un archivo PHP que devuelve un array. Usar `config/env.example.php` como plantilla, sin publicar credenciales ni tokens reales.
 

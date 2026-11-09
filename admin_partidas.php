@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/config/auth.php';
 require_once __DIR__ . '/config/registration_notifications.php';
+require_once __DIR__ . '/config/registration_documents.php';
 
 $adminUser = null;
 $setupError = '';
@@ -176,7 +177,10 @@ function burnout_admin_event_capacity_remaining(array $event): int
 function burnout_admin_clean_list(array $values): array
 {
     return array_map(static function ($value): string {
-        return trim((string) $value);
+        if (!is_string($value)) {
+            throw new BurnoutUserException('Datos de asistentes no válidos.');
+        }
+        return trim($value);
     }, $values);
 }
 
@@ -200,7 +204,7 @@ function burnout_admin_is_valid_phone(string $phone): bool
 
 function burnout_admin_is_valid_document(string $document): bool
 {
-    $value = strtoupper(preg_replace('/[\s-]+/', '', $document) ?? '');
+    $value = burnout_normalize_document($document);
 
     if (preg_match('/^(\d{8})([A-Z])$/', $value, $matches)) {
         return burnout_admin_valid_dni_letter($matches[1], $matches[2]);
@@ -326,6 +330,7 @@ function burnout_admin_save_late_registration(): array
     $team = trim((string) ($_POST['equipo'] ?? ''));
     $attendeeNames = burnout_admin_clean_list(is_array($_POST['attendee_name'] ?? null) ? $_POST['attendee_name'] : []);
     $attendeeDocuments = burnout_admin_clean_list(is_array($_POST['attendee_document'] ?? null) ? $_POST['attendee_document'] : []);
+    $attendeeDocuments = burnout_registration_documents($attendeeDocuments);
 
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         throw new BurnoutUserException('Introduce una direccion electronica valida.');
@@ -365,6 +370,8 @@ function burnout_admin_save_late_registration(): array
             throw new BurnoutUserException('La partida seleccionada no existe.');
         }
 
+        burnout_assert_documents_available($pdo, (int) $eventId, $attendeeDocuments);
+
         if (count($attendeeNames) > burnout_admin_event_capacity_remaining($event)) {
             throw new BurnoutUserException('La inscripcion supera el maximo de aforo de la partida.');
         }
@@ -382,13 +389,14 @@ function burnout_admin_save_late_registration(): array
 
         $registrationId = (int) $pdo->lastInsertId();
         $attendee = $pdo->prepare(
-            'INSERT INTO registration_attendees (registration_id, full_name, document)
-             VALUES (:registration_id, :full_name, :document)'
+            'INSERT INTO registration_attendees (registration_id, event_id, full_name, document)
+             VALUES (:registration_id, :event_id, :full_name, :document)'
         );
 
         foreach ($attendeeNames as $index => $name) {
             $attendee->execute([
                 'registration_id' => $registrationId,
+                'event_id' => $eventId,
                 'full_name' => $name,
                 'document' => $attendeeDocuments[$index],
             ]);
@@ -673,20 +681,9 @@ $csrfToken = burnout_csrf_token();
                 <h2>Gestionar partidas</h2>
                 <button class="admin-partidas-action" type="button" data-partidas-modal-open="create">
                   <span>Crear evento</span>
-                  <svg aria-hidden="true" viewBox="0 0 24 24">
-                    <path d="M12 5v14"></path>
-                    <path d="M5 12h14"></path>
-                  </svg>
                 </button>
                 <button class="admin-partidas-action" type="button" data-partidas-modal-open="delete">
                   <span>Borrar evento</span>
-                  <svg aria-hidden="true" viewBox="0 0 24 24">
-                    <path d="M3 6h18"></path>
-                    <path d="M8 6V4h8v2"></path>
-                    <path d="M19 6l-1 14H6L5 6"></path>
-                    <path d="M10 11v5"></path>
-                    <path d="M14 11v5"></path>
-                  </svg>
                 </button>
               </section>
               <section class="partidas-panel" aria-labelledby="adminAvailableEventsTitle">

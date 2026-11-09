@@ -32,6 +32,9 @@ window.initRegistroPage = function () {
     }
 
     validateField($(this));
+    if (isAttendeeDocumentField($(this).attr('id'))) {
+      $form.find('input[name="attendee_document[]"]').each(function () { validateField($(this)); });
+    }
     updateSubmitState();
   });
 
@@ -86,6 +89,7 @@ window.initRegistroPage = function () {
     if (!validateForm()) {
       event.preventDefault();
       updateSubmitState();
+      focusFirstInvalidField();
       return;
     }
   });
@@ -192,6 +196,23 @@ window.initRegistroPage = function () {
     return isValid && $terms.is(':checked');
   }
 
+  function focusFirstInvalidField() {
+    var field = $form.find('.registro-field.is-invalid input:not(:disabled), .registro-field.is-invalid select:not(:disabled)').get(0);
+
+    if (!field && !$terms.is(':checked')) {
+      field = document.getElementById('abrirNormativa');
+    }
+
+    if (!field) {
+      return;
+    }
+
+    field.focus({ preventScroll: true });
+    var target = field.closest('.registro-field') || field;
+    var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    target.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'center' });
+  }
+
   function validateField($field) {
     var id = $field.attr('id');
     var value = $.trim($field.val());
@@ -229,6 +250,13 @@ window.initRegistroPage = function () {
       message = 'La inscripción supera el máximo de aforo de la partida. Ponte en contacto por Instagram con @burnoutairsoft para confirmar la inscripción.';
     }
 
+    if (!message && isAttendeeDocumentField(id)) {
+      $form.find('input[name="attendee_document[]"]').each(function () {
+        if (this !== $field.get(0) && normalizeDocument(this.value) === normalizeDocument(value)) {
+          message = 'Este documento está repetido entre los asistentes.';
+        }
+      });
+    }
     setFieldError($field, message);
     return !message;
   }
@@ -302,10 +330,29 @@ window.initRegistroPage = function () {
     var $error = $('[data-error-for="' + id + '"]');
 
     $wrapper.toggleClass('is-invalid', Boolean(message));
+    $field.attr('aria-invalid', message ? 'true' : 'false');
+    if ($error.length) {
+      var errorId = id + 'Error';
+      $error.attr('id', errorId);
+      var descriptions = ($field.attr('aria-describedby') || '').split(/\s+/).filter(function (value) {
+        return value && value !== errorId;
+      });
+      if (message) {
+        descriptions.push(errorId);
+      }
+      if (descriptions.length) {
+        $field.attr('aria-describedby', descriptions.join(' '));
+      } else {
+        $field.removeAttr('aria-describedby');
+      }
+    }
     $error.text(message);
   }
 
   function clearErrors() {
+    $form.find('[aria-invalid="true"]').each(function () {
+      setFieldError($(this), '');
+    });
     $('.registro-field').removeClass('is-invalid');
     $('.registro-error').text('');
   }
@@ -326,8 +373,11 @@ window.initRegistroPage = function () {
     return letters[Number(number) % 23] === String(letter || '').toUpperCase();
   }
 
+  function normalizeDocument(value) {
+    return String(value || '').toUpperCase().replace(/[ \t\n\r\v\f-]+/g, '');
+  }
   function isValidDocument(value) {
-    var normalized = String(value || '').toUpperCase().replace(/[\s-]+/g, '');
+    var normalized = normalizeDocument(value);
     var dni = normalized.match(/^(\d{8})([A-Z])$/);
     var nie = normalized.match(/^([XYZ])(\d{7})([A-Z])$/);
 

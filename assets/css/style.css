@@ -1556,6 +1556,64 @@ footer {
 .burnout-popup .burnout-popup__close:focus-visible { outline: 2px solid #df1f29; outline-offset: 3px; }
 .burnout-popup .burnout-popup__close span { line-height: 1; pointer-events: none; }
 body.burnout-popup-open { overflow: hidden; }
+
+.burnout-cookies[hidden],
+.burnout-cookies-settings[hidden],
+.burnout-cookies__withdrawal[hidden] { display: none; }
+.burnout-cookies {
+  position: fixed;
+  inset: auto 20px 20px;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 24px;
+  background: #fff;
+  color: #555;
+  border: 1px solid rgba(21, 21, 21, .15);
+  border-radius: 8px;
+  box-shadow: 0 12px 40px rgba(21, 21, 21, .2);
+}
+.burnout-cookies__content { flex: 1; }
+.burnout-cookies h2 { margin: 0 0 8px; font-size: 22px; color: #151515; }
+.burnout-cookies p { margin: 0; font-size: 16px; line-height: 1.45; }
+.burnout-cookies a { color: #df1f29; text-decoration: underline; }
+.burnout-cookies__actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.burnout-cookies__actions button {
+  min-height: 44px;
+  padding: 10px 18px;
+  margin: 0;
+  border: 1px solid #151515;
+  border-radius: 8px;
+  background: #fff;
+  color: #151515;
+  font: inherit;
+  cursor: pointer;
+}
+.burnout-cookies__actions button:hover { border-color: #df1f29; color: #df1f29; }
+.burnout-cookies-settings {
+  position: fixed;
+  bottom: 8px;
+  left: 12px;
+  z-index: 9998;
+  min-height: 32px;
+  margin: 0;
+  padding: 4px 10px;
+  border: 1px solid rgba(21, 21, 21, .3);
+  border-radius: 8px;
+  background: #fff;
+  color: #151515;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.burnout-cookies button:focus-visible,
+.burnout-cookies a:focus-visible,
+.burnout-cookies-settings:focus-visible { outline: 2px solid #df1f29; outline-offset: 3px; }
+@media (max-width: 700px) {
+  .burnout-cookies { inset: auto 12px 12px; padding: 18px; flex-direction: column; align-items: stretch; gap: 16px; max-height: calc(100vh - 24px); overflow-y: auto; }
+  .burnout-cookies__actions button { flex: 1; }
+}
 .burnout-popup__actions { margin-top: 20px; }
 .burnout-popup.registro-modal .burnout-popup__dialog,
 .burnout-popup.modal .burnout-popup__dialog { padding: 0; }

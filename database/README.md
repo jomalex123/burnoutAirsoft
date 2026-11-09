@@ -38,6 +38,41 @@ y aplicar solo las pendientes, con copia previa. No ejecutar migraciones remotas
 Los scripts SQL de ALTER se aplican una sola vez; no todos son idempotentes. Las peticiones web
 no ejecutan DDL. El esquema completo y las migraciones deben producir estructuras compatibles.
 
+## Documentos de asistentes por partida
+
+Desde el 09/11/2026 cada asistente incluye `event_id` y una columna generada
+`document_key`: documento en mayúsculas, sin guiones, espacios ni tabulaciones o
+saltos de línea ASCII. La clave única `(event_id, document_key)` impide repetir
+una persona en una partida, incluso entre inscripciones distintas. Puede asistir
+a otras partidas. Se conserva la clave primaria `id`; una clave foránea compuesta
+garantiza que el evento del asistente coincida con el de su inscripción.
+
+El formulario público y el alta administrativa rechazan documentos repetidos.
+El servidor guarda el documento normalizado y comprueba inscripciones previas
+dentro de la transacción, después de bloquear el evento. Un conflicto rechaza
+la inscripción completa, sin ocupar plazas parcialmente. No se corrigen números
+o letras: siguen sujetos a la validación de DNI/NIE/pasaporte.
+
+Para instalaciones existentes, aplicar
+`migrations/2026_11_09_registration_document_unique.sql` con copia previa y sin
+altas concurrentes durante el despliegue. Instalar el esquema antes de activar
+el PHP nuevo. No se eliminan duplicados automáticamente: resolverlos manualmente
+antes de añadir la restricción. El SQL no es idempotente; si falla el último
+ALTER, resolver el conflicto y reanudar solo ese ALTER. Para XAMPP local:
+
+```powershell
+& 'D:\xampp\php\php.exe' scripts/migrate_registration_documents_local.php
+& 'D:\xampp\php\php.exe' scripts/migrate_registration_documents_local.php --apply
+& 'D:\xampp\php\php.exe' scripts/check_registration_documents.php
+node scripts/check_registration_documents.js
+```
+
+La herramienta local inspecciona sin argumentos; `--apply` verifica una copia
+JSON privada con esquema y datos de eventos, inscripciones y asistentes antes
+del DDL. Rechaza otros entornos y detecta duplicados sin mostrar documentos.
+La prueba PHP usa datos ficticios y rollback (puede avanzar AUTO_INCREMENT).
+PRE y PRO requieren aplicar su migración con autorización específica.
+
 ## Tablas HQ
 
 | Tabla | Contenido y conservación |

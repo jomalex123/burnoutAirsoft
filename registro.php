@@ -7,6 +7,7 @@ require_once __DIR__ . '/config/auth.php';
 require_once __DIR__ . '/config/mail.php';
 require_once __DIR__ . '/config/rate_limit.php';
 require_once __DIR__ . '/config/registration_notifications.php';
+require_once __DIR__ . '/config/registration_documents.php';
 
 function registro_param(string $key, string $source = 'get'): string
 {
@@ -134,7 +135,7 @@ function registro_format_turn(string $value): string
 {
     $turn = registro_normalize_turn($value);
 
-    return strtoupper($turn === 'manana' ? 'mañana' : $turn);
+    return $turn === 'manana' ? 'MAÑANA' : strtoupper($turn);
 }
 
 function registro_timezone(): DateTimeZone
@@ -382,7 +383,10 @@ function registro_set_capacity_data(string $html, int $remaining, int $maxAttend
 function registro_clean_list(array $values): array
 {
     return array_map(static function ($value): string {
-        return trim((string) $value);
+        if (!is_string($value)) {
+            throw new BurnoutUserException('Datos de asistentes no válidos.');
+        }
+        return trim($value);
     }, $values);
 }
 
@@ -406,7 +410,7 @@ function registro_is_valid_phone(string $phone): bool
 
 function registro_is_valid_document(string $document): bool
 {
-    $value = strtoupper(preg_replace('/[\s-]+/', '', $document) ?? '');
+    $value = burnout_normalize_document($document);
 
     if (preg_match('/^(\d{8})([A-Z])$/', $value, $matches)) {
         return registro_valid_dni_letter($matches[1], $matches[2]);
@@ -546,6 +550,7 @@ function registro_save_submission(): array
     $acceptedRules = isset($_POST['normativaAceptada']);
     $attendeeNames = registro_clean_list(is_array($_POST['attendee_name'] ?? null) ? $_POST['attendee_name'] : []);
     $attendeeDocuments = registro_clean_list(is_array($_POST['attendee_document'] ?? null) ? $_POST['attendee_document'] : []);
+    $attendeeDocuments = burnout_registration_documents($attendeeDocuments);
 
     registro_assert_rate_limit($email);
 
@@ -595,6 +600,8 @@ function registro_save_submission(): array
             throw new BurnoutUserException('La inscripción está cerrada. No se admiten registros durante las 24 horas previas al evento.');
         }
 
+        burnout_assert_documents_available($pdo, (int) $eventId, $attendeeDocuments);
+
         if (count($attendeeNames) > registro_event_capacity_remaining($lockedEvent)) {
             throw new BurnoutUserException(registro_capacity_error_message());
         }
@@ -614,13 +621,14 @@ function registro_save_submission(): array
 
         $registrationId = (int) $pdo->lastInsertId();
         $attendee = $pdo->prepare(
-            'INSERT INTO registration_attendees (registration_id, full_name, document)
-             VALUES (:registration_id, :full_name, :document)'
+            'INSERT INTO registration_attendees (registration_id, event_id, full_name, document)
+             VALUES (:registration_id, :event_id, :full_name, :document)'
         );
 
         foreach ($attendeeNames as $index => $name) {
             $attendee->execute([
                 'registration_id' => $registrationId,
+                'event_id' => $eventId,
                 'full_name' => $name,
                 'document' => $attendeeDocuments[$index],
             ]);

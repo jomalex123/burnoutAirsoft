@@ -58,12 +58,18 @@ window.initAdminPartidasPage = function () {
     lateRegistrationForm.addEventListener('input', function (event) {
       if (event.target && event.target.matches('input, select')) {
         validateLateRegistrationField(event.target);
+        if (/^lateRegistrationAttendeeDocument\d+$/.test(event.target.id)) {
+          lateRegistrationForm.querySelectorAll('input[name="attendee_document[]"]').forEach(validateLateRegistrationField);
+        }
       }
     });
 
     lateRegistrationForm.addEventListener('change', function (event) {
       if (event.target && event.target.matches('input, select')) {
         validateLateRegistrationField(event.target);
+        if (/^lateRegistrationAttendeeDocument\d+$/.test(event.target.id)) {
+          lateRegistrationForm.querySelectorAll('input[name="attendee_document[]"]').forEach(validateLateRegistrationField);
+        }
       }
     });
 
@@ -463,6 +469,13 @@ window.initAdminPartidasPage = function () {
       message = 'Introduce un DNI, NIE o pasaporte valido.';
     }
 
+    if (!message && /^lateRegistrationAttendeeDocument\d+$/.test(id)) {
+      lateRegistrationForm.querySelectorAll('input[name="attendee_document[]"]').forEach(function (other) {
+        if (other !== field && normalizeDocument(other.value) === normalizeDocument(value)) {
+          message = 'Este documento está repetido entre los asistentes.';
+        }
+      });
+    }
     setLateRegistrationFieldError(field, message);
 
     return !message;
@@ -527,8 +540,11 @@ window.initAdminPartidasPage = function () {
     return letters[Number(number) % 23] === String(letter || '').toUpperCase();
   }
 
+  function normalizeDocument(value) {
+    return String(value || '').toUpperCase().replace(/[ \t\n\r\v\f-]+/g, '');
+  }
   function isValidDocument(value) {
-    var normalized = String(value || '').toUpperCase().replace(/[\s-]+/g, '');
+    var normalized = normalizeDocument(value);
     var dni = normalized.match(/^(\d{8})([A-Z])$/);
     var nie = normalized.match(/^([XYZ])(\d{7})([A-Z])$/);
 
