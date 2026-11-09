@@ -131,12 +131,6 @@ docker compose down
 
 ## Configuración y entornos
 
-La integración de estadísticas públicas mediante el contenedor Google Tag Manager
-`GTM-W2FVT27Q`, el consentimiento de cookies y la configuración de GA4 se describen
-en [docs/analytics.md](docs/analytics.md). Solo carga Google en el dominio de
-producción tras aceptar; es necesario configurar y publicar las etiquetas de
-Analytics en el contenedor.
-
 La configuración es un archivo PHP que devuelve un array. Usar `config/env.example.php` como plantilla, sin publicar credenciales ni tokens reales.
 
 - `BURNOUT_ENV`: selecciona `local`, `pre` o `pro`. Si no está definido, se utiliza `default` del archivo de configuración.

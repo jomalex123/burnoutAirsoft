@@ -71,7 +71,40 @@ La herramienta local inspecciona sin argumentos; `--apply` verifica una copia
 JSON privada con esquema y datos de eventos, inscripciones y asistentes antes
 del DDL. Rechaza otros entornos y detecta duplicados sin mostrar documentos.
 La prueba PHP usa datos ficticios y rollback (puede avanzar AUTO_INCREMENT).
-PRE y PRO requieren aplicar su migración con autorización específica.
+PRE y PRO requieren aplicar su migración con autorización específica. La herramienta
+independiente `scripts/migrate_registration_documents_remote.php` selecciona
+explícitamente el destino y rechaza conexiones coincidentes con otros entornos:
+
+```powershell
+& 'D:\xampp\php\php.exe' scripts/migrate_registration_documents_remote.php --environment=pre
+& 'D:\xampp\php\php.exe' scripts/migrate_registration_documents_remote.php --environment=pro
+# Solo tras autorización del entorno correspondiente:
+& 'D:\xampp\php\php.exe' scripts/migrate_registration_documents_remote.php --environment=pre --apply
+& 'D:\xampp\php\php.exe' scripts/migrate_registration_documents_remote.php --environment=pro --apply
+```
+
+Sin `--apply` solo inspecciona. Si encuentra documentos repetidos, aborta y
+muestra únicamente identificadores de evento, inscripción y asistente, sin
+documentos ni nombres. No resuelve duplicados automáticamente ni permite
+eliminar filas. `--apply` bloquea temporalmente las tablas durante la copia y el
+DDL, crea y lee una copia SQL gzip completa en el directorio temporal privado,
+incluidos los datos binarios, y conserva un manifiesto de integridad. Después
+comprueba la expresión generada, índices, clave foránea, coherencia del evento
+y conservación de los datos originales. Repetir la inspección no repite el DDL.
+`--verify-backup=RUTA_PRIVADA.sql.gz` compara el contenido actual de las columnas
+originales con la copia sin restaurarla ni ejecutar sus sentencias.
+
+El 09/11/2026 se aplicó esta migración en PRE y PRO por petición del usuario,
+con copias SQL gzip verificadas de las 19 tablas de cada entorno. PRE tenía
+13 asistentes y ningún duplicado; se comprobó que los datos originales
+coincidieran con su copia. La primera inspección de PRO detectó un grupo
+duplicado y se detuvo sin cambios. Después de que el usuario corrigiera el
+documento, se confirmó que sus 80 asistentes no tenían duplicados ni huérfanos
+y se completó la migración. Se verificaron la columna generada, la unicidad por
+partida, la clave foránea y la conservación de los datos originales de las
+19 tablas. No se eliminaron asistentes durante las migraciones. Las copias y
+manifiestos quedan en el directorio temporal privado, fuera del repositorio.
+Las herramientas locales mantienen sus restricciones originales.
 
 ## Tablas HQ
 
