@@ -189,6 +189,10 @@ window.initAdminPartidasPage = function () {
     announcementForm.addEventListener('submit', async function (event) {
       event.preventDefault();
       if (sendingAnnouncement) { return; }
+      if (announcementRun && announcementRun.done) {
+        closeModals();
+        return;
+      }
       sendingAnnouncement = true;
       var submit = document.getElementById('announcementSend');
       submit.disabled = true;
@@ -206,6 +210,7 @@ window.initAdminPartidasPage = function () {
         }
         setText('announcementProgress', 'Envío terminado. Enviados: ' + announcementRun.sent + '. Fallidos: ' + announcementRun.failed + '. Total: ' + announcementRun.total + '.');
         setText('announcementSend', 'Envío terminado');
+        submit.disabled = false;
       } catch (error) {
         setText('announcementProgress', error.message || 'Se ha interrumpido la conexión. Pulsa Continuar para consultar el estado y seguir.');
         setText('announcementSend', 'Continuar envío');
