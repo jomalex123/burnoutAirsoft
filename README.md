@@ -13,6 +13,7 @@ El entorno local habitual del proyecto utiliza **XAMPP**: Apache y MySQL locales
 - Galerías por evento con imágenes administrables.
 - Publicaciones de Instagram en la página «Nosotros», con carga adicional y visualización en modal.
 - Administración de partidas, registros, galerías y contenido de la normativa.
+- Comunicados desde Gestionar Partidas: elegir evento, escribir asunto y mensaje y enviarlo individualmente al correo principal de cada inscripción. Los listados de Borrar evento y Enviar comunicado muestran 5 eventos por página, ordenados por fecha descendente. Solo Borrar evento muestra el aforo.
 - HQ por partida: mapa temporal en memoria, misiones secuenciales, catálogo y canales Alpha/Bravo.
 - Consulta, filtrado, ordenación, eliminación y exportación CSV/PDF de inscripciones, además de reenvío de notificaciones.
 
@@ -25,7 +26,7 @@ El entorno local habitual del proyecto utiliza **XAMPP**: Apache y MySQL locales
 | Frontend | HTML, CSS propio y JavaScript nativo con jQuery 3.7.1 |
 | Interacciones | Anime.js, Swiper y librerías locales de galería |
 | Exportación PDF | PDFLib en el navegador |
-| HQ | Canvas 2D, Pointer Events, Fullscreen API, Fetch y JSON; persistencia en MySQL |
+| HQ | Canvas 2D, Pointer Events, Fullscreen API, Fetch y JSON; mapa en memoria y misiones, accesos, catálogo y chat en MySQL |
 | Pruebas | Scripts PHP (cURL/DOM) y Node.js integrado, sin dependencias npm |
 | Desarrollo local | Apache/PHP/MySQL de XAMPP; Docker es una alternativa |
 
@@ -226,6 +227,11 @@ catálogo global de misiones clasificado por categoría. El enlace accede en `hq
 solo con su código. La referencia actual de interfaz, API y tecnologías está en
 [docs/hq.md](docs/hq.md); el orden de migraciones está en [database/README.md](database/README.md).
 
+Las anotaciones del mapa se conservan por partida solo mientras el HQ permanece abierto.
+Cambiar de partida recupera los dibujos de esa sesión de página; recargar o abandonar el HQ
+los descarta. El editor no carga ni guarda anotaciones en servidor. La tabla `hq_maps` y
+sus endpoints siguen disponibles por compatibilidad, pero el editor actual no los utiliza.
+
 Con Apache/MySQL de XAMPP encendidos, desde la raíz:
 
 ```powershell
@@ -256,6 +262,15 @@ Comprobar mensajes seguros y respuestas de excepciones sin conectar con MySQL:
 ```
 
 Los fallos técnicos se registran en el servidor y se muestran mediante mensajes breves. Los errores de validación usan `BurnoutUserException`; no utilizar esa clase para detalles SQL, SMTP u otros diagnósticos internos.
+
+Comunicados de eventos (sin MySQL ni correo real): `php scripts/check_event_announcements.php`
+y `node scripts/check_event_pagination.js`. El envío utiliza la configuración de correo existente,
+procesa un contacto por petición y muestra enviados y fallidos. Si la conexión se interrumpe,
+volver a Enviar comunicado permite continuar el envío pendiente de esa sesión de administración.
+No cerrar la página durante el envío. Repetir un paso ya registrado no vuelve a enviar ese correo;
+un corte del proceso PHP justo después de que SMTP acepte el mensaje puede dejar un resultado
+incierto. El resultado indica aceptación por el transporte, no entrega final en la bandeja del destinatario.
+No se mezcla el comunicado con el historial de confirmaciones de inscripción.
 
 Con Node.js disponible, comprobar paginación, filtros, totales y exportación CSV con datos ficticios:
 
@@ -288,5 +303,5 @@ Para cambios de interfaz, verificar navegación directa y parcial, consola del n
 Para desplegar, configurar el entorno y la base de datos del servidor, aplicar los cambios de esquema necesarios y comprobar autenticación, correo y tareas programadas. Las imágenes de galerías e Instagram se almacenan en base de datos, por lo que deben incluirse en las copias de seguridad de MySQL.
 
 La [revisión de seguridad y regresiones del 03/11/2026](docs/security-review-2026-11-03.md)
-detalla las correcciones, comprobaciones y límites de verificación. El guardado del mapa no
-fusiona ediciones simultáneas de varios administradores. No se ha auditado el servidor remoto.
+detalla las correcciones, comprobaciones y límites de verificación. Las anotaciones del mapa
+son temporales y no se comparten entre administradores. No se ha auditado el servidor remoto.

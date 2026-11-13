@@ -471,6 +471,35 @@
   display: block;
 }
 
+.admin-partidas-delete-item[hidden] {
+  display: none;
+}
+
+#announcementForm textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid rgba(21, 21, 21, .2);
+  border-radius: 8px;
+  font: inherit;
+  resize: vertical;
+}
+
+#announcementForm p,
+.admin-partidas-delete-item > div {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.admin-announcement-summary {
+  display: grid;
+  gap: 6px;
+}
+
+.admin-announcement-summary p {
+  margin: 0;
+}
+
 .admin-partidas-delete-item strong {
   font-size: 16px;
 }

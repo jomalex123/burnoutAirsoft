@@ -562,6 +562,11 @@ try {
     $error = burnout_error_message($exception, 'cargar las partidas');
 }
 
+$modalEvents = $events;
+usort($modalEvents, static function (array $first, array $second): int {
+    return strcmp($second['date'], $first['date']) ?: ($second['id'] <=> $first['id']);
+});
+
 $csrfToken = burnout_csrf_token();
 ?>
 <!DOCTYPE html>
@@ -685,6 +690,9 @@ $csrfToken = burnout_csrf_token();
                 <button class="admin-partidas-action" type="button" data-partidas-modal-open="delete">
                   <span>Borrar evento</span>
                 </button>
+                <button class="admin-partidas-action" type="button" data-partidas-modal-open="announcement">
+                  <span>Enviar comunicado</span>
+                </button>
               </section>
               <section class="partidas-panel" aria-labelledby="adminAvailableEventsTitle">
                 <h2 id="adminAvailableEventsTitle">Eventos disponibles</h2>
@@ -749,8 +757,8 @@ $csrfToken = burnout_csrf_token();
                 <?php if (!$events): ?>
                   <div class="admin-empty">No hay eventos creados.</div>
                 <?php else: ?>
-                  <div class="admin-partidas-delete-list">
-                    <?php foreach ($events as $event): ?>
+                  <div class="admin-partidas-delete-list" data-event-paged-list>
+                    <?php foreach ($modalEvents as $event): ?>
                       <article class="admin-partidas-delete-item">
                         <div>
                           <strong><?= htmlspecialchars((string) ($event['title'] ?? 'Sin titulo'), ENT_QUOTES, 'UTF-8') ?></strong>
@@ -773,7 +781,70 @@ $csrfToken = burnout_csrf_token();
                       </article>
                     <?php endforeach; ?>
                   </div>
+                  <nav class="admin-registrations-pagination" aria-label="Páginas de eventos para borrar" data-event-pagination hidden>
+                    <div class="admin-registration-pages"></div>
+                  </nav>
                 <?php endif; ?>
+              </div>
+            </div>
+
+            <div class="admin-gallery-modal burnout-popup" id="announcementEventModal" aria-hidden="true">
+              <div class="admin-gallery-modal__overlay burnout-popup__overlay" data-partidas-modal-close></div>
+              <div class="admin-gallery-modal__dialog burnout-popup__dialog" role="dialog" aria-modal="true" aria-labelledby="announcementEventTitle">
+                <div class="burnout-popup__header">
+                  <h2 id="announcementEventTitle">Enviar comunicado</h2>
+                  <button class="burnout-popup__close" type="button" data-partidas-modal-close aria-label="Cerrar ventana"><span aria-hidden="true">&#215;</span></button>
+                </div>
+                <?php if (!$events): ?>
+                  <div class="admin-empty">No hay eventos creados.</div>
+                <?php else: ?>
+                  <div class="admin-partidas-delete-list" data-event-paged-list>
+                    <?php foreach ($modalEvents as $event): ?>
+                      <article class="admin-partidas-delete-item">
+                        <div>
+                          <strong><?= htmlspecialchars($event['title'], ENT_QUOTES, 'UTF-8') ?></strong>
+                          <span><?= htmlspecialchars($event['date'] . ' · ' . $event['time'], ENT_QUOTES, 'UTF-8') ?></span>
+                        </div>
+                        <button class="admin-delete-icon-button" type="button" data-event-announce="<?= $event['id'] ?>" data-event-summary="<?= htmlspecialchars($event['title'] . ' · ' . $event['date'] . ' · ' . $event['time'], ENT_QUOTES, 'UTF-8') ?>" aria-label="Redactar comunicado para <?= htmlspecialchars($event['title'], ENT_QUOTES, 'UTF-8') ?>">
+                          <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m3 6 9 7 9-7"></path></svg>
+                        </button>
+                      </article>
+                    <?php endforeach; ?>
+                  </div>
+                  <nav class="admin-registrations-pagination" aria-label="Páginas de eventos para comunicados" data-event-pagination hidden>
+                    <div class="admin-registration-pages"></div>
+                  </nav>
+                <?php endif; ?>
+              </div>
+            </div>
+
+            <div class="admin-gallery-modal burnout-popup" id="announcementComposeModal" aria-hidden="true">
+              <div class="burnout-popup__overlay" data-partidas-modal-close></div>
+              <div class="burnout-popup__dialog" role="dialog" aria-modal="true" aria-labelledby="announcementComposeTitle">
+                <div class="burnout-popup__header">
+                  <h2 id="announcementComposeTitle">Redactar comunicado</h2>
+                  <button class="burnout-popup__close" type="button" data-partidas-modal-close aria-label="Cerrar ventana"><span aria-hidden="true">&#215;</span></button>
+                </div>
+                <form class="admin-gallery-form" id="announcementForm">
+                  <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+                  <input type="hidden" name="event_id" id="announcementEventId">
+                  <div class="admin-announcement-summary">
+                    <p id="announcementEventSummary"></p>
+                    <p>Se enviará un correo individual al contacto principal de cada inscripción.</p>
+                  </div>
+                  <div class="admin-login-field">
+                    <label for="announcementSubject">Asunto</label>
+                    <input id="announcementSubject" name="subject" type="text" maxlength="200" required>
+                  </div>
+                  <div class="admin-login-field">
+                    <label for="announcementBody">Mensaje</label>
+                    <textarea id="announcementBody" name="body" rows="8" maxlength="20000" required></textarea>
+                  </div>
+                  <p id="announcementProgress" role="status" aria-live="polite"></p>
+                  <div class="burnout-popup__actions">
+                    <button class="admin-login-submit" type="submit" id="announcementSend">Enviar comunicado</button>
+                  </div>
+                </form>
               </div>
             </div>
 

@@ -13,6 +13,10 @@ window.initAdminPartidasPage = function () {
   var lateRegistrationAttendees = document.getElementById('lateRegistrationAttendees');
   var lateRegistrationFields = document.getElementById('lateRegistrationAttendeeFields');
   var currentEditEvent = null;
+  var modalReturnFocus = null;
+  var sendingAnnouncement = false;
+  var announcementRun = null;
+  var announcementForm = document.getElementById('announcementForm');
 
   if (!root || !grid || !title || !previous || !next) {
     return;
@@ -36,7 +40,8 @@ window.initAdminPartidasPage = function () {
 
   document.querySelectorAll('[data-partidas-modal-open]').forEach(function (button) {
     button.addEventListener('click', function () {
-      openModal(button.getAttribute('data-partidas-modal-open') === 'delete' ? 'deleteEventModal' : 'createEventModal');
+      var target = button.getAttribute('data-partidas-modal-open');
+      openModal(target === 'delete' ? 'deleteEventModal' : target === 'announcement' ? 'announcementEventModal' : 'createEventModal');
     });
   });
 
@@ -90,11 +95,126 @@ window.initAdminPartidasPage = function () {
     });
   }
 
-  document.addEventListener('keydown', function (event) {
+  root.addEventListener('keydown', function (event) {
     if (event.key === 'Escape') {
       closeModals();
     }
+    if (event.key === 'Tab') {
+      var modal = root.querySelector('.admin-gallery-modal.is-open');
+      if (!modal) { return; }
+      var focusable = Array.prototype.filter.call(modal.querySelectorAll('button, input, select, textarea, a[href]'), function (item) {
+        return !item.disabled && item.getClientRects().length > 0;
+      });
+      var first = focusable[0];
+      var last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault(); last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault(); first.focus();
+      }
+    }
   });
+
+  root.querySelectorAll('[data-event-paged-list]').forEach(function (list) {
+    var rows = Array.prototype.slice.call(list.children);
+    var nav = list.nextElementSibling;
+    var pages = nav.querySelector('.admin-registration-pages');
+    var totalPages = Math.ceil(rows.length / 5);
+    function render(page) {
+      rows.forEach(function (row, index) { row.hidden = index < (page - 1) * 5 || index >= page * 5; });
+      nav.hidden = totalPages <= 1;
+      pages.innerHTML = '';
+      for (var number = 1; number <= totalPages; number++) {
+        var button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = number;
+        button.setAttribute('aria-label', 'Página ' + number);
+        if (number === page) {
+          button.className = 'is-active'; button.setAttribute('aria-current', 'page');
+        }
+        button.addEventListener('click', function () { render(Number(this.textContent));
+          pages.querySelector('[aria-current="page"]').focus(); });
+        pages.appendChild(button);
+      }
+    }
+    render(1);
+  });
+
+  root.querySelectorAll('[data-event-announce]').forEach(function (button) {
+    button.addEventListener('click', async function () {
+      try {
+        var status = await announcementRequest({ action: 'status' });
+        announcementRun = status.run && !status.run.done ? status.run : null;
+        if (announcementRun) {
+          showPendingAnnouncement();
+          return;
+        }
+        announcementForm.reset();
+        setValue('announcementEventId', button.getAttribute('data-event-announce'));
+        setText('announcementEventSummary', button.getAttribute('data-event-summary'));
+        setText('announcementProgress', '');
+        setText('announcementSend', 'Enviar comunicado');
+        announcementForm.querySelectorAll('input, textarea').forEach(function (field) { field.disabled = false; });
+        document.getElementById('announcementSend').disabled = false;
+        closeModals();
+        openModal('announcementComposeModal');
+      } catch (error) {
+        setText('announcementProgress', error.message);
+        closeModals(); openModal('announcementComposeModal');
+      }
+    });
+  });
+
+  function showPendingAnnouncement() {
+    setText('announcementEventSummary', 'Comunicado pendiente: ' + announcementRun.subject);
+    setValue('announcementSubject', announcementRun.subject);
+    setValue('announcementBody', announcementRun.body);
+    announcementForm.querySelectorAll('input:not([type="hidden"]), textarea').forEach(function (field) { field.disabled = true; });
+    setText('announcementProgress', 'Enviados: ' + announcementRun.sent + '. Fallidos: ' + announcementRun.failed + '. Total: ' + announcementRun.total + '. Pulsa Continuar para terminar el envío pendiente.');
+    setText('announcementSend', 'Continuar envío');
+    document.getElementById('announcementSend').disabled = false;
+    closeModals(); openModal('announcementComposeModal');
+  }
+
+  async function announcementRequest(values) {
+    var params = new URLSearchParams(values);
+    params.set('csrf_token', announcementForm.querySelector('[name="csrf_token"]').value);
+    var response = await fetch('admin_event_announcement.php', { method: 'POST', credentials: 'same-origin', body: params });
+    var result = await response.json();
+    if (!response.ok || !result.ok) { throw new Error(result.message || 'No se ha podido enviar. Vuelve a pulsar para consultar el estado y continuar.'); }
+    return result;
+  }
+
+  if (announcementForm) {
+    announcementForm.addEventListener('submit', async function (event) {
+      event.preventDefault();
+      if (sendingAnnouncement) { return; }
+      sendingAnnouncement = true;
+      var submit = document.getElementById('announcementSend');
+      submit.disabled = true;
+      try {
+        var status = await announcementRequest({ action: 'status' });
+        announcementRun = status.run && (!status.run.done || (announcementRun && announcementRun.token === status.run.token)) ? status.run : null;
+        if (!announcementRun) {
+          var data = new FormData(announcementForm);
+          announcementRun = (await announcementRequest({ action: 'start', event_id: data.get('event_id'), subject: data.get('subject'), body: data.get('body') })).run;
+        }
+        announcementForm.querySelectorAll('input:not([type="hidden"]), textarea').forEach(function (field) { field.disabled = true; });
+        while (!announcementRun.done) {
+          setText('announcementProgress', 'Procesando ' + (announcementRun.processed + 1) + ' de ' + announcementRun.total + '… No cierres esta página.');
+          announcementRun = (await announcementRequest({ action: 'next', token: announcementRun.token, index: announcementRun.processed })).run;
+        }
+        setText('announcementProgress', 'Envío terminado. Enviados: ' + announcementRun.sent + '. Fallidos: ' + announcementRun.failed + '. Total: ' + announcementRun.total + '.');
+        setText('announcementSend', 'Envío terminado');
+      } catch (error) {
+        setText('announcementProgress', error.message || 'Se ha interrumpido la conexión. Pulsa Continuar para consultar el estado y seguir.');
+        setText('announcementSend', 'Continuar envío');
+        submit.disabled = false;
+      } finally {
+        sendingAnnouncement = false;
+      }
+    });
+  }
 
   renderCalendar();
   renderAvailableEvents();
@@ -278,6 +398,9 @@ window.initAdminPartidasPage = function () {
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
     document.body.classList.add('admin-gallery-modal-open');
+    modalReturnFocus = document.activeElement;
+    var first = modal.querySelector('button, input:not([type="hidden"]), textarea');
+    if (first) { first.focus(); }
   }
 
   function openEditModal(event) {
@@ -560,11 +683,13 @@ window.initAdminPartidasPage = function () {
   }
 
   function closeModals() {
+    if (sendingAnnouncement) { return; }
     document.querySelectorAll('.admin-gallery-modal.is-open').forEach(function (modal) {
       modal.classList.remove('is-open');
       modal.setAttribute('aria-hidden', 'true');
     });
     document.body.classList.remove('admin-gallery-modal-open');
+    if (modalReturnFocus && modalReturnFocus.isConnected) { modalReturnFocus.focus(); }
   }
 
   function formatCapacity(event) {

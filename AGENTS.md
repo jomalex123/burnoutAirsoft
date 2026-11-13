@@ -78,9 +78,12 @@ La documentación puede estar desactualizada. Si difiere del código, contrastar
 - Leer `docs/hq.md` y `database/README.md` para el comportamiento e instalación actuales.
 - Usa PHP/PDO, sesiones y MySQL; Canvas 2D, Pointer Events, Fullscreen API y Fetch/JSON
   nativos. No necesita frameworks nuevos, Node en servidor, WebSockets ni cron para el chat.
-- Mapa, Misiones, Canales y Ajustes comparten la partida. Las anotaciones del mapa se guardan
-  por operación, separadas del plano. Esperar el guardado antes de cambiar de partida o navegar;
-  conservar cambios y avisar si falla. Limpiar temporizadores y listeners al salir.
+- Mapa, Misiones, Canales y Ajustes comparten la partida. Las anotaciones del mapa se conservan
+  solo en memoria por partida mientras el HQ permanece abierto, separadas del plano.
+  Cambiar de partida conserva los dibujos en esa sesión de página; recargar o abandonar
+  el HQ los descarta. El editor no carga ni guarda anotaciones en servidor. La tabla
+  `hq_maps` y sus endpoints se conservan por compatibilidad, pero el editor no los usa.
+  No reintroducir persistencia por referencias antiguas. Limpiar temporizadores y listeners al salir.
 - Inicializar `initAdminMapaInteractivoPage` antes de `initHqPage` y comprobar carga directa y parcial.
 - Solo una misión por equipo puede estar en curso: bloquear primero la operación en las mutaciones
   del guion. Las nuevas quedan Pendientes; Reiniciar limpia la recepción, sin borrar el texto.
