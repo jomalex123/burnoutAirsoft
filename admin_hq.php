@@ -134,10 +134,16 @@ header('Cache-Control: no-store');
                   <button type="button" data-map-tool="text" title="Texto libre" aria-label="Texto libre" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m2 19 5-14 5 14M4 14h6M21 19v-8M21 15a4 4 0 1 0-8 0 4 4 0 0 0 8 0"/></svg></button>
                   <label title="Color"><input type="color" data-map-color value="#df1f29" aria-label="Color"></label>
                   <label title="Grosor"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 5h18M3 12h18M3 19h18"/><path d="M3 12h18" stroke-width="3"/><path d="M3 19h18" stroke-width="5"/></svg><input type="range" data-map-size min="1" max="40" value="5" aria-label="Grosor"><output data-map-size-label>5 px</output></label>
+                  <button type="button" data-map-fill-toggle title="Relleno: sin relleno" aria-label="Relleno: sin relleno" aria-haspopup="listbox" aria-expanded="false" aria-controls="adminMapFillOptions"><svg data-map-fill-icon viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16"/><path d="m5 19 14-14"/></svg></button>
                   <button type="button" data-map-action="undo" title="Deshacer" aria-label="Deshacer" disabled><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9 5-6 6 6 6"/><path d="M3 11h11a6 6 0 0 1 6 6v2"/></svg></button>
                   <button type="button" data-map-action="redo" title="Rehacer" aria-label="Rehacer" disabled><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m15 5 6 6-6 6"/><path d="M21 11H10a6 6 0 0 0-6 6v2"/></svg></button>
                   <button type="button" data-map-action="clear" title="Limpiar mapa" aria-label="Limpiar mapa" ><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/></svg></button>
                   <button type="button" class="admin-map-fullscreen-button" data-map-action="fullscreen" title="Pantalla completa" aria-label="Pantalla completa" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path data-map-fullscreen-icon d="M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5"/></svg></button>
+                </div>
+                <div class="admin-map-fill-menu" id="adminMapFillOptions" data-map-fill-menu role="listbox" aria-label="Relleno de rectángulos y círculos" hidden>
+                  <button type="button" class="admin-map-fill-option" role="option" data-map-fill="none" aria-label="Sin relleno" title="Sin relleno" aria-selected="true" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16"/><path d="m5 19 14-14"/></svg></button>
+                  <button type="button" class="admin-map-fill-option" role="option" data-map-fill="hatched" aria-label="Translúcido y rayado a 45°" title="Translúcido y rayado a 45°" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" fill="currentColor" fill-opacity=".18"/><path d="m4 10 6-6M4 16 16 4M6 20 20 6m-8 14 8-8m-2 8 2-2"/></svg></button>
+                  <button type="button" class="admin-map-fill-option" role="option" data-map-fill="solid" aria-label="Sólido" title="Sólido" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" fill="currentColor"/></svg></button>
                 </div>
                 <div class="admin-map-canvas-wrap">
                   <div class="admin-map-viewport">
@@ -152,6 +158,20 @@ header('Cache-Control: no-store');
                   </div>
                 </div>
                 <p class="admin-map-load-error" role="alert" hidden>No se ha podido cargar el plano del campo. Recarga la página para volver a intentarlo.</p>
+                <div class="burnout-popup" data-map-clear-modal aria-hidden="true">
+                  <div class="burnout-popup__overlay" data-map-clear-close></div>
+                  <div class="burnout-popup__dialog" role="dialog" aria-modal="true" aria-labelledby="mapClearTitle" aria-describedby="mapClearDescription">
+                    <div class="burnout-popup__header">
+                      <h2 id="mapClearTitle">Eliminar anotaciones</h2>
+                      <button type="button" class="burnout-popup__close" data-map-clear-close aria-label="Cerrar ventana"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <div class="burnout-popup__body"><p id="mapClearDescription">¿Eliminar todas las anotaciones? El plano se conservará y podrás deshacer esta acción.</p></div>
+                    <div class="burnout-popup__actions">
+                      <button type="button" class="admin-login-submit" data-map-clear-confirm>Aceptar</button>
+                      <button type="button" class="admin-back-link" data-map-clear-close data-map-clear-cancel>Cancelar</button>
+                    </div>
+                  </div>
+                </div>
                 <div class="admin-gallery-modal admin-map-text-modal burnout-popup" data-map-text-modal aria-hidden="true">
                   <div class="admin-gallery-modal__overlay burnout-popup__overlay" data-map-text-close></div>
                   <div class="admin-gallery-modal__dialog burnout-popup__dialog" role="dialog" aria-modal="true" aria-labelledby="mapTextTitle">

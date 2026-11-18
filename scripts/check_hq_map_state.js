@@ -10,7 +10,7 @@ const context = {
     Map, drawing: false, textPosition: null, busy: false,
     root: { isConnected: true }, canvas: { width: 1600, height: 1131 },
     ctx: { getImageData() { return pixels; }, putImageData(value) { pixels = value; } },
-    closeTextModal() {}, blank() { pixels = 'empty'; }, buttons() {},
+    closeTextModal() {}, closeClearModal() {}, closeFillMenu() {}, blank() { pixels = 'empty'; }, buttons() {},
     window: { initAdminMapaInteractivoPage: {} }
 };
 vm.createContext(context);

@@ -42,13 +42,25 @@ duplicados de las pestañas se han retirado.
 
 - Fondo: `assets/maps/carto-orto-detalle.png`, procedente de `assets/maps/Carto-Orto_Detalle.pdf`.
 - La capa transparente admite lápiz, línea, flecha, rectángulo, círculo, texto y borrador.
+- Tras el grosor y antes de Deshacer, el selector de relleno ofrece iconos para
+  Sin relleno (predeterminado), Translúcido y rayado a 45° y Sólido. Usa el color
+  seleccionado y afecta solo a rectángulos y círculos nuevos. Conserva el contorno.
+  El desplegable admite teclado, Escape y cierre al pulsar fuera, y está dentro del
+  editor para funcionar también en pantalla completa, fuera del scroll de la barra.
+  Los rellenos forman parte de la misma imagen temporal y del historial existente.
 - Deshacer y rehacer guardan hasta 15 cambios durante la sesión del mapa seleccionado.
 - Limpiar borra anotaciones, nunca el plano. La mano permite desplazar el mapa ampliado.
+- Limpiar abre el popup compartido con Aceptar y Cancelar, sin confirmación nativa
+  del navegador. Solo Aceptar borra, conservando Deshacer/Rehacer. El foco inicial
+  va a Cancelar; admite Tab, Escape y retorno al botón de limpiar. El popup está
+  dentro del editor para funcionar en pantalla completa y se cierra al cambiar de partida.
 - Las anotaciones se conservan en memoria por partida mientras el HQ permanece abierto.
   Recargar o abandonar la página descarta los dibujos.
 - No hay carga ni guardado en servidor, ni mensajes de guardado bajo el mapa.
 - Pantalla completa incluye lienzo, botonera y popup de texto, sin cabecera ni selector.
 - La tabla hq_maps y sus endpoints se conservan por compatibilidad; el editor no los usa.
+
+Pruebas de rellenos y selector: `node scripts/check_hq_map_fill.js`.
 
 El enlace de equipo tiene un visor independiente debajo de Misiones, plegado por
 defecto. Muestra el mismo plano PNG, con desplazamiento nativo, zoom 100–300 % en

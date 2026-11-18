@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 // Explicit remote tool; the local migration and tests keep their existing guards.
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
-$options = getopt('', ['environment:', 'apply', 'verify-backup:', 'player-roles']);
+$options = getopt('', ['environment:', 'apply', 'verify-backup:', 'player-roles', 'confirm-production']);
 $environment = $options['environment'] ?? '';
 if (!in_array($environment, ['pre', 'pro'], true)) {
     fwrite(STDERR, "Usar --environment=pre o --environment=pro; sin --apply solo inspecciona.\n");
     exit(1);
 }
-if (isset($options['player-roles']) && $environment !== 'pre') {
-    fwrite(STDERR, "--player-roles solo admite PRE. PRO no está autorizado en este flujo.\n");
+if (isset($options['player-roles'], $options['apply']) && $environment === 'pro' && !isset($options['confirm-production'])) {
+    fwrite(STDERR, "Aplicar roles en PRO requiere autorización expresa y --confirm-production. Sin --apply solo inspecciona.\n");
     exit(1);
 }
 putenv('BURNOUT_ENV_FILE=' . dirname(__DIR__) . '/config/env.php');
@@ -292,12 +292,13 @@ function burnout_reg_remote_player_pending(PDO $pdo): array
 
 function burnout_reg_remote_migrate_player_roles(PDO $pdo, array $options): void
 {
-    global $backupPath, $backup, $backupBytes, $locked, $ddlStarted, $stage;
-    $stage = 'inspeccion de roles en PRE';
+    global $backupPath, $backup, $backupBytes, $locked, $ddlStarted, $stage, $environment;
+    $label = strtoupper($environment);
+    $stage = 'inspeccion de roles en ' . $label;
     $pending = burnout_reg_remote_player_pending($pdo);
     foreach ($pending as $file) echo 'Pendiente: ' . $file . PHP_EOL;
-    if (!$pending) { echo "PRE: las cinco migraciones están instaladas.\n"; return; }
-    if (!isset($options['apply'])) { echo "Inspección de PRE terminada sin cambios.\n"; return; }
+    if (!$pending) { echo $label . ": las cinco migraciones están instaladas.\n"; return; }
+    if (!isset($options['apply'])) { echo 'Inspección de ' . $label . " terminada sin cambios.\n"; return; }
     $tables = $pdo->query("SELECT TABLE_NAME, ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME")->fetchAll();
     foreach ($tables as $table) {
         if (strcasecmp($table['ENGINE'], 'InnoDB') !== 0) throw new RuntimeException('Se requiere InnoDB para la copia.');
@@ -309,8 +310,8 @@ function burnout_reg_remote_migrate_player_roles(PDO $pdo, array $options): void
     $pdo->exec('SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci');
     $pdo->exec('SET autocommit=0'); $pdo->exec($lockSql); $locked = true;
     $pending = burnout_reg_remote_player_pending($pdo);
-    $stage = 'copia privada de PRE';
-    $backupPath = tempnam(sys_get_temp_dir(), 'burnout-pre-player-roles-');
+    $stage = 'copia privada de ' . $label;
+    $backupPath = tempnam(sys_get_temp_dir(), 'burnout-' . $environment . '-player-roles-');
     if ($backupPath === false) throw new RuntimeException('No se pudo crear la copia privada.');
     $named = $backupPath . '.sql.gz';
     if (!rename($backupPath, $named)) throw new RuntimeException('No se pudo nombrar la copia.');
@@ -339,10 +340,11 @@ function burnout_reg_remote_migrate_player_roles(PDO $pdo, array $options): void
     if ($bytes !== $backupBytes || $bytes < 50) throw new RuntimeException('Copia incompleta.');
     // Relee y compara las sentencias originales de la copia antes del primer DDL.
     burnout_reg_remote_verify_backup($pdo, $backupPath);
-    $manifest = json_encode(['environment' => 'pre', 'migrations' => $pending, 'baseline' => $baseline, 'columns' => $columns, 'uncompressed_sha256' => hash_final($hash)], JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR);
+    $manifest = json_encode(['environment' => $environment, 'migrations' => $pending, 'baseline' => $baseline, 'columns' => $columns, 'uncompressed_sha256' => hash_final($hash)], JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR);
     if (file_put_contents($backupPath . '.manifest.json', $manifest) !== strlen($manifest) || file_get_contents($backupPath . '.manifest.json') !== $manifest) throw new RuntimeException('Manifiesto no verificado.');
     echo 'Copia SQL gzip verificada de ' . count($names) . ' tablas: ' . $backupPath . PHP_EOL;
-    $stage = 'migraciones de jugadores PRE'; $ddlStarted = true;
+    echo 'Antes de migrar: ' . $baseline['registrations']['rows'] . ' inscripciones y ' . $baseline['registration_attendees']['rows'] . " asistentes.\n";
+    $stage = 'migraciones de jugadores ' . $label; $ddlStarted = true;
     foreach ($pending as $file) {
         $sql = file_get_contents(__DIR__ . '/../database/migrations/' . $file);
         if ($sql === false) throw new RuntimeException('No se pudo leer la migración.');
@@ -350,9 +352,9 @@ function burnout_reg_remote_migrate_player_roles(PDO $pdo, array $options): void
             $pdo->exec($statement);
             if (preg_match('/^ALTER\s/i', $statement)) $pdo->exec($lockSql);
         }
-        echo 'Aplicada en PRE: ' . $file . PHP_EOL;
+        echo 'Aplicada en ' . $label . ': ' . $file . PHP_EOL;
     }
-    $stage = 'verificacion de jugadores PRE';
+    $stage = 'verificacion de jugadores ' . $label;
     if (burnout_reg_remote_player_pending($pdo)) throw new RuntimeException('Quedan migraciones pendientes.');
     foreach ($baseline as $name => $before) {
         $after = burnout_reg_remote_table_snapshot($pdo, $name, null, $columns[$name]);
@@ -362,7 +364,7 @@ function burnout_reg_remote_migrate_player_roles(PDO $pdo, array $options): void
     }
     burnout_reg_remote_verify_backup($pdo, $backupPath);
     $pdo->exec('COMMIT'); $pdo->exec('UNLOCK TABLES'); $locked = false; $pdo->exec('SET autocommit=1');
-    echo "PRE: cinco migraciones verificadas. PRO no modificado.\n";
+    echo $label . ': cinco migraciones verificadas; ' . $baseline['registrations']['rows'] . ' inscripciones y ' . $baseline['registration_attendees']['rows'] . " asistentes originales conservados, sin duplicarlos.\n";
 }
 
 $stage = 'configuracion';

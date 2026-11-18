@@ -14,19 +14,26 @@
         var viewport = root.querySelector('.admin-map-viewport');
         var stage = root.querySelector('.admin-map-canvas-stage');
         var zoom = 1;
+        var fillMode = 'none', fillPattern = null, fillPatternColor = '';
+        var fillToggle = root.querySelector('[data-map-fill-toggle]');
+        var fillMenu = root.querySelector('[data-map-fill-menu]');
         var panStart = null, activePointer = null;
         var textModal = root.querySelector('[data-map-text-modal]');
         var textInput = root.querySelector('[data-map-text-input]');
         var textPosition = null, textFocus = null;
-        var mapId = 0, localMaps = new Map();
+        var clearModal = root.querySelector('[data-map-clear-modal]');
+        var clearOpener = null;
+        var mapId = 0, localMaps = new Map(), clearMapId = null;
         busy = true;
         root.hqMap = {
-            flush: async function () { return !drawing && !textPosition; },
+            flush: async function () { return !drawing && !textPosition && clearMapId === null; },
             load: async function (id) {
                 if (mapId) localMaps.set(mapId, ctx.getImageData(0, 0, canvas.width, canvas.height));
                 mapId = id;
                 history = []; future = [];
                 closeTextModal();
+                closeClearModal(false);
+                closeFillMenu(false);
                 blank();
                 if (localMaps.has(id)) ctx.putImageData(localMaps.get(id), 0, 0);
                 busy = !id;
@@ -34,13 +41,52 @@
             }
         };
         window.initAdminMapaInteractivoPage.cleanup = function () {
-            if (!root.isConnected) localMaps.clear();
+            if (!root.isConnected) {
+                localMaps.clear();
+                closeClearModal(false);
+                if (root.hqFillCleanup) root.hqFillCleanup();
+            }
         };
         function closeTextModal() {
             textModal.classList.remove('is-open');
             textModal.setAttribute('aria-hidden', 'true');
             textPosition = null;
             if (textFocus && textFocus.isConnected) textFocus.focus();
+        }
+        function closeClearModal(restoreFocus) {
+            if (!clearModal || clearMapId === null) return;
+            clearModal.classList.remove('is-open'); clearModal.setAttribute('aria-hidden', 'true');
+            clearMapId = null;
+            document.body.classList.remove('burnout-popup-open');
+            if (restoreFocus && clearOpener && clearOpener.isConnected) clearOpener.focus();
+            clearOpener = null;
+        }
+        function openClearModal(button) {
+            if (!clearModal || busy || drawing || panStart || textPosition) return;
+            closeFillMenu(false);
+            clearMapId = mapId; clearOpener = button;
+            clearModal.classList.add('is-open'); clearModal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('burnout-popup-open');
+            clearModal.querySelector('[data-map-clear-cancel]').focus();
+        }
+        if (clearModal) {
+            clearModal.querySelectorAll('[data-map-clear-close]').forEach(function (button) {
+                button.addEventListener('click', function () { closeClearModal(true); });
+            });
+            clearModal.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); closeClearModal(true); return; }
+                if (event.key !== 'Tab') return;
+                var controls = Array.from(clearModal.querySelectorAll('button:not(:disabled)'));
+                var first = controls[0], last = controls[controls.length - 1];
+                if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+                else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+            });
+            clearModal.querySelector('[data-map-clear-confirm]').addEventListener('click', function () {
+                var allowed = clearMapId !== null && clearMapId === mapId && !busy && !drawing && !panStart;
+                closeClearModal(true);
+                if (!allowed) return;
+                remember(); blank(); say('Anotaciones eliminadas.'); buttons();
+            });
         }
         textModal.querySelectorAll('[data-map-text-close]').forEach(function (button) {
             button.addEventListener('click', closeTextModal);
@@ -65,6 +111,59 @@
             closeTextModal();
             say('Texto añadido.');
         });
+        function closeFillMenu(restoreFocus) {
+            if (!fillMenu || !fillToggle) return;
+            fillMenu.hidden = true;
+            fillToggle.setAttribute('aria-expanded', 'false');
+            if (restoreFocus) fillToggle.focus();
+        }
+        function openFillMenu() {
+            if (!fillMenu || drawing || panStart) return;
+            fillMenu.hidden = false;
+            fillToggle.setAttribute('aria-expanded', 'true');
+            var anchor = fillToggle.getBoundingClientRect(), panel = mapPanel.getBoundingClientRect();
+            fillMenu.style.left = Math.max(0, Math.min(anchor.left - panel.left + mapPanel.scrollLeft, mapPanel.clientWidth - fillMenu.offsetWidth)) + 'px';
+            fillMenu.style.top = (anchor.bottom - panel.top + mapPanel.scrollTop + 6) + 'px';
+            fillMenu.querySelector('[aria-selected="true"]').focus();
+        }
+        function fillOutside(event) {
+            if (fillMenu && !fillMenu.hidden && !fillMenu.contains(event.target) && !fillToggle.contains(event.target)) closeFillMenu(false);
+        }
+        if (fillToggle && fillMenu) {
+            var fillOptions = Array.from(fillMenu.querySelectorAll('[data-map-fill]'));
+            function syncFillColor() { mapPanel.style.setProperty('--admin-map-fill-color', root.querySelector('[data-map-color]').value); }
+            syncFillColor();
+            root.querySelector('[data-map-color]').addEventListener('input', syncFillColor);
+            fillToggle.addEventListener('click', function () { if (fillMenu.hidden) openFillMenu(); else closeFillMenu(true); });
+            fillToggle.addEventListener('keydown', function (event) {
+                if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); openFillMenu(); }
+            });
+            fillMenu.addEventListener('click', function (event) {
+                var option = event.target.closest('[data-map-fill]');
+                if (!option || drawing || panStart) return;
+                fillMode = option.dataset.mapFill;
+                fillOptions.forEach(function (item) { item.setAttribute('aria-selected', String(item === option)); });
+                var icon = option.querySelector('svg').cloneNode(true); icon.setAttribute('data-map-fill-icon', '');
+                fillToggle.querySelector('[data-map-fill-icon]').replaceWith(icon);
+                var label = 'Relleno: ' + option.getAttribute('aria-label');
+                fillToggle.title = label; fillToggle.setAttribute('aria-label', label);
+                closeFillMenu(true);
+            });
+            fillMenu.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' || event.key === 'Tab') {
+                    if (event.key === 'Escape') event.preventDefault();
+                    event.stopPropagation(); closeFillMenu(true); return;
+                }
+                var index = fillOptions.indexOf(document.activeElement);
+                if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+                event.preventDefault();
+                var next = event.key === 'Home' ? 0 : event.key === 'End' ? fillOptions.length - 1 : (index + (event.key === 'ArrowDown' ? 1 : -1) + fillOptions.length) % fillOptions.length;
+                fillOptions[next].focus();
+            });
+            document.addEventListener('pointerdown', fillOutside);
+            root.querySelector('.admin-map-toolbar').addEventListener('scroll', function () { closeFillMenu(false); });
+            root.hqFillCleanup = function () { document.removeEventListener('pointerdown', fillOutside); };
+        }
         function changeZoom(delta) {
             var next = Math.max(1, Math.min(3, Math.round((zoom + delta) * 100) / 100));
             var centerX = (viewport.scrollLeft + viewport.clientWidth / 2 - stage.offsetLeft) / stage.offsetWidth;
@@ -77,6 +176,7 @@
             root.querySelector('[data-map-action="zoom-out"]').disabled = zoom <= 1;
         }
         function syncFullscreen() {
+            closeFillMenu(false);
             var active = document.fullscreenElement === mapPanel;
             var label = active ? 'Salir de pantalla completa' : 'Pantalla completa';
             fullscreenButton.title = label;
@@ -109,6 +209,8 @@
         }
         function blank() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
         function section(name) {
+            closeClearModal(true);
+            closeFillMenu(false);
             root.querySelectorAll('[data-map-section]').forEach(function (button) {
                 var active = button.dataset.mapSection === name;
                 button.classList.toggle('is-active', active); button.setAttribute('aria-pressed', String(active));
@@ -123,6 +225,25 @@
         function point(event) {
             var rect = canvas.getBoundingClientRect();
             return { x: (event.clientX - rect.left) * canvas.width / rect.width, y: (event.clientY - rect.top) * canvas.height / rect.height };
+        }
+        function shapeFillStyle() {
+            if (fillMode === 'none') return null;
+            var color = root.querySelector('[data-map-color]').value;
+            if (fillMode === 'solid') return color;
+            if (!fillPattern || fillPatternColor !== color) {
+                var tile = document.createElement('canvas'); tile.width = 16; tile.height = 16;
+                var patternContext = tile.getContext('2d');
+                patternContext.fillStyle = color; patternContext.globalAlpha = .18;
+                patternContext.fillRect(0, 0, 16, 16);
+                patternContext.globalAlpha = .65; patternContext.strokeStyle = color; patternContext.lineWidth = 1.5;
+                patternContext.beginPath();
+                patternContext.moveTo(-8, 8); patternContext.lineTo(8, -8);
+                patternContext.moveTo(0, 16); patternContext.lineTo(16, 0);
+                patternContext.moveTo(8, 24); patternContext.lineTo(24, 8);
+                patternContext.stroke();
+                fillPattern = ctx.createPattern(tile, 'repeat'); fillPatternColor = color;
+            }
+            return fillPattern;
         }
         function stroke(p) {
             ctx.globalCompositeOperation = tool === 'eraser' ? 'destination-out' : 'source-over';
@@ -141,10 +262,14 @@
             }
             if (tool === 'rectangle') ctx.rect(start.x, start.y, p.x - start.x, p.y - start.y);
             if (tool === 'circle') ctx.ellipse((start.x + p.x) / 2, (start.y + p.y) / 2, Math.abs(p.x - start.x) / 2, Math.abs(p.y - start.y) / 2, 0, 0, Math.PI * 2);
+            if (tool === 'rectangle' || tool === 'circle') {
+                var style = shapeFillStyle();
+                if (style !== null) { ctx.fillStyle = style; ctx.fill(); }
+            }
             ctx.stroke();
         }
         canvas.addEventListener('pointerdown', function (event) {
-            if (busy || textPosition || (event.pointerType === 'mouse' && event.button !== 0) || drawing || panStart) return;
+            if (busy || textPosition || clearMapId !== null || (event.pointerType === 'mouse' && event.button !== 0) || drawing || panStart) return;
             if (tool === 'pan') {
                 event.preventDefault();
                 activePointer = event.pointerId;
@@ -205,7 +330,7 @@
                 if (action === 'back') section('mapa');
                 if (action === 'undo' && history.length) { future.push(ctx.getImageData(0, 0, canvas.width, canvas.height)); ctx.putImageData(history.pop(), 0, 0); say('Último cambio deshecho.'); }
                 if (action === 'redo' && future.length) { history.push(ctx.getImageData(0, 0, canvas.width, canvas.height)); ctx.putImageData(future.pop(), 0, 0); say('Cambio rehecho.'); }
-                if (action === 'clear' && window.confirm('¿Eliminar todas las anotaciones? El plano se conservará y podrás deshacer esta acción.')) { remember(); blank(); say('Anotaciones eliminadas.'); }
+                if (action === 'clear') { openClearModal(button); return; }
                 if (action === 'export') {
                     if (!background.complete || !background.naturalWidth) { say('Espera a que se cargue el plano para exportar.'); return; }
                     var exported = document.createElement('canvas');

@@ -135,7 +135,7 @@ de subir el código nuevo. Es independiente de `team_name` y asigna siempre todo
 los asistentes de la inscripción al mismo equipo. El esquema completo la incluye.
 Aplicada en XAMPP local el 17/11/2026, con copia JSON privada de esquema y datos de
 inscripciones verificada antes del ALTER y comparación de las siete filas originales
-después. El despliegue en PRE está documentado más abajo; PRO no modificado.
+después. Los despliegues en PRE y PRO están documentados más abajo.
 
 ### Funciones de jugadores
 
@@ -145,18 +145,18 @@ Es independiente del rol de arma y no interviene en el reparto por puntos. Se
 conserva al mover la inscripción entre equipos. Instalar una sola vez con copia
 previa, después de la migración de roles de arma y antes de desplegar este código.
 Aplicada en XAMPP local el 17/11/2026: copia privada de esquema y datos verificada y
-comparación de los 25 asistentes originales tras el ALTER. Ver el despliegue PRE más abajo; PRO no modificado.
+comparación de los 25 asistentes originales tras el ALTER. Ver los despliegues PRE y PRO más abajo.
 
 `migrations/2026_11_18_hq_player_functions.sql` amplía ese ENUM conservando `TL`
 e `Ingeniero` y añadiendo `Radio Operator` y `Segundo TL`. Requiere la migración
 anterior. Aplicada en local el 18/11/2026 con copia privada verificada antes del
 ALTER y comparación de los 25 asistentes y funciones originales después.
-Ver el despliegue PRE más abajo; PRO no modificado.
+Ver los despliegues PRE y PRO más abajo.
 
 `migrations/2026_11_18_hq_player_medic.sql` añade `Medico` al ENUM de funciones
 (etiqueta visible «Médico»), conservando las cuatro opciones anteriores. Aplicada
 en local el 18/11/2026 con copia privada verificada y comparación posterior de
-los 25 asistentes y funciones existentes. Ver el despliegue PRE más abajo; PRO no modificado.
+los 25 asistentes y funciones existentes. Ver los despliegues PRE y PRO más abajo.
 
 ### Despliegue de roles y jugadores en PRE (18/11/2026)
 
@@ -168,8 +168,9 @@ fuera del repositorio. Antes del DDL se comparó la copia con la base; después 
 verificaron los tipos, la conservación de todos los datos originales, los esquemas
 de tablas ajenas al cambio y nuevamente el contenido de la copia.
 
-La herramienta reutiliza el procedimiento remoto de documentos con una opción
-exclusiva de PRE (rechaza `--environment=pro` antes de conectar):
+La herramienta reutiliza el procedimiento remoto de documentos con `--player-roles`
+y selección explícita del entorno. Para aplicar en PRO requiere además
+`--confirm-production` y autorización expresa; sin `--apply` solo inspecciona:
 
 ```powershell
 & 'D:\xampp\php\php.exe' scripts/migrate_registration_documents_remote.php --environment=pre --player-roles
@@ -178,7 +179,28 @@ exclusiva de PRE (rechaza `--environment=pro` antes de conectar):
 ```
 
 Sin `--apply` solo inspecciona. Ya están instaladas: no repetir DDL manualmente.
-PRO no se ha modificado ni desplegado. La configuración local no cambia.
+La configuración local no cambia. La aplicación posterior en PRO se detalla abajo.
+
+### Despliegue de roles y jugadores en PRO (18/11/2026)
+
+Las cinco migraciones se aplicaron en PRO con autorización expresa del usuario,
+después de inspeccionar su estado y revisar que contienen únicamente cambios de
+esquema. Antes del DDL se creó y verificó una copia SQL gzip de las 19 tablas,
+incluidos binarios, y un manifiesto privado de integridad. Después se verificaron
+las columnas, índices y claves foráneas, se compararon los datos originales de
+todas las tablas y se volvió a comparar el contenido completo de la copia.
+Se conservaron exactamente las 47 inscripciones y los 86 asistentes existentes.
+No se insertaron registros, se enviaron correos ni se copiaron datos desde PRE.
+
+```powershell
+& 'D:\xampp\php\php.exe' scripts/migrate_registration_documents_remote.php --environment=pro --player-roles
+# Solo con autorización expresa de PRO; ya aplicadas, no repetir manualmente:
+& 'D:\xampp\php\php.exe' scripts/migrate_registration_documents_remote.php --environment=pro --player-roles --apply --confirm-production
+```
+
+La réplica anterior de 18 inscripciones y 41 jugadores del evento 5 de PRO al
+evento 10 de PRE fue una operación puntual, sin script de importación persistente
+en el repositorio. No forma parte de ninguna migración ni se vuelve a ejecutar.
 
 ### Estructura de operaciones
 
