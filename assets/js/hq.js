@@ -11,6 +11,11 @@
         var channel = 'alpha', section = teamView ? 'canales' : 'mapa';
         var cursor = 0, generation = 0, signature = '', timer, connected = false, connectionFailed = false, operation, operations = [];
         var selectionGeneration = 0;
+        var rosterSignature = '';
+        var rosterBusy = false;
+        var teamRoster = [], rolePlayer = null, roleOpener = null;
+        var rolePopup = root.querySelector('[data-hq-role-popup]');
+        var playerGroups = [], selectedPlayerGroup = 0, playersSignature = '', playersBusy = false, playersGeneration = 0;
         var statusLabels = { draft: 'Pendiente', active: 'En curso', completed: 'Completada', failed: 'Fallida', deleted: 'Eliminada' };
         var feedback = root.querySelector('[data-hq-feedback]');
         var signal = root.querySelector('[data-hq-signal]');
@@ -316,6 +321,241 @@
             signal.textContent = text;
             signal.classList.toggle('is-connected', active);
         }
+        function setupTeamMap() {
+            var viewer = root.querySelector('[data-hq-team-map]');
+            if (!teamView || !viewer) return;
+            var viewport = viewer.querySelector('[data-hq-map-viewport]');
+            var stage = viewer.querySelector('[data-hq-map-stage]');
+            var image = viewer.querySelector('[data-hq-map-image]');
+            var zoomLabel = viewer.querySelector('[data-hq-map-zoom]');
+            var fullscreen = viewer.querySelector('[data-hq-map-view="fullscreen"]');
+            var zoomIn = viewer.querySelector('[data-hq-map-view="zoom-in"]');
+            var zoomOut = viewer.querySelector('[data-hq-map-view="zoom-out"]');
+            var errorMessage = viewer.querySelector('[data-hq-map-error]');
+            var zoom = 1;
+            function changeZoom(delta) {
+                var x = stage.offsetWidth ? (viewport.scrollLeft + viewport.clientWidth / 2) / stage.offsetWidth : .5;
+                var y = stage.offsetHeight ? (viewport.scrollTop + viewport.clientHeight / 2) / stage.offsetHeight : .5;
+                zoom = Math.max(1, Math.min(3, Math.round((zoom + delta) * 100) / 100));
+                stage.style.width = (zoom * 100) + '%';
+                viewport.scrollLeft = x * stage.offsetWidth - viewport.clientWidth / 2;
+                viewport.scrollTop = y * stage.offsetHeight - viewport.clientHeight / 2;
+                zoomLabel.textContent = Math.round(zoom * 100) + ' %';
+                zoomIn.disabled = zoom >= 3; zoomOut.disabled = zoom <= 1;
+            }
+            function syncFullscreen() {
+                var active = document.fullscreenElement === viewer;
+                var label = active ? 'Salir de pantalla completa' : 'Pantalla completa';
+                fullscreen.title = label; fullscreen.setAttribute('aria-label', label);
+                fullscreen.setAttribute('aria-pressed', String(active));
+                fullscreen.querySelector('[data-hq-map-fullscreen-icon]').setAttribute('d', active ? 'M3 8h5V3M16 3v5h5M21 16h-5v5M8 21v-5H3' : 'M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5');
+            }
+            fullscreen.disabled = !document.fullscreenEnabled || !viewer.requestFullscreen;
+            viewer.addEventListener('fullscreenchange', syncFullscreen);
+            viewer.addEventListener('click', async function (event) {
+                var button = event.target.closest('[data-hq-map-view]');
+                if (!button || button.disabled) return;
+                var action = button.dataset.hqMapView;
+                if (action === 'zoom-in' || action === 'zoom-out') { changeZoom(action === 'zoom-in' ? .25 : -.25); return; }
+                if (action !== 'fullscreen') return;
+                try {
+                    if (document.fullscreenElement === viewer) await document.exitFullscreen();
+                    else await viewer.requestFullscreen();
+                    syncFullscreen();
+                } catch (error) {
+                    errorMessage.textContent = 'No se ha podido cambiar a pantalla completa.'; errorMessage.hidden = false;
+                }
+            });
+            function imageState() {
+                errorMessage.textContent = 'No se ha podido cargar el mapa.';
+                errorMessage.hidden = Boolean(image.naturalWidth);
+            }
+            image.addEventListener('load', imageState); image.addEventListener('error', imageState);
+            if (image.complete) imageState();
+            syncFullscreen();
+        }
+        function playerRoleIcon(role) {
+            var paths = {
+                TL: 'm5 9 7-5 7 5M5 14l7-5 7 5M5 19l7-5 7 5',
+                Ingeniero: 'm14 6 4 4 4-4a6 6 0 0 1-8 8L6 22l-4-4 8-8a6 6 0 0 1 8-8Z',
+                'Radio Operator': 'M7 9h10v13H7ZM9 9V2m1 11h4m-4 4h4M14 2a6 6 0 0 1 6 6M14 5a3 3 0 0 1 3 3',
+                'Segundo TL': 'm5 11 7-5 7 5M5 18l7-5 7 5',
+                Medico: 'M9 3h6v6h6v6h-6v6H9v-6H3V9h6Z'
+            };
+            var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('aria-hidden', 'true');
+            var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', paths[role] || ''); svg.append(path);
+            return svg;
+        }
+        function syncRolePopup() {
+            if (!rolePopup || !rolePlayer) return;
+            rolePopup.querySelector('#hqPlayerRoleTitle').textContent = rolePlayer.name;
+            rolePopup.querySelectorAll('[data-hq-role-choice]').forEach(function (button) {
+                var active = button.dataset.hqRoleChoice === rolePlayer.tactical_role;
+                button.setAttribute('aria-pressed', String(active)); button.classList.toggle('is-active', active);
+                button.disabled = rosterBusy || !operation || operation.status !== 'active';
+            });
+        }
+        function closeRolePopup(force) {
+            if (!rolePopup || (rosterBusy && !force)) return;
+            rolePopup.classList.remove('is-open'); rolePopup.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('burnout-popup-open');
+            var current = rolePlayer && root.querySelector('[data-hq-player-role="' + rolePlayer.id + '"]');
+            if (current) current.focus();
+            else if (roleOpener?.isConnected) roleOpener.focus();
+            else root.querySelector('.hq-team-roster summary')?.focus();
+            rolePlayer = null; roleOpener = null;
+        }
+        function openRolePopup(button) {
+            if (!rolePopup || rosterBusy) return;
+            rolePlayer = teamRoster.find(function (player) { return Number(player.id) === Number(button.dataset.hqPlayerRole); });
+            if (!rolePlayer) return;
+            roleOpener = button;
+            rolePopup.querySelector('[data-hq-role-feedback]').textContent = '';
+            syncRolePopup();
+            rolePopup.classList.add('is-open'); rolePopup.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('burnout-popup-open');
+            (rolePopup.querySelector('[data-hq-role-choice][aria-pressed="true"]') || rolePopup.querySelector('[data-hq-role-choice]')).focus();
+        }
+        function renderTeamPlayers(roster) {
+            if (!teamView) return;
+            teamRoster = roster ? roster.players : [];
+            if (!roster || (rolePlayer && !teamRoster.some(function (player) { return player.id === rolePlayer.id; }))) closeRolePopup(true);
+            var nextSignature = JSON.stringify([roster, operation?.status]);
+            if (nextSignature === rosterSignature) return;
+            rosterSignature = nextSignature;
+            root.querySelector('[data-hq-roster-team]').textContent = roster ? (roster.team === 'alpha' ? 'Equipo Alpha' : 'Equipo Bravo') : 'Equipo';
+            root.querySelector('[data-hq-roster-count]').textContent = teamRoster.length + (teamRoster.length === 1 ? ' jugador' : ' jugadores');
+            var list = root.querySelector('[data-hq-roster-list]');
+            var focusedPlayer = document.activeElement?.dataset?.hqPlayerRole;
+            list.replaceChildren();
+            teamRoster.forEach(function (player) {
+                var row = node('li', 'hq-team-player'), info = node('div', 'hq-team-player-info');
+                var name = node('button', 'hq-team-player-name', player.name);
+                name.type = 'button'; name.dataset.hqPlayerRole = player.id;
+                name.setAttribute('aria-haspopup', 'dialog');
+                name.disabled = !operation || operation.status !== 'active';
+                info.append(name, node('span', '', 'Equipo: ' + (player.team_name || 'Sin equipo')), node('span', '', player.role));
+                row.append(info);
+                if (player.tactical_role) {
+                    row.dataset.hqFunction = player.tactical_role;
+                    var badge = node('span', 'hq-team-player-function');
+                    var label = { TL: 'Team Leader', Medico: 'Médico' }[player.tactical_role] || player.tactical_role;
+                    badge.setAttribute('title', label); badge.setAttribute('aria-label', label); badge.setAttribute('role', 'img');
+                    badge.append(playerRoleIcon(player.tactical_role)); row.append(badge);
+                }
+                list.append(row);
+            });
+            if (!teamRoster.length) list.append(node('li', 'hq-empty', 'Sin jugadores asignados.'));
+            if (focusedPlayer) root.querySelector('[data-hq-player-role="' + focusedPlayer + '"]')?.focus();
+            if (rolePlayer) { rolePlayer = teamRoster.find(function (player) { return player.id === rolePlayer.id; }); syncRolePopup(); }
+        }
+        async function savePlayerRole(button) {
+            if (!teamView || rosterBusy || !operationId || !rolePlayer) return;
+            rosterBusy = true;
+            var request = ++generation, selectedOperation = operationId;
+            var role = button.dataset.hqRoleChoice === rolePlayer.tactical_role ? '' : button.dataset.hqRoleChoice;
+            window.clearTimeout(timer); syncRolePopup();
+            var message = rolePopup.querySelector('[data-hq-role-feedback]'); message.textContent = '';
+            try {
+                var data = await api('player_role', { player_id: rolePlayer.id, tactical_role: role }, true);
+                if (request !== generation || selectedOperation !== operationId || !root.isConnected) return;
+                rosterSignature = ''; renderTeamPlayers(data.roster); closeRolePopup(true);
+            } catch (error) {
+                if (request !== generation || !root.isConnected) return;
+                message.textContent = error.message; message.classList.add('is-error');
+            } finally {
+                rosterBusy = false;
+                if (root.isConnected) { syncRolePopup(); schedule(); }
+            }
+        }
+        if (rolePopup) {
+            rolePopup.addEventListener('click', function (event) {
+                if (event.target.closest('[data-hq-role-close]')) { closeRolePopup(); return; }
+                var button = event.target.closest('[data-hq-role-choice]');
+                if (button && !button.disabled) savePlayerRole(button);
+            });
+            rolePopup.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') { event.preventDefault(); closeRolePopup(); }
+                trapPopupFocus(event, rolePopup);
+            });
+        }
+        function playerControls() {
+            if (teamView) return;
+            var selected = playerGroups.find(function (group) { return group.id === selectedPlayerGroup; });
+            var disabled = playersBusy || !operation || operation.status !== 'active';
+            root.querySelectorAll('[data-hq-players-move]').forEach(function (button) {
+                button.disabled = disabled || !selected || selected.team === button.dataset.hqPlayersMove;
+            });
+            root.querySelector('[data-hq-players-balance]').disabled = disabled || !playerGroups.length;
+            root.querySelectorAll('[data-hq-player-group]').forEach(function (button) {
+                button.disabled = disabled;
+                var active = Number(button.dataset.hqPlayerGroup) === selectedPlayerGroup;
+                button.classList.toggle('is-selected', active);
+                button.setAttribute('aria-pressed', String(active));
+            });
+        }
+        function renderPlayers(groups) {
+            if (teamView) return;
+            playerGroups = groups;
+            if (!groups.some(function (group) { return group.id === selectedPlayerGroup; })) selectedPlayerGroup = 0;
+            var nextSignature = JSON.stringify(groups);
+            if (nextSignature !== playersSignature) {
+                playersSignature = nextSignature;
+                var focused = document.activeElement;
+                var focusedGroup = focused && focused.dataset ? focused.dataset.hqPlayerGroup : null;
+                ['alpha', 'bravo'].forEach(function (team) {
+                    var list = root.querySelector('[data-hq-players-list="' + team + '"]');
+                    list.replaceChildren();
+                    var count = 0, points = 0, roles = {};
+                    groups.filter(function (group) { return group.team === team; }).forEach(function (group) {
+                        var button = node('button', 'hq-players-group');
+                        button.type = 'button'; button.dataset.hqPlayerGroup = group.id;
+                        button.append(node('strong', '', (group.name || 'Inscripción #' + group.id) + ' · ' + group.players.length + ' jugadores'));
+                        group.players.forEach(function (player) {
+                            button.append(node('span', '', player.name + ' · ' + player.role));
+                            roles[player.role] = (roles[player.role] || 0) + 1;
+                            count++;
+                        });
+                        points += group.points;
+                        list.append(button);
+                    });
+                    if (!list.children.length) list.append(node('p', 'hq-empty', operation ? 'Sin jugadores en este equipo.' : 'Selecciona una partida.'));
+                    root.querySelector('[data-hq-players-total="' + team + '"]').textContent = count + ' jugadores · ' + points + ' puntos';
+                    root.querySelector('[data-hq-players-roles="' + team + '"]').textContent = ['Fusilero', 'Tirador Selecto', 'Francotirador', 'Apoyo', 'Escudo', 'Sin especificar'].filter(function (role) { return role !== 'Sin especificar' || roles[role] > 0; }).map(function (role) { return role + ': ' + (roles[role] || 0); }).join(' · ');
+                });
+                if (focusedGroup) root.querySelector('[data-hq-player-group="' + focusedGroup + '"]')?.focus();
+            }
+            playerControls();
+        }
+        async function loadPlayers() {
+            if (teamView || section !== 'jugadores' || playersBusy) return;
+            var request = ++playersGeneration, selectedOperation = operationId;
+            var data = await api('players');
+            if (request !== playersGeneration || selectedOperation !== operationId || !root.isConnected || section !== 'jugadores') return;
+            renderPlayers(data.groups);
+        }
+        async function changePlayers(button) {
+            if (playersBusy || !operationId) return;
+            var submittedOperation = operationId;
+            var registration = selectedPlayerGroup;
+            var balance = button.hasAttribute('data-hq-players-balance');
+            var request = ++playersGeneration;
+            playersBusy = true;
+            window.clearTimeout(timer);
+            playerControls();
+            try {
+                var data = await api(balance ? 'players_balance' : 'players_move', { registration_id: registration, team: button.dataset.hqPlayersMove || '' }, true);
+                if (request !== playersGeneration || submittedOperation !== operationId || !root.isConnected) return;
+                renderPlayers(data.groups);
+            } catch (error) {
+                if (submittedOperation === operationId && root.isConnected) report(error.message, true);
+            } finally {
+                playersBusy = false;
+                if (root.isConnected) { playerControls(); schedule(); }
+            }
+        }
         function resetChannel() {
             generation++;
             cursor = 0;
@@ -419,14 +659,15 @@
         function updateHeading() {
             var headings = {
                 misiones: ['Briefing de operaciones', 'MISIONES'],
-                canales: ['Comunicaciones', 'CANALES'],
+                canales: ['Comunicaciones', 'COMUNICACIONES'],
+                jugadores: ['Jugadores', 'JUGADORES'],
                 ajustes: ['Control de operación', 'AJUSTES']
             };
             var heading = !teamView && headings[section];
             root.querySelector('[data-hq-operation-heading]').textContent = heading ? 'Centro de Operaciones / ' + heading[0] : 'Centro de operaciones';
             var operationTitle = root.querySelector('[data-hq-operation-title]');
             if (operationTitle) operationTitle.textContent = operation ? eventLabel(operation) : 'Selecciona una partida';
-            signal.hidden = Boolean(heading);
+            signal.hidden = teamView || Boolean(heading);
         }
         function updateOperation() {
             updateHeading();
@@ -442,10 +683,11 @@
         function schedule() {
             window.clearTimeout(timer);
             if (!root.isConnected) { document.removeEventListener('visibilitychange', visibility); return; }
-            if (operationId && connected && !document.hidden && (teamView || section === 'misiones' || section === 'canales' || section === 'ajustes')) timer = window.setTimeout(refresh, 5000);
+            if (operationId && connected && !document.hidden && (teamView || section === 'misiones' || section === 'canales' || section === 'ajustes' || section === 'jugadores')) timer = window.setTimeout(refresh, 5000);
         }
         async function refresh() {
             window.clearTimeout(timer);
+            if (teamView && rosterBusy) return;
             if (!root.isConnected || (!teamView && !operationId)) return;
             var requestGeneration = ++generation;
             try {
@@ -466,6 +708,8 @@
                 renderScript(data.missions);
                 renderMissions(data.missions);
                 renderMessages(data.messages);
+                renderTeamPlayers(data.roster || null);
+                await loadPlayers();
             } catch (error) {
                 if (requestGeneration !== generation || !root.isConnected) return;
                 setConnection('Conexión interrumpida', false);
@@ -476,6 +720,7 @@
                     root.querySelector('[data-hq-login]').hidden = false;
                     root.querySelector('[data-hq-dashboard]').hidden = true;
                     document.querySelector('[data-hq-team-heading]').hidden = true;
+                    renderTeamPlayers(null);
                     resetChannel();
                 } else if (error.status === 410 && !teamView) {
                     clearOperation('La partida ya no está disponible. Selecciona otro evento del calendario.');
@@ -492,6 +737,10 @@
             document.querySelector('.admin-map-page')?.hqMap?.load(0);
             operationId = 0;
             operation = undefined;
+            playersGeneration++;
+            selectedPlayerGroup = 0;
+            playersSignature = '';
+            renderPlayers([]);
             connected = false;
             window.clearTimeout(timer);
             resetChannel();
@@ -609,6 +858,16 @@
         root.addEventListener('click', async function (event) {
             var button = event.target.closest('button');
             if (!button) return;
+            if (button.hasAttribute('data-hq-player-role')) { openRolePopup(button); return; }
+            if (button.hasAttribute('data-hq-player-group')) {
+                selectedPlayerGroup = selectedPlayerGroup === Number(button.dataset.hqPlayerGroup) ? 0 : Number(button.dataset.hqPlayerGroup);
+                playerControls();
+                return;
+            }
+            if (button.hasAttribute('data-hq-players-move') || button.hasAttribute('data-hq-players-balance')) {
+                await changePlayers(button);
+                return;
+            }
             if (button.dataset.hqCatalogAction) {
                 if (button.dataset.hqCatalogAction === 'edit') openCatalogEditor(button.dataset.hqCatalogId, button);
                 else openCatalogDelete(button.dataset.hqCatalogId, button);
@@ -666,6 +925,8 @@
             var selectedOperation = operationId;
             try {
                 if (button.hasAttribute('data-hq-logout')) {
+                    generation++;
+                    window.clearTimeout(timer);
                     await api('logout', {}, true);
                     connected = false;
                     resetChannel();
@@ -673,6 +934,7 @@
                     root.querySelector('[data-hq-login]').hidden = false;
                     root.querySelector('[data-hq-dashboard]').hidden = true;
                     document.querySelector('[data-hq-team-heading]').hidden = true;
+                    renderTeamPlayers(null);
                     operationId = 0;
                 } else if (button.dataset.hqAccess) {
                     var result = await api('access', { team: button.dataset.hqAccess }, true);
@@ -700,6 +962,7 @@
             }
         };
         if (teamView) {
+            setupTeamMap();
             refresh();
         } else {
             root.querySelector('[data-hq-send]').disabled = true;

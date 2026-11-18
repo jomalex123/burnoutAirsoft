@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/config/auth.php';
 require_once __DIR__ . '/config/registration_notifications.php';
 require_once __DIR__ . '/config/registration_documents.php';
+require_once __DIR__ . '/config/registration_roles.php';
 
 $adminUser = null;
 $setupError = '';
@@ -348,6 +349,8 @@ function burnout_admin_save_late_registration(): array
         throw new BurnoutUserException('No se pueden registrar mas de 10 asistentes en el mismo formulario.');
     }
 
+    $attendeeRoles = burnout_validate_registration_roles($_POST['attendee_role'] ?? null, count($attendeeNames));
+
     foreach ($attendeeNames as $index => $name) {
         $document = $attendeeDocuments[$index] ?? '';
 
@@ -389,8 +392,8 @@ function burnout_admin_save_late_registration(): array
 
         $registrationId = (int) $pdo->lastInsertId();
         $attendee = $pdo->prepare(
-            'INSERT INTO registration_attendees (registration_id, event_id, full_name, document)
-             VALUES (:registration_id, :event_id, :full_name, :document)'
+            'INSERT INTO registration_attendees (registration_id, event_id, full_name, document, weapon_role)
+             VALUES (:registration_id, :event_id, :full_name, :document, :weapon_role)'
         );
 
         foreach ($attendeeNames as $index => $name) {
@@ -399,6 +402,7 @@ function burnout_admin_save_late_registration(): array
                 'event_id' => $eventId,
                 'full_name' => $name,
                 'document' => $attendeeDocuments[$index],
+                'weapon_role' => $attendeeRoles[$index],
             ]);
         }
 

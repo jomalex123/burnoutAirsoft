@@ -490,7 +490,7 @@ window.initAdminPartidasPage = function () {
     var total = parseInt(lateRegistrationAttendees.value, 10);
     var existingValues = {};
 
-    lateRegistrationFields.querySelectorAll('input').forEach(function (input) {
+    lateRegistrationFields.querySelectorAll('input, select').forEach(function (input) {
       existingValues[input.id] = input.value;
     });
 
@@ -552,6 +552,30 @@ window.initAdminPartidasPage = function () {
       field.appendChild(heading);
       field.appendChild(nameField);
       field.appendChild(documentField);
+      var roleId = 'lateRegistrationAttendeeRole' + index;
+      var roleField = document.createElement('div');
+      roleField.className = 'admin-login-field';
+      var roleLabel = document.createElement('label');
+      roleLabel.htmlFor = roleId;
+      roleLabel.textContent = 'Rol de arma *';
+      var roleSelect = document.createElement('select');
+      roleSelect.id = roleId;
+      roleSelect.name = 'attendee_role[]';
+      roleSelect.required = true;
+      ['', 'Fusilero', 'Tirador Selecto', 'Apoyo', 'Francotirador', 'Escudo'].forEach(function (role) {
+        var option = document.createElement('option');
+        option.value = role;
+        option.textContent = role || 'Selecciona el rol de arma';
+        roleSelect.appendChild(option);
+      });
+      roleSelect.value = existingValues[roleId] || '';
+      var roleError = document.createElement('span');
+      roleError.className = 'admin-registration-error';
+      roleError.setAttribute('data-error-for', roleId);
+      roleField.appendChild(roleLabel);
+      roleField.appendChild(roleSelect);
+      roleField.appendChild(roleError);
+      field.appendChild(roleField);
       lateRegistrationFields.appendChild(field);
     }
   }

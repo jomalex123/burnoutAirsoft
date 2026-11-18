@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 // Explicit remote tool; the local migration and tests keep their existing guards.
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
-$options = getopt('', ['environment:', 'apply', 'verify-backup:']);
+$options = getopt('', ['environment:', 'apply', 'verify-backup:', 'player-roles']);
 $environment = $options['environment'] ?? '';
 if (!in_array($environment, ['pre', 'pro'], true)) {
     fwrite(STDERR, "Usar --environment=pre o --environment=pro; sin --apply solo inspecciona.\n");
+    exit(1);
+}
+if (isset($options['player-roles']) && $environment !== 'pre') {
+    fwrite(STDERR, "--player-roles solo admite PRE. PRO no está autorizado en este flujo.\n");
     exit(1);
 }
 putenv('BURNOUT_ENV_FILE=' . dirname(__DIR__) . '/config/env.php');
@@ -259,6 +263,108 @@ function burnout_reg_remote_inspect(PDO $pdo, string $expression): array
     return ['installed' => $generated, 'parent_index' => $parentIndex, 'event_column' => isset($columns['event_id'])];
 }
 
+function burnout_reg_remote_player_pending(PDO $pdo): array
+{
+    $attendees = burnout_reg_remote_columns($pdo, 'registration_attendees');
+    $registrations = burnout_reg_remote_columns($pdo, 'registrations');
+    foreach (['event_id', 'document_key'] as $required) {
+        if (!isset($attendees[$required])) throw new RuntimeException('Instalar primero documentos por partida.');
+    }
+    $pending = [];
+    if (!isset($attendees['weapon_role'])) $pending[] = '2026_11_17_registration_weapon_role.sql';
+    elseif ($attendees['weapon_role']['COLUMN_TYPE'] !== "enum('Fusilero','Tirador Selecto','Apoyo','Francotirador','Escudo')" || $attendees['weapon_role']['IS_NULLABLE'] !== 'YES') throw new RuntimeException('weapon_role existente incompatible.');
+    if (!isset($registrations['hq_team'])) $pending[] = '2026_11_17_hq_players.sql';
+    elseif ($registrations['hq_team']['COLUMN_TYPE'] !== "enum('alpha','bravo')" || $registrations['hq_team']['COLUMN_DEFAULT'] !== 'alpha' || $registrations['hq_team']['IS_NULLABLE'] !== 'NO') throw new RuntimeException('hq_team existente incompatible.');
+    $levels = ["enum('TL','Ingeniero')" => 1, "enum('TL','Ingeniero','Radio Operator','Segundo TL')" => 2, "enum('TL','Ingeniero','Radio Operator','Segundo TL','Medico')" => 3];
+    $level = 0;
+    if (isset($attendees['tactical_role'])) {
+        $level = $levels[$attendees['tactical_role']['COLUMN_TYPE']] ?? -1;
+        if ($level < 0 || $attendees['tactical_role']['IS_NULLABLE'] !== 'YES') throw new RuntimeException('tactical_role existente incompatible.');
+    }
+    if ($level < 1) $pending[] = '2026_11_17_hq_player_tactical_role.sql';
+    if ($level < 2) $pending[] = '2026_11_18_hq_player_functions.sql';
+    if ($level < 3) $pending[] = '2026_11_18_hq_player_medic.sql';
+    if (!burnout_reg_remote_index($pdo, 'registration_attendees', 'registration_attendees_event_document_unique', ['event_id', 'document_key']) || !burnout_reg_remote_foreign_key($pdo)) {
+        throw new RuntimeException('Revisar la unicidad de documentos y la relación de asistentes con la partida.');
+    }
+    return $pending;
+}
+
+function burnout_reg_remote_migrate_player_roles(PDO $pdo, array $options): void
+{
+    global $backupPath, $backup, $backupBytes, $locked, $ddlStarted, $stage;
+    $stage = 'inspeccion de roles en PRE';
+    $pending = burnout_reg_remote_player_pending($pdo);
+    foreach ($pending as $file) echo 'Pendiente: ' . $file . PHP_EOL;
+    if (!$pending) { echo "PRE: las cinco migraciones están instaladas.\n"; return; }
+    if (!isset($options['apply'])) { echo "Inspección de PRE terminada sin cambios.\n"; return; }
+    $tables = $pdo->query("SELECT TABLE_NAME, ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME")->fetchAll();
+    foreach ($tables as $table) {
+        if (strcasecmp($table['ENGINE'], 'InnoDB') !== 0) throw new RuntimeException('Se requiere InnoDB para la copia.');
+    }
+    $names = array_column($tables, 'TABLE_NAME');
+    $lockSql = 'LOCK TABLES ' . implode(', ', array_map(static function (string $name): string {
+        return burnout_reg_remote_identifier($name) . (in_array($name, ['events', 'registrations', 'registration_attendees'], true) ? ' WRITE' : ' READ');
+    }, $names));
+    $pdo->exec('SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci');
+    $pdo->exec('SET autocommit=0'); $pdo->exec($lockSql); $locked = true;
+    $pending = burnout_reg_remote_player_pending($pdo);
+    $stage = 'copia privada de PRE';
+    $backupPath = tempnam(sys_get_temp_dir(), 'burnout-pre-player-roles-');
+    if ($backupPath === false) throw new RuntimeException('No se pudo crear la copia privada.');
+    $named = $backupPath . '.sql.gz';
+    if (!rename($backupPath, $named)) throw new RuntimeException('No se pudo nombrar la copia.');
+    $backupPath = $named;
+    @chmod($backupPath, 0600);
+    $backup = gzopen($backupPath, 'wb6');
+    if ($backup === false) throw new RuntimeException('No se pudo abrir la copia.');
+    burnout_reg_remote_backup_write($backup, "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;\nSET FOREIGN_KEY_CHECKS=0;\n");
+    $baseline = []; $columns = [];
+    foreach ($names as $name) {
+        $columns[$name] = $pdo->query('SHOW COLUMNS FROM ' . burnout_reg_remote_identifier($name))->fetchAll(PDO::FETCH_COLUMN);
+        $baseline[$name] = burnout_reg_remote_table_snapshot($pdo, $name, $backup);
+    }
+    burnout_reg_remote_backup_write($backup, "SET FOREIGN_KEY_CHECKS=1;\n");
+    if (!gzclose($backup)) throw new RuntimeException('No se pudo cerrar la copia.');
+    $backup = null;
+    $read = gzopen($backupPath, 'rb');
+    if ($read === false) throw new RuntimeException('No se pudo verificar la copia.');
+    $bytes = 0; $hash = hash_init('sha256');
+    while (!gzeof($read)) {
+        $chunk = gzread($read, 1048576);
+        if ($chunk === false) throw new RuntimeException('No se pudo leer la copia completa.');
+        $bytes += strlen($chunk); hash_update($hash, $chunk);
+    }
+    gzclose($read);
+    if ($bytes !== $backupBytes || $bytes < 50) throw new RuntimeException('Copia incompleta.');
+    // Relee y compara las sentencias originales de la copia antes del primer DDL.
+    burnout_reg_remote_verify_backup($pdo, $backupPath);
+    $manifest = json_encode(['environment' => 'pre', 'migrations' => $pending, 'baseline' => $baseline, 'columns' => $columns, 'uncompressed_sha256' => hash_final($hash)], JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR);
+    if (file_put_contents($backupPath . '.manifest.json', $manifest) !== strlen($manifest) || file_get_contents($backupPath . '.manifest.json') !== $manifest) throw new RuntimeException('Manifiesto no verificado.');
+    echo 'Copia SQL gzip verificada de ' . count($names) . ' tablas: ' . $backupPath . PHP_EOL;
+    $stage = 'migraciones de jugadores PRE'; $ddlStarted = true;
+    foreach ($pending as $file) {
+        $sql = file_get_contents(__DIR__ . '/../database/migrations/' . $file);
+        if ($sql === false) throw new RuntimeException('No se pudo leer la migración.');
+        foreach (array_filter(array_map('trim', explode(';', $sql))) as $statement) {
+            $pdo->exec($statement);
+            if (preg_match('/^ALTER\s/i', $statement)) $pdo->exec($lockSql);
+        }
+        echo 'Aplicada en PRE: ' . $file . PHP_EOL;
+    }
+    $stage = 'verificacion de jugadores PRE';
+    if (burnout_reg_remote_player_pending($pdo)) throw new RuntimeException('Quedan migraciones pendientes.');
+    foreach ($baseline as $name => $before) {
+        $after = burnout_reg_remote_table_snapshot($pdo, $name, null, $columns[$name]);
+        $ok = $before['rows'] === $after['rows'] && $before['data'] === $after['data'];
+        if (!in_array($name, ['registrations', 'registration_attendees'], true)) $ok = $ok && $before['schema'] === $after['schema'];
+        burnout_reg_remote_check($ok, 'Datos originales conservados: ' . $name);
+    }
+    burnout_reg_remote_verify_backup($pdo, $backupPath);
+    $pdo->exec('COMMIT'); $pdo->exec('UNLOCK TABLES'); $locked = false; $pdo->exec('SET autocommit=1');
+    echo "PRE: cinco migraciones verificadas. PRO no modificado.\n";
+}
+
 $stage = 'configuracion';
 $backupPath = null;
 $backup = null;
@@ -282,6 +388,10 @@ try {
     echo strtoupper($environment) . ': conexion verificada; servidor ' . $pdo->query('SELECT VERSION()')->fetchColumn() . PHP_EOL;
     $pdo->exec('SET SESSION lock_wait_timeout = 15');
     $pdo->exec('SET SESSION innodb_lock_wait_timeout = 15');
+    if (isset($options['player-roles'])) {
+        burnout_reg_remote_migrate_player_roles($pdo, $options);
+        exit(0);
+    }
     $sql = file_get_contents(__DIR__ . '/../database/migrations/2026_11_09_registration_document_unique.sql');
     if ($sql === false || !preg_match('/ADD COLUMN document_key VARCHAR\(40\) GENERATED ALWAYS AS \((.*)\) STORED,/', $sql, $match)) {
         throw new RuntimeException('No se reconoce la migracion SQL esperada.');

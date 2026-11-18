@@ -54,6 +54,7 @@ if (in_array('--install-local', $argv, true)) {
     if (!$table) $pdo->exec(file_get_contents(__DIR__ . '/../database/migrations/2026_11_04_hq_mission_categories.sql'));
     echo "Migración HQ aplicada en local.\n";
 }
+$playerRegistrations = [];
 $operations = [];
 $events = [];
 $sessions = [];
@@ -143,7 +144,8 @@ try {
     $alpha = hq_session();
     $bravo = hq_session();
     $page = hq_page($admin, 'admin_hq.php');
-    hq_check($page->query('//main')->length === 1 && $page->query('//*[@data-map-panel]')->length === 4, 'Carga directa de HQ con un único main y cuatro pestañas');
+    hq_check($page->query('//main')->length === 1 && $page->query('//*[@data-map-panel]')->length === 5, 'Carga directa de HQ con un único main y cinco pestañas');
+    hq_check($page->query('//*[@data-map-section="jugadores"]')->length === 1 && $page->query('//*[@data-hq-players-list]')->length === 2, 'Menú Jugadores con dos equipos');
     hq_check($page->query('//script[@src="assets/js/hq.js"]')->length === 1 && $page->query('//link[@href="assets/css/hq.css"]')->length === 1 && $page->query('//*[@data-hq-console]')->length === 1, 'El HTML incluye el contenedor y los recursos para navegación parcial');
     $seenIds = [];
     foreach ($page->query('//*[@id]') as $element) {
@@ -161,6 +163,12 @@ try {
     hq_check($page->query('//*[@data-hq-catalog-browser="import"]//*[@data-hq-table-size]')->length === 0 && $page->query('//*[@data-hq-catalog-browser="manage"]//*[@data-hq-table-size]')->length === 1, 'Importar mantiene cinco filas fijas y Gestionar permite elegir');
     $page = hq_page($alpha, 'hq_equipo.php');
     hq_check($page->query('//main')->length === 1 && $page->query('//*[@data-hq-form="login"]')->length === 1 && $page->query('//*[@data-map-panel="ajustes"]')->length === 0, 'Carga de enlace sin herramientas administrativas');
+    hq_check($page->query('//details[contains(@class,"hq-team-roster") and not(@open)]')->length === 1, 'Jugadores plegado por defecto en el enlace');
+    hq_check($page->query('//*[@data-hq-signal and @hidden]')->length === 1, 'Indicador de canal oculto en el enlace');
+    hq_check($page->query('//*[@data-hq-role-choice]')->length === 5 && $page->query('//*[@data-hq-role-popup]//select')->length === 0, 'Popup con cinco iconos y sin selector');
+    hq_check($page->query('//details[contains(@class,"hq-team-map-section")]/preceding-sibling::details[1][@data-map-panel="misiones"]')->length === 1, 'Mapa del enlace colocado debajo de Misiones');
+    hq_check($page->query('//*[@data-hq-team-map]//*[@data-hq-map-view]')->length === 3 && $page->query('//*[@data-hq-team-map]//canvas')->length === 0 && $page->query('//*[@data-hq-team-map]//*[@data-map-tool]')->length === 0, 'Visor de mapa con zoom y pantalla completa, sin editor');
+    hq_check($page->query('//details[@data-map-panel="canales"]/summary/h2[text()="Comunicaciones"]')->length === 1, 'El enlace muestra Comunicaciones');
     [$status] = hq_request($alpha, 'list');
     hq_check($status === 401, 'Sin sesión administrativa no se enumeran partidas');
     $today = new DateTimeImmutable(burnout_hq_today(), new DateTimeZone('Europe/Madrid'));
@@ -221,6 +229,115 @@ try {
             }
         }
     }
+    // Jugadores: datos ficticios, siempre eliminados por finally.
+    foreach ([$todayEvent, $todayEvent, $afternoonEvent] as $testEvent) {
+        $pdo->prepare('INSERT INTO registrations (event_id, email, phone, accepted_rules) VALUES (?, ?, ?, 1)')->execute([$testEvent, 'hq-players@example.invalid', '600000000']);
+        $registrationId = (int) $pdo->lastInsertId();
+        $playerRegistrations[] = $registrationId;
+        foreach (['Fusilero', 'Apoyo'] as $role) {
+            $pdo->prepare('INSERT INTO registration_attendees (registration_id, event_id, full_name, document, weapon_role) VALUES (?, ?, ?, ?, ?)')->execute([$registrationId, $testEvent, 'Jugador ficticio', bin2hex(random_bytes(10)), $role]);
+        }
+    }
+    $playersPayload = ['operation_id' => $id];
+    [$status, $players] = hq_request($admin, 'players', $playersPayload);
+    hq_check($status === 200 && count($players['groups']) === 2, 'Jugadores aislados por partida');
+    hq_check($players['groups'][0]['points'] === 4 && $players['groups'][0]['team'] === 'alpha' && count($players['groups'][0]['players']) === 2, 'Roles, puntos y equipo inicial por inscripción');
+    hq_check(!isset($players['groups'][0]['players'][0]['document']) && !isset($players['groups'][0]['email']), 'Jugadores no transmite documentos ni contactos');
+    [$status] = hq_request($alpha, 'players', $playersPayload, false, true);
+    hq_check($status === 403, 'El enlace no recibe jugadores');
+    [$status, $teamState] = hq_request($alpha, 'state', $playersPayload + ['channel' => 'bravo'], false, true);
+    hq_check($status === 200 && $teamState['roster']['team'] === 'alpha' && $teamState['roster']['count'] === 4, 'El enlace recibe solo su plantilla aunque manipule el canal');
+    hq_check(array_keys($teamState['roster']['players'][0]) === ['id', 'name', 'role', 'team_name', 'tactical_role'], 'La plantilla del enlace incluye equipo y función, sin documentos ni contactos');
+    $alphaPlayer = $teamState['roster']['players'][0]['id'];
+    foreach (['TL', 'Ingeniero', 'Radio Operator', 'Segundo TL', 'Medico', ''] as $function) {
+        [$status, $roleResult] = hq_request($alpha, 'player_role', $playersPayload + ['player_id' => $alphaPlayer, 'tactical_role' => $function], true, true);
+        hq_check($status === 200 && $roleResult['roster']['players'][0]['tactical_role'] === ($function === '' ? null : $function), 'El enlace asigna y retira su función: ' . ($function ?: 'ninguna'));
+        hq_check($roleResult['roster']['players'][0]['role'] === 'Fusilero', 'La función no modifica el rol de arma');
+    }
+    $ownPlayers = array_column($roleResult['roster']['players'], 'id');
+    foreach (['TL', 'Segundo TL', 'Ingeniero', 'Radio Operator'] as $uniqueRole) {
+        hq_request($alpha, 'player_role', $playersPayload + ['player_id' => $ownPlayers[0], 'tactical_role' => $uniqueRole], true, true);
+        [$status, $roleResult] = hq_request($alpha, 'player_role', $playersPayload + ['player_id' => $ownPlayers[1], 'tactical_role' => $uniqueRole], true, true);
+        $assigned = array_values(array_filter($roleResult['roster']['players'], static fn(array $player): bool => $player['tactical_role'] === $uniqueRole));
+        hq_check($status === 200 && count($assigned) === 1 && $assigned[0]['id'] === $ownPlayers[1], 'Reasignar función única retira la anterior: ' . $uniqueRole);
+    }
+    foreach (array_slice($ownPlayers, 0, 2) as $playerId) {
+        [$status] = hq_request($alpha, 'player_role', $playersPayload + ['player_id' => $playerId, 'tactical_role' => 'Medico'], true, true);
+        hq_check($status === 200, 'Permite hasta dos médicos');
+    }
+    [$status] = hq_request($alpha, 'player_role', $playersPayload + ['player_id' => $ownPlayers[2], 'tactical_role' => 'Medico'], true, true);
+    hq_check($status === 422, 'Rechaza un tercer médico sin quitar los anteriores');
+    [$status, $roleResult] = hq_request($alpha, 'state', $playersPayload + ['channel' => 'alpha'], false, true);
+    hq_check(count(array_filter($roleResult['roster']['players'], static fn(array $player): bool => $player['tactical_role'] === 'Medico')) === 2, 'Los dos médicos se conservan tras rechazar el tercero');
+    foreach ($ownPlayers as $playerId) hq_request($alpha, 'player_role', $playersPayload + ['player_id' => $playerId, 'tactical_role' => ''], true, true);
+    foreach ([['player_id' => ['1'], 'tactical_role' => 'TL'], ['player_id' => $alphaPlayer, 'tactical_role' => ['TL']], ['player_id' => $alphaPlayer, 'tactical_role' => 'Otro']] as $invalidRole) {
+        [$status] = hq_request($alpha, 'player_role', $playersPayload + $invalidRole, true, true);
+        hq_check($status === 422, 'Valida identificador y función en servidor');
+    }
+    [$status] = hq_request($bravo, 'player_role', $playersPayload + ['player_id' => $alphaPlayer, 'tactical_role' => 'TL', 'team' => 'alpha'], true, true);
+    hq_check($status === 403, 'Bravo no modifica jugadores de Alpha aunque manipule el equipo');
+    [$status] = hq_request($alpha, 'player_role', $playersPayload + ['player_id' => $alphaPlayer, 'tactical_role' => 'TL', 'csrf_token' => 'incorrecto'], true, true);
+    hq_check($status === 403, 'CSRF protege funciones de jugadores');
+    [$status] = hq_request($alpha, 'player_role', $playersPayload + ['player_id' => $alphaPlayer, 'tactical_role' => 'TL'], false, true);
+    hq_check($status === 405, 'Cambiar función exige POST');
+    [$status, $teamState] = hq_request($bravo, 'state', $playersPayload + ['channel' => 'alpha'], false, true);
+    hq_check($status === 200 && $teamState['roster']['team'] === 'bravo' && $teamState['roster']['count'] === 0, 'Bravo no recibe los jugadores de Alpha');
+    foreach (['players_move', 'players_balance'] as $playersAction) {
+        [$status] = hq_request($alpha, $playersAction, $playersPayload, true, true);
+        hq_check($status === 403, 'El enlace no modifica jugadores: ' . $playersAction);
+        [$status] = hq_request($admin, $playersAction, $playersPayload + ['csrf_token' => 'incorrecto'], true);
+        hq_check($status === 403, 'CSRF de jugadores: ' . $playersAction);
+        [$status] = hq_request($admin, $playersAction, $playersPayload);
+        hq_check($status === 405, 'Las mutaciones de jugadores exigen POST');
+    }
+    foreach ([['registration_id' => ['1'], 'team' => 'bravo'], ['registration_id' => $playerRegistrations[2], 'team' => 'bravo'], ['registration_id' => $playerRegistrations[0], 'team' => 'otro']] as $invalidMove) {
+        [$status] = hq_request($admin, 'players_move', $playersPayload + $invalidMove, true);
+        hq_check($status === 422, 'Rechaza traslado inválido o de otra partida');
+    }
+    [$status, $moved] = hq_request($admin, 'players_move', $playersPayload + ['registration_id' => $playerRegistrations[0], 'team' => 'bravo'], true);
+    hq_check($status === 200 && $moved['groups'][0]['team'] === 'bravo' && count($moved['groups'][0]['players']) === 2, 'Traslado manual conserva la inscripción completa');
+    [$status] = hq_request($alpha, 'player_role', $playersPayload + ['player_id' => $alphaPlayer, 'tactical_role' => 'TL'], true, true);
+    hq_check($status === 403, 'El equipo anterior pierde permiso al trasladar al jugador');
+    [$status, $roleResult] = hq_request($bravo, 'player_role', $playersPayload + ['player_id' => $alphaPlayer, 'tactical_role' => 'Ingeniero'], true, true);
+    hq_check($status === 200 && $roleResult['roster']['players'][0]['tactical_role'] === 'Ingeniero', 'El nuevo equipo puede asignar la función');
+    foreach ([&$alpha, &$bravo] as &$teamSession) {
+        [$status, $teamState] = hq_request($teamSession, 'state', $playersPayload + ['channel' => 'alpha'], false, true);
+        hq_check($status === 200 && $teamState['roster']['count'] === 2, 'El enlace actualiza su plantilla tras un traslado');
+    }
+    unset($teamSession);
+    [$status, $balanced] = hq_request($admin, 'players_balance', $playersPayload, true);
+    hq_check($status === 200 && $balanced['groups'][0]['team'] !== $balanced['groups'][1]['team'], 'Generador equilibra dos inscripciones de igual composición');
+    [$status, $reloaded] = hq_request($admin, 'players', $playersPayload);
+    hq_check($reloaded['groups'] === $balanced['groups'], 'El reparto persiste al volver a consultar');
+    $query = $pdo->prepare('SELECT tactical_role FROM registration_attendees WHERE id = ?');
+    $query->execute([$alphaPlayer]);
+    hq_check($query->fetchColumn() === 'Ingeniero', 'Reequilibrar conserva la función asignada');
+    $firstGroup = $balanced['groups'][0];
+    $secondGroup = $balanced['groups'][1];
+    $firstSession = $firstGroup['team'] === 'alpha' ? $alpha : $bravo;
+    $secondSession = $secondGroup['team'] === 'alpha' ? $alpha : $bravo;
+    hq_request($firstSession, 'player_role', $playersPayload + ['player_id' => $firstGroup['players'][0]['id'], 'tactical_role' => 'TL'], true, true);
+    hq_request($secondSession, 'player_role', $playersPayload + ['player_id' => $secondGroup['players'][0]['id'], 'tactical_role' => 'TL'], true, true);
+    hq_request($admin, 'players_move', $playersPayload + ['registration_id' => $firstGroup['id'], 'team' => $secondGroup['team']], true);
+    [$status, $merged] = hq_request($secondSession, 'state', $playersPayload + ['channel' => 'alpha'], false, true);
+    $leaders = array_values(array_filter($merged['roster']['players'], static fn(array $player): bool => $player['tactical_role'] === 'TL'));
+    hq_check(count($leaders) === 1 && $leaders[0]['id'] === $secondGroup['players'][0]['id'], 'Trasladar conserva al TL del destino y retira el duplicado entrante');
+    [$status, $balancedAgain] = hq_request($admin, 'players_balance', $playersPayload, true);
+    foreach ($balancedAgain['groups'] as $group) {
+        $doctorSession = $group['team'] === 'alpha' ? $alpha : $bravo;
+        foreach ($group['players'] as $player) hq_request($doctorSession, 'player_role', $playersPayload + ['player_id' => $player['id'], 'tactical_role' => 'Medico'], true, true);
+    }
+    hq_request($admin, 'players_move', $playersPayload + ['registration_id' => $firstGroup['id'], 'team' => $secondGroup['team']], true);
+    [$status, $merged] = hq_request($secondSession, 'state', $playersPayload + ['channel' => 'alpha'], false, true);
+    hq_check(count(array_filter($merged['roster']['players'], static fn(array $player): bool => $player['tactical_role'] === 'Medico')) === 2, 'Trasladar grupos conserva como máximo dos médicos');
+    $pdo->prepare("UPDATE hq_operations SET status = 'closed' WHERE id = ?")->execute([$id]);
+    [$status] = hq_request($alpha, 'player_role', $playersPayload + ['player_id' => $alphaPlayer, 'tactical_role' => 'TL'], true, true);
+    hq_check($status === 422, 'La partida cerrada bloquea funciones de jugadores');
+    foreach (['players_move', 'players_balance'] as $playersAction) {
+        [$status] = hq_request($admin, $playersAction, $playersPayload + ['registration_id' => $playerRegistrations[0], 'team' => 'alpha'], true);
+        hq_check($status === 422, 'Partida cerrada rechaza cambios de jugadores');
+    }
+    $pdo->prepare("UPDATE hq_operations SET status = 'active' WHERE id = ?")->execute([$id]);
     $png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=';
     [$status] = hq_request($admin, 'map_save', ['operation_id' => $id, 'annotations' => $png], true);
     hq_check($status === 200, 'Guarda anotaciones del mapa');
@@ -363,6 +480,8 @@ try {
     hq_request($admin, 'access', ['operation_id' => $id, 'team' => 'alpha'], true);
     [$status] = hq_request($alpha, 'state', ['operation_id' => $id, 'channel' => 'alpha'], false, true);
     hq_check($status === 401, 'Renovar código revoca la sesión anterior');
+    [$status] = hq_request($alpha, 'player_role', ['operation_id' => $id, 'player_id' => $alphaPlayer, 'tactical_role' => 'TL'], true, true);
+    hq_check($status === 401, 'Una sesión revocada no modifica funciones');
     hq_request($admin, 'settings', ['operation_id' => $id, 'title' => 'No cambiar el calendario', 'operation_date' => '2000-01-01', 'status' => 'closed'], true);
     [$status] = hq_request($bravo, 'message', ['operation_id' => $id, 'body' => 'No debe enviarse'], true, true);
     hq_check($status === 422, 'Cerrar la partida bloquea transmisiones');
@@ -400,6 +519,9 @@ try {
             $pdo->prepare('DELETE FROM rate_limits WHERE scope = ? AND identifier_hash = ?')->execute(['hq_message', burnout_rate_limit_hash($id . '|' . $sender . '|127.0.0.1')]);
             $pdo->prepare('DELETE FROM rate_limits WHERE scope = ? AND identifier_hash = ?')->execute(['hq_message', burnout_rate_limit_hash($id . '|' . $sender . '|::1')]);
         }
+    }
+    foreach ($playerRegistrations as $registrationId) {
+        $pdo->prepare('DELETE FROM registrations WHERE id = ?')->execute([$registrationId]);
     }
     foreach ($events as $eventId) {
         $pdo->prepare('DELETE FROM events WHERE id = ?')->execute([$eventId]);

@@ -8,6 +8,7 @@ require_once __DIR__ . '/config/mail.php';
 require_once __DIR__ . '/config/rate_limit.php';
 require_once __DIR__ . '/config/registration_notifications.php';
 require_once __DIR__ . '/config/registration_documents.php';
+require_once __DIR__ . '/config/registration_roles.php';
 
 function registro_param(string $key, string $source = 'get'): string
 {
@@ -427,6 +428,11 @@ function registro_is_valid_document(string $document): bool
 
 function registro_assert_rate_limit(string $email): void
 {
+    $environment = getenv('BURNOUT_ENV') ?: (burnout_env_config()['default'] ?? 'local');
+    if ($environment === 'local') {
+        return;
+    }
+
     $ipBlock = burnout_rate_limit_hit('public_registration_ip', burnout_client_ip(), 5, 60 * 60, 60 * 60);
 
     if ($ipBlock > 0) {
@@ -574,6 +580,8 @@ function registro_save_submission(): array
         throw new BurnoutUserException('No se pueden registrar más de 10 asistentes en el mismo formulario.');
     }
 
+    $attendeeRoles = burnout_validate_registration_roles($_POST['attendee_role'] ?? null, count($attendeeNames));
+
     foreach ($attendeeNames as $index => $name) {
         $document = $attendeeDocuments[$index] ?? '';
 
@@ -621,8 +629,8 @@ function registro_save_submission(): array
 
         $registrationId = (int) $pdo->lastInsertId();
         $attendee = $pdo->prepare(
-            'INSERT INTO registration_attendees (registration_id, event_id, full_name, document)
-             VALUES (:registration_id, :event_id, :full_name, :document)'
+            'INSERT INTO registration_attendees (registration_id, event_id, full_name, document, weapon_role)
+             VALUES (:registration_id, :event_id, :full_name, :document, :weapon_role)'
         );
 
         foreach ($attendeeNames as $index => $name) {
@@ -631,6 +639,7 @@ function registro_save_submission(): array
                 'event_id' => $eventId,
                 'full_name' => $name,
                 'document' => $attendeeDocuments[$index],
+                'weapon_role' => $attendeeRoles[$index],
             ]);
         }
 

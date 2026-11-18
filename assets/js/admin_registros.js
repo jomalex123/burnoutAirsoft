@@ -328,10 +328,9 @@ window.initAdminRegistrosPage = function () {
           email: cells[3] ? cells[3].textContent.trim() : '',
           phone: cells[4] ? cells[4].textContent.trim() : '',
           team: cells[5] ? cells[5].textContent.trim() : '',
-          attendeeNumber: attendeeCells[0] ? attendeeCells[0].textContent.trim() : '',
           name: attendeeCells[1] ? attendeeCells[1].textContent.trim() : '',
           document: attendeeCells[2] ? attendeeCells[2].textContent.trim() : '',
-          createdAt: cells[7] ? cells[7].textContent.trim() : ''
+          createdAt: cells[8] ? cells[8].textContent.trim() : ''
         });
       });
 

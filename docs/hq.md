@@ -29,7 +29,7 @@ comprobaciones de integración. Node.js se usa solo para pruebas, no para servir
 
 ## Partida y navegación
 
-Mapa, Misiones, Canales y Ajustes comparten el evento seleccionado. Se ofrecen eventos
+Mapa, Misiones, Comunicaciones, Jugadores y Ajustes comparten el evento seleccionado. Se ofrecen eventos
 de hoy o futuros según `Europe/Madrid`, ordenados por fecha y turno. Cada evento tiene
 una operación HQ única; su nombre y fecha se editan desde Gestionar Partidas.
 No hay un campo independiente de activación del evento.
@@ -49,6 +49,14 @@ duplicados de las pestañas se han retirado.
 - No hay carga ni guardado en servidor, ni mensajes de guardado bajo el mapa.
 - Pantalla completa incluye lienzo, botonera y popup de texto, sin cabecera ni selector.
 - La tabla hq_maps y sus endpoints se conservan por compatibilidad; el editor no los usa.
+
+El enlace de equipo tiene un visor independiente debajo de Misiones, plegado por
+defecto. Muestra el mismo plano PNG, con desplazamiento nativo, zoom 100–300 % en
+pasos de 25 % y pantalla completa del mapa y su botonera. No contiene canvas de
+edición ni consulta/guarda anotaciones administrativas. Incluye una capa vacía
+`data-hq-map-overlay` reservada para detalles de misión futuros, todavía sin datos.
+Lo inicializa `initHqPage`, compatible con carga directa y parcial, sin listeners
+globales adicionales. Prueba de controles: `node scripts/check_hq_team_map.js`.
 
 ## Misiones y guion
 
@@ -114,6 +122,40 @@ lo usa y guardar la categoría no lo modifica. No se elimina mediante esta revis
 `mission_update` se conserva en la API para compatibilidad, aunque las tarjetas ya no
 ofrecen editar o sustituir guiones; las importadas siguen tomando el texto del servidor.
 
+## Jugadores (administración)
+
+Dos cajas muestran Alpha y Bravo, con nombres, roles, totales de jugadores y puntos,
+y cantidades por rol. Se selecciona una inscripción completa y las flechas centrales
+la trasladan; en móvil las cajas se apilan y las flechas apuntan arriba/abajo.
+El botón circular regenera y guarda el reparto. El reparto se conserva al cambiar
+de partida o recargar. Las altas nuevas empiezan en Alpha.
+
+La unidad indivisible es la inscripción (`registrations.id`), no el nombre de equipo
+de contacto. `registrations.hq_team` guarda Alpha/Bravo independientemente de
+`team_name`. No cambia misiones, códigos ni canales del HQ.
+
+Puntos: Fusilero 1, Tirador Selecto 2, Francotirador 2, Apoyo 3 y Escudo 2.
+Los asistentes anteriores sin rol mantienen «Sin especificar» y cuentan 1 punto.
+El generador usa varias distribuciones deterministas y mejoras mediante movimientos
+o intercambios de grupos completos. Minimiza `4 × diferencia_puntos² +
+diferencia_jugadores² + suma((peso_rol × diferencia_cantidad_rol)²)`.
+Busca un reparto aproximado; las inscripciones indivisibles pueden impedir la igualdad.
+No garantiza el óptimo matemático. Regenerar reemplaza las asignaciones manuales.
+
+`players` es GET; `players_move` y `players_balance` son POST con CSRF y sesión admin.
+El servidor valida partida vigente, operación abierta e inscripción perteneciente a
+ese evento, y serializa cambios bloqueando operación, evento e inscripciones.
+Los enlaces solo reciben los identificadores de jugadores, nombres, roles de arma,
+equipo de inscripción y funciones de su propio equipo en la consulta
+`state`; no reciben puntos, documentos ni contactos. Las acciones
+administrativas de jugadores siguen restringidas a HQ.
+La vista se actualiza cada cinco segundos mientras está visible. Las respuestas
+de una partida anterior se descartan al cambiar la selección.
+
+Pruebas: `php scripts/check_hq_players.php` (algoritmo sin MySQL),
+`node scripts/check_hq_players_ui.js` (estado de interfaz y respuestas tardías), y
+`php scripts/check_hq.php` (integración HTTP local con datos ficticios que limpia).
+
 ## Enlace de equipo
 
 Compartir `hq_equipo.php` y el código del equipo. No hace falta introducir identificador
@@ -122,6 +164,34 @@ Una sesión solo accede a su equipo; se recupera al recargar y se revoca al reno
 La cabecera «Burnout Airsoft / Enlace HQ» aparece tras validar la sesión y se oculta al salir.
 El enlace recibe misiones transmitidas de su equipo, confirma recepción y participa en
 su chat. No recibe el catálogo ni sus metadatos administrativos.
+La sección Jugadores muestra el equipo Alpha/Bravo, el número de jugadores y sus
+nombres, equipos de inscripción y roles de arma. Permite elegir la función de cada
+jugador pulsando su nombre: un popup ofrece cinco iconos cuadrados para Team Leader
+(tres galones), Ingeniero (llave), Radio Operator (radio), Segundo TL (dos galones)
+y Médico (cruz). Las filas con función asignada tienen un fondo rojizo muy suave,
+que desaparece al retirar la función.
+El icono activo marca la función; pulsarlo otra vez la retira. El popup reutiliza
+el componente compartido, con foco inicial, Tab, Escape y retorno al nombre.
+Jugadores, Misiones, Mapa y Comunicaciones son paneles plegables independientes, con cabeceras
+oscuras, bordes y flechas que cambian al abrirlos. Misiones empieza abierto;
+Jugadores, Mapa y Comunicaciones, cerrados. El enlace no muestra el
+indicador verde de canal disponible. La función se guarda automáticamente en
+`registration_attendees.tactical_role`, separada del rol de arma y de la puntuación.
+Cada equipo admite un Team Leader, un Segundo TL, un Ingeniero, un Radio Operator
+y hasta dos Médicos. Asignar una función única a otro jugador retira la asignación
+anterior del mismo equipo. Un tercer Médico se rechaza sin modificar a los dos
+existentes. Las comprobaciones se serializan bloqueando la operación. Mover o
+reequilibrar inscripciones también aplica estos límites: conserva primero a los
+titulares que ya estaban en el equipo destino y retira funciones sobrantes.
+La acción POST `player_role` exige CSRF,
+sesión vigente y operación abierta; bloquea la operación y el acceso, relee la
+pertenencia del jugador y solo permite editar el equipo de la sesión. Trasladar al
+jugador conserva su función cuando hay plaza en el equipo destino y revoca la
+posibilidad de editarlo al equipo anterior.
+Se actualiza con la consulta periódica de estado, incluidos los
+traslados y repartos que haga administración. El servidor determina el equipo por
+la sesión validada, sin aceptar un equipo alternativo del cliente. La lista se
+limpia al desconectar o caducar el acceso.
 
 ## Seguridad y mantenimiento
 

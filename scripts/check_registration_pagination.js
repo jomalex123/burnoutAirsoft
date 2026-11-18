@@ -23,7 +23,7 @@ const rows = Array.from({ length: 35 }, (_, i) => {
     date: '2026-12-01', turn: 'M', email: '', phone: '', team: '', document: '',
     created: String(i).padStart(3, '0'), attendeeCount: i < 17 ? '2' : '1'
   };
-  row.querySelectorAll = () => Array.from({ length: 8 }, () => ({ textContent: row.dataset.event }));
+  row.querySelectorAll = () => Array.from({ length: 11 }, () => ({ textContent: row.dataset.event }));
   return row;
 });
 const ids = {};
@@ -54,7 +54,7 @@ const context = {
       const match = selector.match(/^#registrationAttendees(\d+) tbody tr$/);
       if (!match) return [];
       return Array.from({ length: Number(rows[Number(match[1]) - 1].dataset.attendeeCount) }, () => ({
-        querySelectorAll: () => ['1', 'Asistente ficticio', 'Documento ficticio'].map(textContent => ({ textContent }))
+        querySelectorAll: () => ['Fusilero', 'Asistente ficticio', 'Documento ficticio'].map(textContent => ({ textContent }))
       }));
     }
   }

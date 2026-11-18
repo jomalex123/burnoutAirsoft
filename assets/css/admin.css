@@ -1234,6 +1234,10 @@
   font-size: 14px;
 }
 
+.admin-table .admin-registrations-attendee-count {
+  text-align: center;
+}
+
 .admin-registrations-attendees-table {
   min-width: 520px;
 }

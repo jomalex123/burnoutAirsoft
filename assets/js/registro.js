@@ -265,7 +265,7 @@ window.initRegistroPage = function () {
     var total = parseInt($asistentes.val(), 10);
     var existingValues = {};
 
-    $asistentesFields.find('input').each(function () {
+    $asistentesFields.find('input, select').each(function () {
       existingValues[this.id] = this.value;
     });
 
@@ -309,7 +309,17 @@ window.initRegistroPage = function () {
 
       $nameField.append($nameLabel, $nameInput, $nameError);
       $documentField.append($documentLabel, $documentInput, $documentError);
-      $field.append($title, $nameField, $documentField);
+      var roleId = 'asistenteRol' + index;
+      var $roleField = $('<div class="registro-field"></div>');
+      var $roleLabel = $('<label></label>').attr('for', roleId).text('Rol de arma *');
+      var $roleSelect = $('<select></select>').attr({ id: roleId, name: 'attendee_role[]', required: true });
+      $roleSelect.append($('<option></option>').val('').text('Selecciona el rol de arma'));
+      ['Fusilero', 'Tirador Selecto', 'Apoyo', 'Francotirador', 'Escudo'].forEach(function (role) {
+        $roleSelect.append($('<option></option>').val(role).text(role));
+      });
+      $roleSelect.val(existingValues[roleId] || '');
+      $roleField.append($roleLabel, $roleSelect, $('<span class="registro-error"></span>').attr('data-error-for', roleId));
+      $field.append($title, $nameField, $documentField, $roleField);
       $asistentesFields.append($field);
     }
   }

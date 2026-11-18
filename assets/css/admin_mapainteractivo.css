@@ -40,7 +40,7 @@
 .admin-map-maintenance p { color: #555; }
 .admin-map-content [hidden] { display: none; }
 @media (max-width: 900px) { .admin-map-workspace { grid-template-columns: 150px minmax(0,1fr); } .admin-map-content { padding: 18px; } .admin-map-heading { align-items: flex-start; flex-direction: column; } }
-@media (max-width: 640px) { .admin-map-workspace { grid-template-columns: minmax(0,1fr); } .admin-map-sidebar { padding: 12px; } .admin-map-brand, .admin-map-sidebar p { display: none; } .admin-map-sidebar nav { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 4px; } .admin-map-sidebar button { flex-direction: column; justify-content: center; gap: 6px; text-align: center; padding: 12px 4px; font-size: 14px; } .admin-map-content { padding: 14px; } .admin-map-heading h2 { font-size: 26px; } .admin-map-canvas-wrap { padding: 4px; } }
+@media (max-width: 640px) { .admin-map-workspace { grid-template-columns: minmax(0,1fr); } .admin-map-sidebar { padding: 12px; } .admin-map-brand, .admin-map-sidebar p { display: none; } .admin-map-sidebar nav { grid-template-columns: repeat(5,minmax(0,1fr)); gap: 4px; } .admin-map-sidebar button { flex-direction: column; justify-content: center; gap: 6px; text-align: center; padding: 12px 4px; font-size: 14px; } .admin-map-content { padding: 14px; } .admin-map-heading h2 { font-size: 26px; } .admin-map-canvas-wrap { padding: 4px; } }
 
 .admin-map-toolbar > * { flex-shrink: 0; }
 .admin-map-toolbar button { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 8px; }

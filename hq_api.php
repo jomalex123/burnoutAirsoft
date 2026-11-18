@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/config/hq.php';
+require_once __DIR__ . '/config/hq_players.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -15,8 +16,8 @@ try {
         throw new BurnoutUserException('Método no permitido.');
     }
     $input = $method === 'POST' ? $_POST : $_GET;
-    $action = burnout_hq_choice($input, 'action', ['login', 'logout', 'list', 'state', 'select', 'settings', 'access', 'mission', 'mission_update', 'mission_status', 'ack', 'message', 'catalog', 'catalog_save', 'catalog_remove', 'map', 'map_save', 'mission_move', 'mission_remove']);
-    if (($method === 'GET') !== in_array($action, ['list', 'state', 'catalog', 'map'], true)) {
+    $action = burnout_hq_choice($input, 'action', ['login', 'logout', 'list', 'state', 'select', 'settings', 'access', 'mission', 'mission_update', 'mission_status', 'ack', 'message', 'catalog', 'catalog_save', 'catalog_remove', 'map', 'map_save', 'mission_move', 'mission_remove', 'players', 'players_move', 'players_balance', 'player_role']);
+    if (($method === 'GET') !== in_array($action, ['list', 'state', 'catalog', 'map', 'players'], true)) {
         http_response_code(405);
         throw new BurnoutUserException('Método no permitido.');
     }
@@ -73,14 +74,26 @@ try {
             http_response_code(401);
             throw new BurnoutUserException('Accede de nuevo con el código de tu equipo.');
         }
-        if (!$admin && !in_array($action, ['state', 'ack', 'message'], true)) {
+        if (!$admin && !in_array($action, ['state', 'ack', 'message', 'player_role'], true)) {
             http_response_code(403);
             throw new BurnoutUserException('Esta acción corresponde a HQ.');
         }
+        $linkSession = $_SESSION['hq_link'] ?? [];
         session_write_close();
         $pdo = burnout_pdo();
         if ($action === 'list') {
             $result['operations'] = burnout_hq_available_events();
+        } elseif ($action === 'player_role') {
+            if ($team === null) {
+                http_response_code(403);
+                throw new BurnoutUserException('Selecciona las funciones desde el enlace de equipo.');
+            }
+            $result['roster'] = burnout_hq_set_player_role($id, $team, $linkSession, $input);
+        } elseif ($action === 'players') {
+            $operation = burnout_hq_operation($id);
+            $result['groups'] = burnout_hq_players((int) $operation['event_id']);
+        } elseif ($action === 'players_move' || $action === 'players_balance') {
+            $result['groups'] = burnout_hq_mutate_players($id, $input, $action === 'players_balance');
         } elseif ($action === 'mission_move' || $action === 'mission_remove') {
             $missionId = burnout_hq_id($input, 'mission_id');
             $pdo->beginTransaction();
@@ -170,6 +183,9 @@ try {
             $channel = $team ?? burnout_hq_choice($input, 'channel', ['alpha', 'bravo']);
             $after = burnout_hq_id($input, 'after', true);
             $result = burnout_hq_state($id, $team, $channel, $after);
+            if ($team !== null) {
+                $result['roster'] = burnout_hq_team_players((int) $result['operation']['event_id'], $team);
+            }
         } else {
             $operation = burnout_hq_operation($id);
             if ($action === 'settings') {

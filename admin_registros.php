@@ -109,7 +109,7 @@ function admin_registros_read_attendees(PDO $pdo, array $registrationIds): array
 
     $placeholders = implode(', ', array_fill(0, count($ids), '?'));
     $statement = $pdo->prepare(
-        'SELECT registration_id, full_name, document
+        'SELECT registration_id, full_name, document, weapon_role
          FROM registration_attendees
          WHERE registration_id IN (' . $placeholders . ')
          ORDER BY registration_id ASC, id ASC'
@@ -122,6 +122,7 @@ function admin_registros_read_attendees(PDO $pdo, array $registrationIds): array
         $attendees[$registrationId][] = [
             'name' => (string) $attendee['full_name'],
             'document' => (string) $attendee['document'],
+            'weapon_role' => (string) ($attendee['weapon_role'] ?? 'Sin especificar'),
         ];
     }
 
@@ -426,6 +427,7 @@ $attendeeTotal = array_sum(array_map(static function (array $registration): int 
                         <th><button class="admin-sort-button" type="button" data-sort-key="email" aria-label="Ordenar por email">Email</button></th>
                         <th><button class="admin-sort-button" type="button" data-sort-key="phone" aria-label="Ordenar por teléfono">Teléfono</button></th>
                         <th><button class="admin-sort-button" type="button" data-sort-key="team" aria-label="Ordenar por equipo">Equipo</button></th>
+                        <th class="admin-registrations-attendee-count">N. ASISTENTES</th>
                         <th>Asistentes</th>
                         <th><button class="admin-sort-button" type="button" data-sort-key="created" aria-label="Ordenar por fecha de registro">Registro</button></th>
                         <th class="admin-table-icon-column" aria-label="Notificación"></th>
@@ -453,6 +455,7 @@ $attendeeTotal = array_sum(array_map(static function (array $registration): int 
                           <td><?= htmlspecialchars($registration['email'], ENT_QUOTES, 'UTF-8') ?></td>
                           <td><?= htmlspecialchars($registration['phone'], ENT_QUOTES, 'UTF-8') ?></td>
                           <td><?= htmlspecialchars($registration['team'] !== '' ? $registration['team'] : '-', ENT_QUOTES, 'UTF-8') ?></td>
+                          <td class="admin-registrations-attendee-count"><?= (int) $registration['attendee_count'] ?></td>
                           <td>
                             <button class="admin-table-action" type="button" data-registros-modal-open="registrationAttendees<?= (int) $registration['id'] ?>">
                               VER
@@ -517,15 +520,15 @@ $attendeeTotal = array_sum(array_map(static function (array $registration): int 
                           <table class="admin-table admin-registrations-attendees-table">
                             <thead>
                               <tr>
-                                <th>N. asistente</th>
+                                <th>Rol de arma</th>
                                 <th>Nombre completo</th>
                                 <th>Documento</th>
                               </tr>
                             </thead>
                             <tbody>
-                              <?php foreach ($registration['attendees'] as $index => $attendee): ?>
+                              <?php foreach ($registration['attendees'] as $attendee): ?>
                                 <tr>
-                                  <td><?= $index + 1 ?></td>
+                                  <td><?= htmlspecialchars($attendee['weapon_role'], ENT_QUOTES, 'UTF-8') ?></td>
                                   <td><?= htmlspecialchars($attendee['name'], ENT_QUOTES, 'UTF-8') ?></td>
                                   <td><?= htmlspecialchars($attendee['document'], ENT_QUOTES, 'UTF-8') ?></td>
                                 </tr>

@@ -25,12 +25,45 @@ $hqTeamView = $hqTeamView ?? false;
       <?php else: ?>
       <button type="button" data-hq-logout>Desconectar</button>
       <?php endif; ?>
-      <span class="hq-signal" data-hq-signal>Sin conexión</span>
+      <span class="hq-signal" data-hq-signal <?= $hqTeamView ? 'hidden' : '' ?>>Sin conexión</span>
     </div>
     <div class="hq-new-call" data-hq-call hidden role="status">Llamada entrante de HQ · Nuevo briefing recibido</div>
-    <section data-map-panel="misiones" <?= $hqTeamView ? '' : 'hidden' ?>>
+    <?php if ($hqTeamView): ?>
+    <details class="hq-team-roster hq-team-accordion">
+      <summary class="hq-team-accordion-heading"><h2>Jugadores</h2><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+      <div class="hq-team-accordion-body">
+      <div class="hq-players-team">
+        <div class="hq-radio-header"><strong data-hq-roster-team>Equipo</strong><span data-hq-roster-count aria-live="polite">0 jugadores</span></div>
+        <ul class="hq-team-roster-list" data-hq-roster-list></ul>
+      </div>
+      </div>
+    </details>
+    <div class="burnout-popup" data-hq-role-popup aria-hidden="true">
+      <div class="burnout-popup__overlay" data-hq-role-close></div>
+      <div class="burnout-popup__dialog" role="dialog" aria-modal="true" aria-labelledby="hqPlayerRoleTitle">
+        <div class="burnout-popup__header">
+          <h2 id="hqPlayerRoleTitle">Función del jugador</h2>
+          <button type="button" class="burnout-popup__close" data-hq-role-close aria-label="Cerrar ventana"><span aria-hidden="true">&times;</span></button>
+        </div>
+        <div class="burnout-popup__body">
+          <div class="hq-role-choices" role="group" aria-label="Función del jugador">
+            <button type="button" data-hq-role-choice="TL" aria-label="Team Leader" title="Team Leader" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 9 7-5 7 5M5 14l7-5 7 5M5 19l7-5 7 5"/></svg></button>
+            <button type="button" data-hq-role-choice="Segundo TL" aria-label="Segundo TL" title="Segundo TL" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 11 7-5 7 5M5 18l7-5 7 5"/></svg></button>
+            <button type="button" data-hq-role-choice="Radio Operator" aria-label="Radio Operator" title="Radio Operator" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9h10v13H7ZM9 9V2m1 11h4m-4 4h4M14 2a6 6 0 0 1 6 6M14 5a3 3 0 0 1 3 3"/></svg></button>
+            <button type="button" data-hq-role-choice="Ingeniero" aria-label="Ingeniero" title="Ingeniero" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6 4 4 4-4a6 6 0 0 1-8 8L6 22l-4-4 8-8a6 6 0 0 1 8-8Z"/></svg></button>
+            <button type="button" data-hq-role-choice="Medico" aria-label="Médico" title="Médico" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6Z"/></svg></button>
+          </div>
+          <p class="hq-feedback" data-hq-role-feedback role="status" aria-live="polite"></p>
+        </div>
+      </div>
+    </div>
+    <?php endif; ?>
       <?php if ($hqTeamView): ?>
-      <div class="hq-section-heading"><h2>Misiones</h2></div>
+    <details class="hq-team-accordion" data-map-panel="misiones" open>
+      <summary class="hq-team-accordion-heading"><h2>Misiones</h2><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+      <div class="hq-team-accordion-body">
+      <?php else: ?>
+    <section data-map-panel="misiones" hidden>
       <?php endif; ?>
       <?php if (!$hqTeamView): ?>
       <div class="hq-channel-tabs" role="group" aria-label="Misiones del equipo">
@@ -39,9 +72,36 @@ $hqTeamView = $hqTeamView ?? false;
       </div>
       <?php endif; ?>
       <div class="hq-missions" data-hq-missions><p class="hq-empty">El canal está en espera. Selecciona un evento del calendario.</p></div>
+      <?php if ($hqTeamView): ?>
+      </div>
+    </details>
+    <details class="hq-team-accordion hq-team-map-section">
+      <summary class="hq-team-accordion-heading"><h2>Mapa</h2><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+      <div class="hq-team-accordion-body">
+        <div class="hq-team-map" data-hq-team-map>
+          <div class="hq-team-map-toolbar" role="group" aria-label="Controles del mapa">
+            <button type="button" data-hq-map-view="zoom-out" title="Alejar mapa" aria-label="Alejar mapa" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+            <output data-hq-map-zoom aria-label="Nivel de zoom">100 %</output>
+            <button type="button" data-hq-map-view="zoom-in" title="Acercar mapa" aria-label="Acercar mapa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></button>
+            <button type="button" class="hq-team-map-fullscreen" data-hq-map-view="fullscreen" title="Pantalla completa" aria-label="Pantalla completa" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path data-hq-map-fullscreen-icon d="M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5"/></svg></button>
+          </div>
+          <div class="hq-team-map-viewport" data-hq-map-viewport tabindex="0" role="region" aria-label="Mapa de la partida, solo lectura">
+            <div class="hq-team-map-stage" data-hq-map-stage>
+              <img src="assets/maps/carto-orto-detalle.png" alt="Plano del campo de Burnout Airsoft" draggable="false" data-hq-map-image>
+              <div class="hq-team-map-overlay" data-hq-map-overlay aria-hidden="true"></div>
+            </div>
+          </div>
+          <p class="hq-feedback is-error" data-hq-map-error role="status" hidden>No se ha podido cargar el mapa.</p>
+        </div>
+      </div>
+    </details>
+    <details class="hq-team-accordion" data-map-panel="canales">
+      <summary class="hq-team-accordion-heading"><h2>Comunicaciones</h2><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+      <div class="hq-team-accordion-body">
+      <?php else: ?>
     </section>
-    <section data-map-panel="canales" <?= $hqTeamView ? '' : 'hidden' ?>>
-      <?php if ($hqTeamView): ?><div class="hq-section-heading"><h2>Canales</h2></div><?php endif; ?>
+    <section data-map-panel="canales" hidden>
+      <?php endif; ?>
       <?php if (!$hqTeamView): ?>
       <div class="hq-channel-tabs" role="group" aria-label="Canal del equipo">
         <button type="button" class="is-active" data-hq-channel="alpha" aria-pressed="true">Equipo Alpha</button>
@@ -56,8 +116,32 @@ $hqTeamView = $hqTeamView ?? false;
           <button type="submit" data-hq-send>Transmitir</button>
         </form>
       </div>
+      <?php if ($hqTeamView): ?>
+      </div>
+    </details>
+      <?php else: ?>
     </section>
+      <?php endif; ?>
     <?php if (!$hqTeamView): ?>
+    <section data-map-panel="jugadores" hidden>
+      <div class="hq-players-layout">
+        <div class="hq-players-team">
+          <div class="hq-radio-header"><strong>Equipo Alpha</strong><span data-hq-players-total="alpha">0 jugadores · 0 puntos</span></div>
+          <div class="hq-players-roles" data-hq-players-roles="alpha"></div>
+          <div class="hq-players-list" data-hq-players-list="alpha" role="group" aria-label="Inscripciones del equipo Alpha"><p class="hq-empty">Selecciona una partida.</p></div>
+        </div>
+        <div class="hq-players-controls" role="group" aria-label="Repartir jugadores">
+          <button type="button" class="hq-players-generate" data-hq-players-balance title="Generar equipos equilibrados" aria-label="Generar equipos equilibrados por puntos y roles, sin separar inscripciones" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 8a8 8 0 0 0-14-3L3 8m0-5v5h5M4 16a8 8 0 0 0 14 3l3-3m0 5v-5h-5"/></svg></button>
+          <button type="button" data-hq-players-move="bravo" title="Mover inscripción a Bravo" aria-label="Mover inscripción seleccionada al equipo Bravo" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16m-7-7 7 7-7 7"/></svg></button>
+          <button type="button" data-hq-players-move="alpha" title="Mover inscripción a Alpha" aria-label="Mover inscripción seleccionada al equipo Alpha" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H4m7-7-7 7 7 7"/></svg></button>
+        </div>
+        <div class="hq-players-team">
+          <div class="hq-radio-header"><strong>Equipo Bravo</strong><span data-hq-players-total="bravo">0 jugadores · 0 puntos</span></div>
+          <div class="hq-players-roles" data-hq-players-roles="bravo"></div>
+          <div class="hq-players-list" data-hq-players-list="bravo" role="group" aria-label="Inscripciones del equipo Bravo"><p class="hq-empty">Selecciona una partida.</p></div>
+        </div>
+      </div>
+    </section>
     <section data-map-panel="ajustes" hidden>
       <div class="hq-card hq-create hq-settings-panel" data-hq-needs-operation hidden><h3>GESTIONAR GUION</h3>
         <div class="hq-script-layout">

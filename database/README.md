@@ -38,6 +38,25 @@ y aplicar solo las pendientes, con copia previa. No ejecutar migraciones remotas
 Los scripts SQL de ALTER se aplican una sola vez; no todos son idempotentes. Las peticiones web
 no ejecutan DDL. El esquema completo y las migraciones deben producir estructuras compatibles.
 
+## Roles de arma de asistentes
+
+Cada nueva alta pública o administrativa requiere un rol por asistente: Fusilero,
+Tirador Selecto, Apoyo, Francotirador o Escudo. Se guarda en `weapon_role` y se
+muestra en el popup de asistentes de `admin_registros.php`. Las filas anteriores
+conservan NULL y se muestran como «Sin especificar». La tabla muestra el número
+de asistentes en la columna «N. ASISTENTES», separada del botón VER.
+
+Para bases existentes, instalar `migrations/2026_11_17_registration_weapon_role.sql`
+antes de desplegar el código, con copia previa. No reimportar el esquema completo.
+Aplicar el SQL desde phpMyAdmin o el cliente MySQL de XAMPP, seleccionando la base
+local y haciendo copia previa de `registration_attendees`. El SQL se ejecuta una
+sola vez; comprobar antes si existe `weapon_role`. Establece el cotejamiento de la
+conexión y reconstruye la expresión de `document_key` con caracteres hexadecimales
+equivalentes para evitar conflictos de cotejamiento en MariaDB. Conserva la
+normalización y la restricción única de documentos. PRE y PRO requieren autorización
+específica. Aplicada y verificada en local el 17/11/2026, con copia privada previa
+y conservación de los cinco asistentes existentes. No repetir el ALTER en local.
+
 ## Documentos de asistentes por partida
 
 Desde el 09/11/2026 cada asistente incluye `event_id` y una columna generada
@@ -107,6 +126,61 @@ manifiestos quedan en el directorio temporal privado, fuera del repositorio.
 Las herramientas locales mantienen sus restricciones originales.
 
 ## Tablas HQ
+
+### Reparto de jugadores
+
+`migrations/2026_11_17_hq_players.sql` añade `registrations.hq_team`
+(`alpha`/`bravo`, Alpha por defecto). Instalar una sola vez, con copia previa y antes
+de subir el código nuevo. Es independiente de `team_name` y asigna siempre todos
+los asistentes de la inscripción al mismo equipo. El esquema completo la incluye.
+Aplicada en XAMPP local el 17/11/2026, con copia JSON privada de esquema y datos de
+inscripciones verificada antes del ALTER y comparación de las siete filas originales
+después. El despliegue en PRE está documentado más abajo; PRO no modificado.
+
+### Funciones de jugadores
+
+`migrations/2026_11_17_hq_player_tactical_role.sql` añade
+`registration_attendees.tactical_role` (`TL`, `Ingeniero` o NULL para Sin función).
+Es independiente del rol de arma y no interviene en el reparto por puntos. Se
+conserva al mover la inscripción entre equipos. Instalar una sola vez con copia
+previa, después de la migración de roles de arma y antes de desplegar este código.
+Aplicada en XAMPP local el 17/11/2026: copia privada de esquema y datos verificada y
+comparación de los 25 asistentes originales tras el ALTER. Ver el despliegue PRE más abajo; PRO no modificado.
+
+`migrations/2026_11_18_hq_player_functions.sql` amplía ese ENUM conservando `TL`
+e `Ingeniero` y añadiendo `Radio Operator` y `Segundo TL`. Requiere la migración
+anterior. Aplicada en local el 18/11/2026 con copia privada verificada antes del
+ALTER y comparación de los 25 asistentes y funciones originales después.
+Ver el despliegue PRE más abajo; PRO no modificado.
+
+`migrations/2026_11_18_hq_player_medic.sql` añade `Medico` al ENUM de funciones
+(etiqueta visible «Médico»), conservando las cuatro opciones anteriores. Aplicada
+en local el 18/11/2026 con copia privada verificada y comparación posterior de
+los 25 asistentes y funciones existentes. Ver el despliegue PRE más abajo; PRO no modificado.
+
+### Despliegue de roles y jugadores en PRE (18/11/2026)
+
+Las cinco migraciones del 17 y 18 de noviembre se aplicaron en PRE por autorización
+del usuario: rol de arma, equipo HQ por inscripción y las tres ampliaciones de
+funciones. Se creó y leyó una copia SQL gzip completa de las 19 tablas, con datos
+binarios y manifiesto de integridad en el directorio temporal privado del equipo,
+fuera del repositorio. Antes del DDL se comparó la copia con la base; después se
+verificaron los tipos, la conservación de todos los datos originales, los esquemas
+de tablas ajenas al cambio y nuevamente el contenido de la copia.
+
+La herramienta reutiliza el procedimiento remoto de documentos con una opción
+exclusiva de PRE (rechaza `--environment=pro` antes de conectar):
+
+```powershell
+& 'D:\xampp\php\php.exe' scripts/migrate_registration_documents_remote.php --environment=pre --player-roles
+# Solo con autorización para PRE y tras revisar la inspección:
+& 'D:\xampp\php\php.exe' scripts/migrate_registration_documents_remote.php --environment=pre --player-roles --apply
+```
+
+Sin `--apply` solo inspecciona. Ya están instaladas: no repetir DDL manualmente.
+PRO no se ha modificado ni desplegado. La configuración local no cambia.
+
+### Estructura de operaciones
 
 | Tabla | Contenido y conservación |
 | --- | --- |

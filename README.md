@@ -9,12 +9,17 @@ El entorno local habitual del proyecto utiliza **XAMPP**: Apache y MySQL locales
 - Páginas públicas de inicio, equipo, campo, normativa y privacidad.
 - Calendario de partidas con turnos de mañana, tarde y noche, aforo y asistentes inscritos.
 - Inscripción a partidas con varios asistentes, validación y notificaciones por correo.
+- El límite de intentos de inscripción por IP y correo se omite en el entorno `local` para facilitar pruebas. Se mantiene en PRE y PRO; el entorno se obtiene de `BURNOUT_ENV` o de `default` en la configuración.
+- Rol de arma obligatorio por asistente, visible en el popup de administración; total de asistentes por inscripción en la columna «N. ASISTENTES». Las inscripciones anteriores muestran «Sin especificar».
 - Control de documentos repetidos dentro de una inscripción y entre inscripciones de la misma partida, con normalización y restricción única en MySQL. Una persona puede inscribirse en otras partidas.
 - Galerías por evento con imágenes administrables.
 - Publicaciones de Instagram en la página «Nosotros», con carga adicional y visualización en modal.
 - Administración de partidas, registros, galerías y contenido de la normativa.
 - Comunicados desde Gestionar Partidas: elegir evento, escribir asunto y mensaje y enviarlo individualmente al correo principal de cada inscripción. Los listados de Borrar evento y Enviar comunicado muestran 5 eventos por página, ordenados por fecha descendente. Solo Borrar evento muestra el aforo.
 - HQ por partida: mapa temporal en memoria, misiones secuenciales, catálogo y canales Alpha/Bravo.
+- Jugadores en HQ: traslado de inscripciones completas entre Alpha/Bravo y reparto automático por puntos y roles, con asignación guardada por partida.
+- El enlace HQ muestra los jugadores en un panel plegable. Al pulsar un nombre, un popup con cinco iconos permite asignar Team Leader, Ingeniero, Radio Operator, Segundo TL o Médico a sus propios jugadores, sin modificar armas ni puntuaciones. Las filas con función se resaltan suavemente.
+- El enlace incluye un mapa de solo lectura debajo de Misiones, con zoom y pantalla completa. La sección de chat se llama Comunicaciones tanto en el enlace como en administración.
 - Consulta, filtrado, ordenación, eliminación y exportación CSV/PDF de inscripciones, además de reenvío de notificaciones.
 
 ## Tecnologías
