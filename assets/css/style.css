@@ -1298,6 +1298,14 @@ footer {
  * 11. Responsive Rules
  */
 
+@media only screen and (max-width: 1024px) {
+    .ms-header {
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+}
+
 @media only screen and (max-width: 805px) {
     h1 {
         font-size: calc(48px + 1vw);

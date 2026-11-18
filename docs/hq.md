@@ -170,6 +170,9 @@ jugador pulsando su nombre: un popup ofrece cinco iconos cuadrados para Team Lea
 (tres galones), Ingeniero (llave), Radio Operator (radio), Segundo TL (dos galones)
 y Médico (cruz). Las filas con función asignada tienen un fondo rojizo muy suave,
 que desaparece al retirar la función.
+La lista se ordena por función: TL, Segundo TL, Radio Operator, Ingeniero, Médico
+y finalmente los jugadores sin función. Dentro de cada función conserva el orden
+de inscripción. El orden se actualiza al asignar o retirar funciones.
 El icono activo marca la función; pulsarlo otra vez la retira. El popup reutiliza
 el componente compartido, con foco inicial, Tab, Escape y retorno al nombre.
 Jugadores, Misiones, Mapa y Canales son paneles plegables independientes, con cabeceras
@@ -208,6 +211,8 @@ limpia al desconectar o caducar el acceso.
   están bloqueados por `.htaccess`. La API usa JSON y no-store; los errores técnicos van al log.
 - Limpiar temporizadores y listeners al abandonar la página; inicializar mapa antes del HQ.
 - Usar `--admin-button-height: 44px` para acciones de texto en mayúsculas. Los iconos compactos,
-  cierres y paginación conservan su tamaño. El menú lateral usa 64 px en móvil.
+  cierres y paginación conservan su tamaño. En horizontal, hasta 900 px, el menú
+  HQ pasa arriba con botones de 64 px y columnas adaptables. En vertical conserva
+  el diseño anterior: barra lateral hasta 900 px y cinco columnas hasta 640 px.
 
 Detalle de la revisión y sus límites: [revisión del 03/11/2026](security-review-2026-11-03.md).

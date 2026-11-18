@@ -15,7 +15,14 @@ function burnout_hq_team_players(int $eventId, string $team): array
         'SELECT a.id, a.full_name AS name, COALESCE(a.weapon_role, ?) AS role,
                 COALESCE(r.team_name, ?) AS team_name, a.tactical_role
          FROM registrations r JOIN registration_attendees a ON a.registration_id = r.id AND a.event_id = r.event_id
-         WHERE r.event_id = ? AND r.hq_team = ? ORDER BY r.id, a.id'
+         WHERE r.event_id = ? AND r.hq_team = ?
+         ORDER BY CASE a.tactical_role
+             WHEN \'TL\' THEN 0
+             WHEN \'Segundo TL\' THEN 1
+             WHEN \'Radio Operator\' THEN 2
+             WHEN \'Ingeniero\' THEN 3
+             WHEN \'Medico\' THEN 4
+             ELSE 5 END, r.id, a.id'
     );
     $query->execute(['Sin especificar', '', $eventId, $team]);
     $players = $query->fetchAll();

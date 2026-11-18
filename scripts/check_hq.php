@@ -270,6 +270,12 @@ try {
     [$status, $roleResult] = hq_request($alpha, 'state', $playersPayload + ['channel' => 'alpha'], false, true);
     hq_check(count(array_filter($roleResult['roster']['players'], static fn(array $player): bool => $player['tactical_role'] === 'Medico')) === 2, 'Los dos médicos se conservan tras rechazar el tercero');
     foreach ($ownPlayers as $playerId) hq_request($alpha, 'player_role', $playersPayload + ['player_id' => $playerId, 'tactical_role' => ''], true, true);
+    foreach ([0 => 'Medico', 1 => 'Radio Operator', 2 => 'TL'] as $position => $assignedRole) {
+        hq_request($alpha, 'player_role', $playersPayload + ['player_id' => $ownPlayers[$position], 'tactical_role' => $assignedRole], true, true);
+    }
+    [$status, $ordered] = hq_request($alpha, 'state', $playersPayload + ['channel' => 'alpha'], false, true);
+    hq_check($status === 200 && array_column($ordered['roster']['players'], 'tactical_role') === ['TL', 'Radio Operator', 'Medico', null], 'Lista ordenada por función con los no asignados al final');
+    foreach ($ownPlayers as $playerId) hq_request($alpha, 'player_role', $playersPayload + ['player_id' => $playerId, 'tactical_role' => ''], true, true);
     foreach ([['player_id' => ['1'], 'tactical_role' => 'TL'], ['player_id' => $alphaPlayer, 'tactical_role' => ['TL']], ['player_id' => $alphaPlayer, 'tactical_role' => 'Otro']] as $invalidRole) {
         [$status] = hq_request($alpha, 'player_role', $playersPayload + $invalidRole, true, true);
         hq_check($status === 422, 'Valida identificador y función en servidor');
