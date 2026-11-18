@@ -125,6 +125,7 @@ try {
         '2026_11_03_add_hq_maps.sql' => !isset($initial['hq_maps']),
         '2026_11_03_hq_mission_order.sql' => !isset($missions['sort_order']),
         '2026_11_03_hq_mission_classification.sql' => !isset($catalog['category']) && !isset($catalog['mission_type']),
+        '2026_11_18_hq_mission_maps.sql' => !isset($initial['hq_mission_maps']),
     ];
     if (isset($initial['hq_mission_catalog']) !== isset($missions['catalog_id']) || isset($catalog['category']) !== isset($catalog['mission_type'])) {
         throw new RuntimeException('Se ha detectado una migracion parcial; revisar antes de continuar.');
@@ -134,6 +135,7 @@ try {
         echo "Inspeccion terminada. No se han realizado cambios.\n";
         exit;
     }
+    if (!in_array(true, $plan, true)) { echo "No hay migraciones HQ pendientes.\n"; exit; }
 
     $stage = 'copia de seguridad';
     $engines = $pdo->query("SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_TYPE = 'BASE TABLE'")->fetchAll(PDO::FETCH_COLUMN);
@@ -185,6 +187,7 @@ try {
         'hq_messages' => ['id', 'operation_id', 'team', 'sender', 'body'],
         'hq_mission_catalog' => ['id', 'title', 'briefing', 'content_hash', 'is_available', 'category', 'mission_type'],
         'hq_maps' => ['operation_id', 'annotations', 'updated_at'],
+        'hq_mission_maps' => ['catalog_id', 'annotations', 'updated_at'],
     ];
     foreach ($required as $table => $fields) {
         burnout_pro_check(!array_diff($fields, array_keys(burnout_pro_columns($pdo, $table))), 'Columnas completas: ' . $table);
@@ -192,6 +195,9 @@ try {
     $missions = burnout_pro_columns($pdo, 'hq_missions');
     burnout_pro_check(str_contains($missions['status']['COLUMN_TYPE'], "'deleted'") && $missions['status']['COLUMN_DEFAULT'] === 'draft', 'Estados de mision y valor Pendiente correctos');
     burnout_pro_check(str_contains(burnout_pro_columns($pdo, 'hq_maps')['annotations']['COLUMN_TYPE'], 'mediumblob'), 'Anotaciones almacenadas en MEDIUMBLOB');
+    burnout_pro_check(str_contains(burnout_pro_columns($pdo, 'hq_mission_maps')['annotations']['COLUMN_TYPE'], 'mediumblob'), 'Mapas de mision almacenados en MEDIUMBLOB');
+    $mapForeign = $pdo->query("SELECT REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hq_mission_maps' AND COLUMN_NAME = 'catalog_id' AND REFERENCED_TABLE_NAME IS NOT NULL")->fetch();
+    burnout_pro_check($mapForeign && $mapForeign['REFERENCED_TABLE_NAME'] === 'hq_mission_catalog' && $mapForeign['REFERENCED_COLUMN_NAME'] === 'id', 'Mapa de mision vinculado al catalogo');
     $foreign = $pdo->query("SELECT CONSTRAINT_NAME, DELETE_RULE FROM information_schema.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME IN ('hq_operations','hq_access','hq_missions','hq_messages','hq_maps')")->fetchAll(PDO::FETCH_KEY_PAIR);
     foreach (['hq_operations_event_fk' => 'SET NULL', 'hq_access_operation_fk' => 'CASCADE', 'hq_missions_operation_fk' => 'CASCADE', 'hq_missions_catalog_fk' => 'SET NULL', 'hq_messages_operation_fk' => 'CASCADE', 'hq_maps_operation_fk' => 'CASCADE'] as $name => $rule) {
         burnout_pro_check(($foreign[$name] ?? '') === $rule, 'Clave foranea correcta: ' . $name);

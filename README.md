@@ -179,6 +179,15 @@ El script puede ejecutarse desde una tarea programada del servidor. Esa tarea de
 
 ## Base de datos y migraciones
 
+El 18/11/2026 se aplicó `database/migrations/2026_11_18_hq_mission_maps.sql` en
+PRE y PRO; local también está actualizado. Crea `hq_mission_maps` para guardar
+las anotaciones por misión. En PRO se verificó una copia SQL gzip completa antes
+del DDL y se comprobó que el esquema y los datos de las 19 tablas previas siguieran
+intactos. No se copiaron inscripciones entre entornos ni se generaron correos.
+Los scripts `scripts/migrate_hq_pre.php` y `scripts/migrate_hq_pro.php` detectan
+esta migración; sin argumentos solo inspeccionan. Detalles en
+[database/README.md](database/README.md).
+
 Las tablas incluyen usuarios y auditoría administrativa, límites de solicitudes, partidas, inscripciones, asistentes, notificaciones de correo, galerías por evento y caché de Instagram.
 
 Para una instalación nueva, importar `database/schema.sql`. Para una instalación existente, revisar las migraciones de `database/migrations/` y aplicar únicamente las necesarias según su estado actual.

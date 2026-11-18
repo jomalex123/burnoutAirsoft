@@ -6,7 +6,8 @@ PNG en `hq_mission_maps` mediante endpoints exclusivos de administración. El ma
 general del HQ conserva sus anotaciones solo en memoria. El mapa del enlace HQ carga
 en lectura el dibujo de la misión activa de su propio equipo, mediante `team_map`,
 y lo retira si deja de haber una misión activa. Ver `docs/hq.md` y la
-migración `2026_11_18_hq_mission_maps.sql` (aplicada en local y PRE; PRO pendiente).
+migración `2026_11_18_hq_mission_maps.sql` (aplicada en local, PRE y PRO el 18/11/2026,
+con copias previas y verificación de integridad).
 
 ## Entorno local actual
 
