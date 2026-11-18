@@ -5,7 +5,11 @@
 `migrations/2026_11_18_hq_mission_maps.sql` crea `hq_mission_maps`, con un PNG de
 anotaciones por entrada del catálogo. Es independiente de `hq_maps`, que se conserva
 por compatibilidad: el mapa general del HQ sigue trabajando en memoria.
-La migración está aplicada en local con copia previa; PRE y PRO quedan pendientes.
+La migración está aplicada en local y PRE con copia previa; PRO queda pendiente.
+Aplicada en PRE el 18/11/2026 mediante `scripts/migrate_hq_pre.php --apply`, tras
+inspeccionar el estado y verificar una copia SQL gzip de las 19 tablas existentes.
+La comprobación posterior confirmó que su esquema y sus datos siguen intactos,
+incluidas las inscripciones, asistentes y notificaciones. No se importaron registros.
 Para instalaciones existentes, aplicar este SQL después de crear el catálogo HQ.
 
 El entorno de este equipo es XAMPP: Apache, PHP en `D:\xampp\php\php.exe` y MySQL

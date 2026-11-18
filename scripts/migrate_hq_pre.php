@@ -93,6 +93,10 @@ try {
     if ([$config['host'], (int) $config['port'], $config['database']] === [$local['host'] ?? '', (int) ($local['port'] ?? 3306), $local['database'] ?? '']) {
         throw new RuntimeException('PRE coincide con la conexion local; no se continuara.');
     }
+    $production = $all['connections']['pro'] ?? [];
+    if ([$config['host'], (int) $config['port'], $config['database']] === [$production['host'] ?? '', (int) ($production['port'] ?? 3306), $production['database'] ?? '']) {
+        throw new RuntimeException('PRE coincide con PRO; no se continuara.');
+    }
     $dsn = sprintf('mysql:host=%s;port=%d;dbname=%s;charset=%s', $config['host'], (int) $config['port'], $config['database'], $config['charset']);
     $pdo = new PDO($dsn, $config['username'], $config['password'], [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
@@ -116,6 +120,7 @@ try {
         '2026_11_03_add_hq_maps.sql' => !isset($initial['hq_maps']),
         '2026_11_03_hq_mission_order.sql' => !isset($missions['sort_order']),
         '2026_11_03_hq_mission_classification.sql' => !isset($catalog['category']) && !isset($catalog['mission_type']),
+        '2026_11_18_hq_mission_maps.sql' => !isset($initial['hq_mission_maps']),
     ];
     if (isset($initial['hq_mission_catalog']) !== isset($missions['catalog_id']) || isset($catalog['category']) !== isset($catalog['mission_type'])) {
         throw new RuntimeException('Se ha detectado una migracion parcial; revisar antes de continuar.');
@@ -125,6 +130,7 @@ try {
         echo "Inspeccion terminada. No se han realizado cambios.\n";
         exit;
     }
+    if (!in_array(true, $plan, true)) { echo "No hay migraciones HQ pendientes.\n"; exit; }
 
     $stage = 'copia de seguridad';
     if (!function_exists('gzopen')) throw new RuntimeException('No esta disponible gzip para la copia.');
@@ -143,6 +149,16 @@ try {
     if (!gzclose($backup)) throw new RuntimeException('No se ha podido cerrar la copia.');
     $backup = null;
     if (filesize($backupPath) < 50) throw new RuntimeException('La copia esta vacia.');
+    $verify = gzopen($backupPath, 'rb');
+    if ($verify === false) throw new RuntimeException('No se ha podido verificar la copia gzip.');
+    $tail = '';
+    while (!gzeof($verify)) {
+        $chunk = gzread($verify, 65536);
+        if ($chunk === false) throw new RuntimeException('La copia gzip no se puede leer completa.');
+        $tail = substr($tail . $chunk, -64);
+    }
+    gzclose($verify);
+    if (!str_ends_with($tail, "SET FOREIGN_KEY_CHECKS=1;\n")) throw new RuntimeException('La copia SQL esta incompleta.');
     echo 'Copia SQL gzip de ' . count($tables) . ' tablas: ' . $backupPath . PHP_EOL;
     foreach ($plan as $file => $pending) {
         if (!$pending) continue;
@@ -161,6 +177,7 @@ try {
         'hq_messages' => ['id', 'operation_id', 'team', 'sender', 'body'],
         'hq_mission_catalog' => ['id', 'title', 'briefing', 'content_hash', 'is_available', 'category', 'mission_type'],
         'hq_maps' => ['operation_id', 'annotations', 'updated_at'],
+        'hq_mission_maps' => ['catalog_id', 'annotations', 'updated_at'],
     ];
     foreach ($required as $table => $fields) {
         burnout_pre_check(!array_diff($fields, array_keys(burnout_pre_columns($pdo, $table))), 'Columnas completas: ' . $table);
@@ -168,6 +185,9 @@ try {
     $missions = burnout_pre_columns($pdo, 'hq_missions');
     burnout_pre_check(str_contains($missions['status']['COLUMN_TYPE'], "'deleted'") && $missions['status']['COLUMN_DEFAULT'] === 'draft', 'Estados de mision y valor Pendiente correctos');
     burnout_pre_check(str_contains(burnout_pre_columns($pdo, 'hq_maps')['annotations']['COLUMN_TYPE'], 'mediumblob'), 'Anotaciones almacenadas en MEDIUMBLOB');
+    burnout_pre_check(str_contains(burnout_pre_columns($pdo, 'hq_mission_maps')['annotations']['COLUMN_TYPE'], 'mediumblob'), 'Mapas de mision almacenados en MEDIUMBLOB');
+    $mapForeign = $pdo->query("SELECT REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hq_mission_maps' AND COLUMN_NAME = 'catalog_id' AND REFERENCED_TABLE_NAME IS NOT NULL")->fetch();
+    burnout_pre_check($mapForeign && $mapForeign['REFERENCED_TABLE_NAME'] === 'hq_mission_catalog' && $mapForeign['REFERENCED_COLUMN_NAME'] === 'id', 'Mapa de mision vinculado al catalogo');
     $foreign = $pdo->query("SELECT CONSTRAINT_NAME, DELETE_RULE FROM information_schema.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME IN ('hq_operations','hq_access','hq_missions','hq_messages','hq_maps')")->fetchAll(PDO::FETCH_KEY_PAIR);
     foreach (['hq_operations_event_fk' => 'SET NULL', 'hq_access_operation_fk' => 'CASCADE', 'hq_missions_operation_fk' => 'CASCADE', 'hq_missions_catalog_fk' => 'SET NULL', 'hq_messages_operation_fk' => 'CASCADE', 'hq_maps_operation_fk' => 'CASCADE'] as $name => $rule) {
         burnout_pre_check(($foreign[$name] ?? '') === $rule, 'Clave foranea correcta: ' . $name);

@@ -43,7 +43,8 @@ equipo desde la sesión y no admite elegir otra misión o equipo mediante parám
 El catálogo y los mapas de otras misiones siguen reservados a administración.
 
 Migración: `database/migrations/2026_11_18_hq_mission_maps.sql`, aplicada en local
-el 18/11/2026 con copia previa. PRE y PRO pendientes de autorización.
+el 18/11/2026 con copia previa. Aplicada también en PRE el 18/11/2026, con copia
+SQL gzip y verificación de integridad de las 19 tablas previas. PRO sigue pendiente.
 Comprobaciones: `node scripts/check_hq_mission_maps.js` y `scripts/check_hq.php`.
 
 Referencia funcional y técnica de `admin_hq.php`, `hq_equipo.php` y `hq_api.php`.
