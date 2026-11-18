@@ -659,7 +659,7 @@
         function updateHeading() {
             var headings = {
                 misiones: ['Briefing de operaciones', 'MISIONES'],
-                canales: ['Comunicaciones', 'COMUNICACIONES'],
+                canales: ['Canales', 'CANALES'],
                 jugadores: ['Jugadores', 'JUGADORES'],
                 ajustes: ['Control de operación', 'AJUSTES']
             };

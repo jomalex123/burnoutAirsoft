@@ -96,7 +96,7 @@ $hqTeamView = $hqTeamView ?? false;
       </div>
     </details>
     <details class="hq-team-accordion" data-map-panel="canales">
-      <summary class="hq-team-accordion-heading"><h2>Comunicaciones</h2><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+      <summary class="hq-team-accordion-heading"><h2>Canales</h2><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
       <div class="hq-team-accordion-body">
       <?php else: ?>
     </section>

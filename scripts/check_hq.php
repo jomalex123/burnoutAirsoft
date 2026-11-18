@@ -168,7 +168,7 @@ try {
     hq_check($page->query('//*[@data-hq-role-choice]')->length === 5 && $page->query('//*[@data-hq-role-popup]//select')->length === 0, 'Popup con cinco iconos y sin selector');
     hq_check($page->query('//details[contains(@class,"hq-team-map-section")]/preceding-sibling::details[1][@data-map-panel="misiones"]')->length === 1, 'Mapa del enlace colocado debajo de Misiones');
     hq_check($page->query('//*[@data-hq-team-map]//*[@data-hq-map-view]')->length === 3 && $page->query('//*[@data-hq-team-map]//canvas')->length === 0 && $page->query('//*[@data-hq-team-map]//*[@data-map-tool]')->length === 0, 'Visor de mapa con zoom y pantalla completa, sin editor');
-    hq_check($page->query('//details[@data-map-panel="canales"]/summary/h2[text()="Comunicaciones"]')->length === 1, 'El enlace muestra Comunicaciones');
+    hq_check($page->query('//details[@data-map-panel="canales"]/summary/h2[text()="Canales"]')->length === 1, 'El enlace muestra Canales');
     [$status] = hq_request($alpha, 'list');
     hq_check($status === 401, 'Sin sesión administrativa no se enumeran partidas');
     $today = new DateTimeImmutable(burnout_hq_today(), new DateTimeZone('Europe/Madrid'));

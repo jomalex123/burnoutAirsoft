@@ -29,13 +29,13 @@ comprobaciones de integración. Node.js se usa solo para pruebas, no para servir
 
 ## Partida y navegación
 
-Mapa, Misiones, Comunicaciones, Jugadores y Ajustes comparten el evento seleccionado. Se ofrecen eventos
+Mapa, Misiones, Canales, Jugadores y Ajustes comparten el evento seleccionado. Se ofrecen eventos
 de hoy o futuros según `Europe/Madrid`, ordenados por fecha y turno. Cada evento tiene
 una operación HQ única; su nombre y fecha se editan desde Gestionar Partidas.
 No hay un campo independiente de activación del evento.
 
 Las cabeceras muestran únicamente «Centro de Operaciones / …»: Mapa de Operaciones,
-Briefing de operaciones, Comunicaciones y Control de operación. Los títulos grandes
+Briefing de operaciones, Canales y Control de operación. Los títulos grandes
 duplicados de las pestañas se han retirado.
 
 ## Mapa
@@ -172,9 +172,9 @@ y Médico (cruz). Las filas con función asignada tienen un fondo rojizo muy sua
 que desaparece al retirar la función.
 El icono activo marca la función; pulsarlo otra vez la retira. El popup reutiliza
 el componente compartido, con foco inicial, Tab, Escape y retorno al nombre.
-Jugadores, Misiones, Mapa y Comunicaciones son paneles plegables independientes, con cabeceras
+Jugadores, Misiones, Mapa y Canales son paneles plegables independientes, con cabeceras
 oscuras, bordes y flechas que cambian al abrirlos. Misiones empieza abierto;
-Jugadores, Mapa y Comunicaciones, cerrados. El enlace no muestra el
+Jugadores, Mapa y Canales, cerrados. El enlace no muestra el
 indicador verde de canal disponible. La función se guarda automáticamente en
 `registration_attendees.tactical_role`, separada del rol de arma y de la puntuación.
 Cada equipo admite un Team Leader, un Segundo TL, un Ingeniero, un Radio Operator
