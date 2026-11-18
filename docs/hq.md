@@ -1,5 +1,24 @@
 # HQ: funcionamiento y estándares actuales
 
+## Lectura del guion
+
+«Nueva misión» y «Editar misión» incluyen un altavoz junto al mapa. En el enlace HQ,
+cada misión transmitida incluye también un altavoz entre sus acciones. Lee el texto
+actual del formulario, aunque todavía no se haya guardado. Una segunda pulsación
+detiene la lectura; también se detiene al editar el guion, cerrar el editor, abrir
+su mapa o abandonar la página.
+
+Utiliza Speech Synthesis del navegador, con una voz masculina `es-ES` identificada
+por su nombre (por ejemplo, Pablo, Álvaro o Jorge) y velocidad `.92`, tono
+`.85` y volumen `1` para una lectura firme. El timbre y la expresividad dependen de
+las voces instaladas: no se garantiza una interpretación militar profesional.
+La API no expone el género: se seleccionan nombres masculinos conocidos. Si no hay
+una voz masculina reconocida de España, se informa al usuario sin sustituirla por
+una voz femenina ni otro acento.
+Se espera la carga asíncrona de voces y se fragmentan los guiones largos para
+evitar límites de longitud del motor. No se guardan audios en base de datos ni se
+configuran servicios externos. Prueba: `node scripts/check_hq_mission_speech.js`.
+
 ## Mapas del catálogo de misiones
 
 El icono de mapa de «Editar misión» abre el componente compartido con todas sus

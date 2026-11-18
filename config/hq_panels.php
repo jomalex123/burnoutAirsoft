@@ -168,7 +168,10 @@ $hqTeamView = $hqTeamView ?? false;
           <label>Nombre de la misión<input name="title" maxlength="180" required></label>
           <label>Categoría<select name="category"><option value="">Sin clasificar</option></select></label>
           <label>Guion<textarea name="briefing" maxlength="8000" rows="6" required></textarea></label>
-          <button type="button" class="hq-mission-map-button" data-hq-mission-map-edit title="Editar mapa" aria-label="Editar mapa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 5-2-1-6 3v14l6-3 8 3 6-3v-5M8 4v14M16 16v5M22 7c0 3-5 7-5 7s-5-4-5-7a5 5 0 0 1 10 0ZM19 7a2 2 0 1 1-4 0 2 2 0 0 1 4 0Z"/></svg></button>
+          <div class="hq-catalog-tools">
+            <button type="button" class="hq-mission-map-button" data-hq-mission-map-edit title="Editar mapa" aria-label="Editar mapa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 5-2-1-6 3v14l6-3 8 3 6-3v-5M8 4v14M16 16v5M22 7c0 3-5 7-5 7s-5-4-5-7a5 5 0 0 1 10 0ZM19 7a2 2 0 1 1-4 0 2 2 0 0 1 4 0Z"/></svg></button>
+            <button type="button" class="hq-mission-audio-button" data-hq-mission-speech title="Leer guion" aria-label="Leer guion" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4 6 8H2v8h4l5 4ZM15 8a6 6 0 0 1 0 8M18 4a11 11 0 0 1 0 16"/></svg></button>
+          </div>
           <p class="hq-feedback" data-hq-catalog-editor-feedback role="status"></p>
           <div class="burnout-popup__actions"><button class="admin-login-submit" type="submit">Guardar misión</button></div>
         </form>

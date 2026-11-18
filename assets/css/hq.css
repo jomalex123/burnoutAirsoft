@@ -215,8 +215,13 @@
 .hq-console .hq-catalog-row-actions button { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; min-height: 0; padding: 4px; border: 0; background: transparent; color: #555; }
 .hq-console .hq-catalog-row-actions button:not(:disabled):hover { background: transparent; color: #df1f29; }
 .hq-catalog-row-actions svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.hq-console button.hq-mission-map-button { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; width: 44px; height: 44px; padding: 9px; border: 1px solid #ddd; border-radius: 0; background: #fff; color: #555; }
-.hq-mission-map-button svg { flex: 0 0 24px; width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.hq-catalog-tools { display: flex; align-items: center; gap: 8px; }
+.hq-console button:is(.hq-mission-map-button, .hq-mission-audio-button) { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; width: 44px; height: 44px; padding: 9px; border: 1px solid #ddd; border-radius: 0; background: #fff; color: #555; }
+.hq-mission-map-button svg, .hq-mission-audio-button svg { flex: 0 0 24px; width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.hq-console button.hq-mission-audio-button.is-active { background: #df1f29; border-color: #df1f29; color: #fff; }
+.hq-team-page .hq-console button.hq-mission-audio-button { background: #151515; border-color: #fff; color: #fff; }
+.hq-team-page .hq-console button.hq-mission-audio-button.is-active,
+.hq-team-page .hq-console button.hq-mission-audio-button:not(:disabled):hover { background: #df1f29; border-color: #df1f29; color: #fff; }
 .hq-mission-map-column { width: 70px; text-align: center; }
 .hq-mission-map-popup > .burnout-popup__dialog { width: min(100%, 1200px); max-width: 1200px; }
 .hq-mission-map-popup > .burnout-popup__dialog > .burnout-popup__actions { justify-content: flex-end; }

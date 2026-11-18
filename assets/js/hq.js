@@ -49,6 +49,83 @@
         var filterPopup = root.querySelector('[data-hq-catalog-filter-popup]');
         var filterOpener = null;
         var catalogEditor = root.querySelector('[data-hq-catalog-editor-popup]'), catalogEditorOpener = null, catalogEditorVersion = 0;
+        var speechButton = root.querySelector('[data-hq-mission-speech]');
+        var speechEngine = window.speechSynthesis, speechActive = false, speechVersion = 0, speechUtterance = null;
+        var speechVoiceCleanup = null;
+        function stopMissionSpeech() {
+            speechVersion++;
+            if (speechVoiceCleanup) speechVoiceCleanup();
+            if (speechActive && speechEngine) speechEngine.cancel();
+            speechActive = false; speechUtterance = null;
+            if (speechButton) {
+                speechButton.classList.remove('is-active'); speechButton.setAttribute('aria-pressed', 'false');
+                speechButton.title = 'Leer guion'; speechButton.setAttribute('aria-label', 'Leer guion');
+            }
+        }
+        function missionSpeechChunks(text) {
+            var chunks = [], remaining = text.trim();
+            while (remaining.length) {
+                var end = Math.min(220, remaining.length);
+                if (end < remaining.length) {
+                    var sentence = remaining.slice(0, end).match(/[.!?;:\n]\s+/g);
+                    if (sentence) {
+                        var marker = sentence[sentence.length - 1];
+                        end = remaining.slice(0, end).lastIndexOf(marker) + marker.length;
+                    } else {
+                        var space = remaining.lastIndexOf(' ', end); if (space > 0) end = space;
+                    }
+                }
+                chunks.push(remaining.slice(0, end).trim()); remaining = remaining.slice(end).trim();
+            }
+            return chunks;
+        }
+        async function readMissionSpeech(button, text) {
+            if (speechActive && (!button || button === speechButton)) { stopMissionSpeech(); return; }
+            stopMissionSpeech();
+            speechButton = button || root.querySelector('[data-hq-mission-speech]');
+            var message = teamView ? feedback : catalogEditor.querySelector('[data-hq-catalog-editor-feedback]');
+            function fail(text) { stopMissionSpeech(); message.textContent = text; message.classList.add('is-error'); }
+            if (!speechEngine || !window.SpeechSynthesisUtterance) { fail('Este navegador no permite leer el guion en voz alta.'); return; }
+            text = (text === undefined ? catalogEditor.querySelector('[name="briefing"]').value : text).trim();
+            if (!text) { fail('Escribe el guion antes de escucharlo.'); return; }
+            message.textContent = ''; message.classList.remove('is-error');
+            speechActive = true;
+            var version = ++speechVersion;
+            speechButton.classList.add('is-active'); speechButton.setAttribute('aria-pressed', 'true');
+            speechButton.title = 'Detener lectura'; speechButton.setAttribute('aria-label', 'Detener lectura');
+            var voices = speechEngine.getVoices();
+            if (!voices.length) voices = await new Promise(function (resolve) {
+                var timer;
+                function finish() {
+                    window.clearTimeout(timer); speechEngine.removeEventListener('voiceschanged', changed);
+                    speechVoiceCleanup = null; resolve(speechEngine.getVoices());
+                }
+                function changed() { if (speechEngine.getVoices().length) finish(); }
+                speechVoiceCleanup = finish;
+                speechEngine.addEventListener('voiceschanged', changed);
+                timer = window.setTimeout(finish, 2000);
+                changed();
+            });
+            if (version !== speechVersion || !root.isConnected) return;
+            var spanish = voices.filter(function (voice) {
+                var name = voice.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+                return voice.lang.replace('_', '-').toLowerCase() === 'es-es' && /\b(pablo|alvaro|jorge|enrique|andres|antonio|diego|manuel|carlos|miguel|raul|sergio|david|male|masculina|masculino)\b/.test(name);
+            });
+            spanish.sort(function (a, b) { return Number(b.localService) - Number(a.localService) || Number(b.default) - Number(a.default); });
+            if (!spanish.length) { fail('No hay una voz masculina de castellano de España disponible. Instala una voz masculina es-ES, como Pablo, para escuchar el guion.'); return; }
+            var chunks = missionSpeechChunks(text), index = 0;
+            function next() {
+                if (version !== speechVersion || !root.isConnected) return;
+                if (index >= chunks.length) { stopMissionSpeech(); return; }
+                speechUtterance = new window.SpeechSynthesisUtterance(chunks[index++]);
+                speechUtterance.voice = spanish[0]; speechUtterance.lang = 'es-ES';
+                speechUtterance.rate = .92; speechUtterance.pitch = .85; speechUtterance.volume = 1;
+                speechUtterance.onend = next;
+                speechUtterance.onerror = function () { if (version === speechVersion) fail('No se ha podido reproducir el guion. Vuelve a intentarlo.'); };
+                try { speechEngine.speak(speechUtterance); } catch (error) { fail('No se ha podido reproducir el guion. Vuelve a intentarlo.'); }
+            }
+            next();
+        }
         var catalogDelete = root.querySelector('[data-hq-catalog-delete-popup]'), catalogDeleteId = 0, catalogDeleteOpener = null, catalogDeleting = false;
         var accessPopup = root.querySelector('[data-hq-access-popup]'), accessResolve = null, accessOpener = null;
         function closeAccessConfirm(accepted) {
@@ -258,6 +335,7 @@
         }
         function closeCatalogEditor() {
             if (!catalogEditor) return;
+            stopMissionSpeech();
             catalogEditorVersion++;
             catalogEditor.classList.remove('is-open'); catalogEditor.setAttribute('aria-hidden', 'true');
             document.body.classList.remove('burnout-popup-open');
@@ -284,6 +362,7 @@
             catalogDelete.querySelector('button[data-hq-catalog-delete-close]').focus();
         }
         function openCatalogEditor(id, opener) {
+            stopMissionSpeech();
             catalogEditorVersion++;
             missionMapDraft = null;
             catalogEditorOpener = opener; selectCatalogItem(id);
@@ -302,7 +381,10 @@
             var state = catalogTables.find(function (state) { return state.element.dataset.hqCatalogBrowser === 'manage'; });
             state.selected = item ? item.id : 0; renderCatalogTable(state);
         }
+        window.addEventListener('pagehide', stopMissionSpeech);
         if (!teamView) {
+            speechButton.addEventListener('click', function (event) { readMissionSpeech(event.currentTarget); });
+            catalogEditor.querySelector('[name="briefing"]').addEventListener('input', stopMissionSpeech);
             accessPopup.querySelectorAll('[data-hq-access-close]').forEach(function (button) { button.addEventListener('click', function () { closeAccessConfirm(false); }); });
             accessPopup.querySelector('[data-hq-access-confirm]').addEventListener('click', function () { closeAccessConfirm(true); });
             accessPopup.addEventListener('keydown', function (event) {
@@ -634,6 +716,7 @@
             }
         }
         function resetChannel() {
+            stopMissionSpeech();
             if (teamView) clearTeamMissionMap();
             generation++;
             cursor = 0;
@@ -685,6 +768,7 @@
             var list = root.querySelector('[data-hq-missions]');
             list.querySelectorAll('details[data-mission-id]').forEach(function (card) { missionCards.set(card.dataset.missionId, { open: card.open, status: card.dataset.status }); });
             missions = missions.filter(function (mission) { return teamView || mission.team === missionTeam; });
+            if (teamView) stopMissionSpeech();
             list.replaceChildren();
             if (!missions.length) list.append(node('p', 'hq-empty', 'Sin misiones transmitidas. Canal en espera.'));
             missions.forEach(function (mission) {
@@ -702,6 +786,14 @@
                 var footer = node('div', 'hq-briefing-footer');
                 footer.append(node('span', '', mission.status === 'draft' ? 'Pendiente de inicio' : mission.acknowledged_at ? '✓ Recepción confirmada · ' + mission.acknowledged_at : 'Pendiente de recepción'));
                 var actions = node('div', 'hq-mission-actions');
+                if (teamView) {
+                    var speaker = node('button', 'hq-mission-audio-button'); speaker.type = 'button';
+                    speaker.dataset.hqTeamMissionSpeech = String(mission.id);
+                    speaker.title = 'Leer guion'; speaker.setAttribute('aria-label', 'Leer guion: ' + mission.title); speaker.setAttribute('aria-pressed', 'false');
+                    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('aria-hidden', 'true');
+                    var path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); path.setAttribute('d', 'M11 4 6 8H2v8h4l5 4ZM15 8a6 6 0 0 1 0 8M18 4a11 11 0 0 1 0 16');
+                    svg.append(path); speaker.append(svg); actions.append(speaker);
+                }
                 if (teamView && mission.status === 'active' && !mission.acknowledged_at) actions.append(missionButton('Recibido, HQ', mission.id, 'ack'));
                 if (!teamView) {
                     if (mission.status === 'draft') actions.append(missionButton('Iniciar', mission.id, 'active'));
@@ -938,7 +1030,12 @@
         root.addEventListener('click', async function (event) {
             var button = event.target.closest('button');
             if (!button) return;
+            if (button.hasAttribute('data-hq-team-mission-speech')) {
+                var card = button.closest('.hq-briefing');
+                readMissionSpeech(button, card.querySelector('.hq-briefing-text').textContent); return;
+            }
             if (button.hasAttribute('data-hq-mission-map-edit')) {
+                stopMissionSpeech();
                 openMissionMap(root.querySelector('[data-hq-form="catalog_save"]').elements.catalog_id.value, true, button); return;
             }
             if (button.hasAttribute('data-hq-mission-map-preview')) {
@@ -1045,6 +1142,8 @@
         document.addEventListener('visibilitychange', visibility);
         window.initHqPage.cleanup = function () {
             if (!root.isConnected) {
+                stopMissionSpeech();
+                window.removeEventListener('pagehide', stopMissionSpeech);
                 teamMapVersion++;
                 closeAccessConfirm(false);
                 generation++;
