@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
-const source = fs.readFileSync(path.join(__dirname, '../assets/js/admin_mapainteractivo.js'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, '../assets/js/map.js'), 'utf8');
 const operations = [], tiles = [];
 function drawingContext() {
     return {
@@ -23,7 +23,7 @@ const context = vm.createContext({
     root: { querySelector: selector => selector === '[data-map-color]' ? color : { value: '5' } },
     document: { createElement(tag) { assert.equal(tag, 'canvas'); const painter = drawingContext(); const tile = { painter, getContext: () => painter }; tiles.push(tile); return tile; } }
 });
-vm.runInContext(source.slice(source.indexOf('        function shapeFillStyle()'), source.indexOf("        canvas.addEventListener('pointerdown'")), context);
+vm.runInContext(source.slice(source.indexOf('        function shapeFillStyle()'), source.indexOf("        listen(canvas, 'pointerdown'")), context);
 function draw(tool, fillMode) {
     operations.length = 0;
     context.tool = tool; context.fillMode = fillMode;
@@ -75,8 +75,8 @@ const panel = element(); Object.assign(panel, { scrollLeft: 0, scrollTop: 0, cli
 const toolbar = element();
 const menuDocument = { activeElement: null, listeners: {}, addEventListener(name, callback) { this.listeners[name] = callback; }, removeEventListener(name) { delete this.listeners[name]; } };
 const menuRoot = { querySelector: selector => selector === '[data-map-color]' ? color : toolbar };
-const selection = vm.createContext({ fillMode: 'none', fillToggle: toggle, fillMenu: menu, root: menuRoot, mapPanel: panel, drawing: false, panStart: null, document: menuDocument });
-vm.runInContext(source.slice(source.indexOf('        function closeFillMenu('), source.indexOf('        function changeZoom(')), selection);
+const selection = vm.createContext({ listen(element, type, handler) { element.addEventListener(type, handler); }, fillMode: 'none', fillToggle: toggle, fillMenu: menu, root: menuRoot, mapPanel: panel, drawing: false, panStart: null, document: menuDocument });
+vm.runInContext(source.slice(source.indexOf('        function closeFillMenu('), source.indexOf("        listen(root, 'fullscreenchange'")), selection);
 toggle.listeners.click();
 assert.equal(menu.hidden, false);
 assert.equal(menuDocument.activeElement, options[0]);

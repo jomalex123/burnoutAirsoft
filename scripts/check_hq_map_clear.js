@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
-const source = fs.readFileSync(path.join(__dirname, '../assets/js/admin_mapainteractivo.js'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, '../assets/js/map.js'), 'utf8');
 const document = { activeElement: null, body: { classList: { add() {}, remove() {} } } };
 function element() {
     return { isConnected: true, dataset: {}, attributes: {}, listeners: {}, classList: { add() {}, remove() {} },
@@ -18,7 +18,7 @@ modal.querySelectorAll = selector => selector === '[data-map-clear-close]' ? [ov
 modal.querySelector = selector => selector === '[data-map-clear-cancel]' ? cancel : accept;
 const actions = ['clear', 'undo', 'redo'].map(action => { const button = element(); button.dataset.mapAction = action; return button; });
 let pixels = 'anotaciones', history = [], future = [];
-const context = vm.createContext({
+const context = vm.createContext({ listen(element, type, handler) { element.addEventListener(type, handler); },
     clearModal: modal, clearMapId: null, clearOpener: null, mapId: 1, busy: false, drawing: false, panStart: null, textPosition: null,
     document, closeFillMenu() {}, remember() { history.push(pixels); future.length = 0; }, blank() { pixels = 'vacio'; }, say() {}, buttons() {},
     history, future, canvas: { width: 1600, height: 1131 }, ctx: { getImageData() { return pixels; }, putImageData(value) { pixels = value; } },

@@ -21,6 +21,7 @@ declare(strict_types=1);
       <thead><tr>
         <th aria-sort="ascending"><button type="button" class="admin-sort-button" data-hq-table-sort="title">Misi&oacute;n</button></th>
         <th aria-sort="none"><button type="button" class="admin-sort-button" data-hq-table-sort="category">Categor&iacute;a</button></th>
+        <?php if ($hqCatalogTableMode === 'import'): ?><th class="hq-mission-map-column">Mapa</th><?php endif; ?>
         <?php if ($hqCatalogTableMode === 'manage'): ?><th class="hq-catalog-actions-column" aria-label="Acciones"></th><?php endif; ?>
       </tr></thead>
       <tbody data-hq-table-body></tbody>

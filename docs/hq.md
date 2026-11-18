@@ -1,5 +1,32 @@
 # HQ: funcionamiento y estándares actuales
 
+## Mapas del catálogo de misiones
+
+El icono de mapa de «Editar misión» abre el componente compartido con todas sus
+herramientas. «Guardar mapa» guarda únicamente las anotaciones PNG de esa misión y
+vuelve al editor, conservando los campos del formulario. «Cerrar» vuelve sin guardar
+los cambios del dibujo. En una misión nueva, el mapa queda como borrador hasta pulsar
+«Guardar misión»; la creación de ambos datos es transaccional.
+
+La tabla de «Importar misión» incluye una columna «Mapa». Su icono abre el dibujo
+guardado en modo lectura, con zoom y pantalla completa. Una misión sin anotaciones
+muestra el plano vacío. El cierre devuelve a la tabla, conservando filtros y selección.
+
+Los PNG se guardan en `hq_mission_maps`, asociados por `catalog_id`. Los endpoints
+`catalog_map` (GET) y `catalog_map_save` (POST con CSRF) requieren administrador.
+El tamaño del canvas es 1600 × 1131 y el límite del dato recibido es 4 MB.
+La consulta del catálogo no incluye las imágenes; se recuperan al abrir el popup.
+Estos mapas no cambian el mapa temporal de la partida. El enlace de equipo muestra
+en lectura el mapa guardado de su misión en curso. Al cambiar la misión o actualizar
+su dibujo, el sondeo detecta la nueva versión y descarga el PNG mediante `team_map`.
+Sin misión activa o sin dibujo, se muestra solo el plano. El servidor determina el
+equipo desde la sesión y no admite elegir otra misión o equipo mediante parámetros.
+El catálogo y los mapas de otras misiones siguen reservados a administración.
+
+Migración: `database/migrations/2026_11_18_hq_mission_maps.sql`, aplicada en local
+el 18/11/2026 con copia previa. PRE y PRO pendientes de autorización.
+Comprobaciones: `node scripts/check_hq_mission_maps.js` y `scripts/check_hq.php`.
+
 Referencia funcional y técnica de `admin_hq.php`, `hq_equipo.php` y `hq_api.php`.
 Instalación y orden de migraciones: [database/README.md](../database/README.md).
 
@@ -40,6 +67,36 @@ duplicados de las pestañas se han retirado.
 
 ## Mapa
 
+### Componente compartido
+
+Todos los mapas actuales usan `config/map_component.php`, `assets/js/map.js` y
+`assets/css/map.css`. El renderer `burnout_render_map($id, $editable = true)` recibe
+un identificador único por instancia. Administración lo usa en edición y Enlace HQ
+lo usa con `false`: solo genera el plano, la capa vacía, zoom y pantalla completa,
+sin canvas de dibujo, controles de edición ni sus ventanas.
+
+`initBurnoutMapsPage` inicializa todas las instancias antes del adaptador
+`initAdminMapaInteractivoPage` y de `initHqPage`. La navegación parcial carga
+`map.js` antes de los scripts de página. Cada elemento conserva su controlador
+`burnoutMap`, con `load`, `flush`, `closePopups` y `destroy`. La inicialización es
+idempotente; al retirar la página se eliminan listeners y anotaciones temporales.
+Zoom, pantalla completa, capas y errores usan el mismo código en ambos modos.
+Los modos editor y lectura comparten la barra de controles y el diseño responsive.
+El zoom se mantiene flotante en la esquina inferior derecha del mapa, como en el
+editor original; pantalla completa permanece en la barra superior.
+
+Para reutilizarlo, incluir el renderer con `require_once`, cargar `map.css` después
+de los estilos base y `map.js` antes del script de página, y llamar a
+`burnout_render_map('identificador-unico', true)` (editor) o con `false` (lector).
+Los IDs de popups y referencias accesibles se generan a partir de ese identificador.
+`admin_mapainteractivo.js` queda únicamente como adaptador del menú del HQ y expone
+el controlador al selector de partida mediante `root.hqMap`.
+
+Pruebas de estructura y múltiples instancias: `php scripts/check_map_component.php`
+y `node scripts/check_hq_team_map.js`.
+
+### Edición y conservación
+
 - Fondo: `assets/maps/carto-orto-detalle.png`, procedente de `assets/maps/Carto-Orto_Detalle.pdf`.
 - La capa transparente admite lápiz, línea, flecha, rectángulo, círculo, texto y borrador.
 - Tras el grosor y antes de Deshacer, el selector de relleno ofrece iconos para
@@ -62,13 +119,12 @@ duplicados de las pestañas se han retirado.
 
 Pruebas de rellenos y selector: `node scripts/check_hq_map_fill.js`.
 
-El enlace de equipo tiene un visor independiente debajo de Misiones, plegado por
+El enlace de equipo usa el mismo componente en modo lectura debajo de Misiones, plegado por
 defecto. Muestra el mismo plano PNG, con desplazamiento nativo, zoom 100–300 % en
 pasos de 25 % y pantalla completa del mapa y su botonera. No contiene canvas de
 edición ni consulta/guarda anotaciones administrativas. Incluye una capa vacía
-`data-hq-map-overlay` reservada para detalles de misión futuros, todavía sin datos.
-Lo inicializa `initHqPage`, compatible con carga directa y parcial, sin listeners
-globales adicionales. Prueba de controles: `node scripts/check_hq_team_map.js`.
+`data-map-overlay` reservada para detalles de misión futuros, todavía sin datos.
+Lo inicializa `initBurnoutMapsPage`, compatible con carga directa y parcial.
 
 ## Misiones y guion
 

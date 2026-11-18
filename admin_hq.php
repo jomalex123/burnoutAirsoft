@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/config/auth.php';
+require_once __DIR__ . '/config/map_component.php';
 
 $adminUser = null;
 $setupError = '';
@@ -31,6 +32,7 @@ header('Cache-Control: no-store');
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/admin.css">
     <link rel="stylesheet" href="assets/css/admin_mapainteractivo.css">
+    <link rel="stylesheet" href="assets/css/map.css">
     <link rel="stylesheet" href="assets/css/hq.css">
   </head>
   <body>
@@ -112,7 +114,7 @@ header('Cache-Control: no-store');
           <div class="admin-map-workspace">
             <aside class="admin-map-sidebar" aria-label="Secciones del HQ">
               <nav aria-label="Herramientas de operaciones">
-                <button type="button" class="is-active" data-map-section="mapa" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 22s8-8.5 8-14a8 8 0 0 0-16 0c0 5.5 8 14 8 14Z"/><circle cx="12" cy="8" r="3" fill="#151515"/></svg><span>Mapa</span></button>
+                <button type="button" class="is-active" data-map-section="mapa" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m10 5-2-1-6 3v14l6-3 8 3 6-3v-5M8 4v14M16 16v5M22 7c0 3-5 7-5 7s-5-4-5-7a5 5 0 0 1 10 0ZM19 7a2 2 0 1 1-4 0 2 2 0 0 1 4 0Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Mapa</span></button>
                 <button type="button" data-map-section="misiones" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 3h2V1h4v2h2v2h5l-1 17H4L3 5h5Z"/><path d="M12 7v10m-4-4 4 4 4-4" fill="none" stroke="#151515" stroke-width="2"/></svg><span>Misiones</span></button>
                 <button type="button" data-map-section="canales" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="10" r="2"/><path d="M12 14v7M7 5a7 7 0 0 0 0 10M17 5a7 7 0 0 1 0 10M4 2a11 11 0 0 0 0 16M20 2a11 11 0 0 1 0 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Canales</span></button>
                 <button type="button" data-map-section="jugadores" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="9" cy="7" r="4"/><path d="M1 22v-4a8 8 0 0 1 16 0v4ZM18 3a4 4 0 0 1 0 8M19 14a7 7 0 0 1 4 8"/></svg><span>Jugadores</span></button>
@@ -122,75 +124,7 @@ header('Cache-Control: no-store');
             <div class="admin-map-content">
               <section data-map-panel="mapa" aria-label="Editor de mapa">
                 <div class="hq-console"><div class="hq-operation-bar"><div><h2 class="hq-eyebrow">Centro de Operaciones / Mapa de Operaciones</h2></div><label><select data-hq-map-operation aria-label="Evento del calendario"><option value="">Selecciona una partida</option></select></label></div></div>
-                <div class="admin-map-editor" data-map-editor>
-                <div class="admin-map-toolbar" role="group" aria-label="Herramientas de dibujo">
-                  <button type="button" data-map-tool="pan" title="Mover mapa" aria-label="Mover mapa" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 12V5a1.5 1.5 0 0 1 3 0v6-8a1.5 1.5 0 0 1 3 0v8-6a1.5 1.5 0 0 1 3 0v7-3a1.5 1.5 0 0 1 3 0v6c0 4-2 7-6 7h-2c-2 0-3-1-4-3l-4-6a1.5 1.5 0 0 1 2-2Z"/></svg></button>
-                  <button type="button" data-map-tool="pen" title="Lápiz" aria-label="Lápiz" aria-pressed="true" class="is-active"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m16 3 5 5-12 12-6 1 1-6Z"/><path d="m14 5 5 5"/></svg></button>
-                  <button type="button" data-map-tool="line" title="Línea" aria-label="Línea" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m4 20 16-16"/><circle cx="4" cy="20" r="1"/><circle cx="20" cy="4" r="1"/></svg></button>
-                  <button type="button" data-map-tool="arrow" title="Flecha" aria-label="Flecha" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 20 20 4M8 4h12v12"/></svg></button>
-                  <button type="button" data-map-tool="rectangle" title="Rectángulo" aria-label="Rectángulo" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="1"/></svg></button>
-                  <button type="button" data-map-tool="circle" title="Círculo" aria-label="Círculo" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/></svg></button>
-                  <button type="button" data-map-tool="eraser" title="Borrador" aria-label="Borrador" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m14 3 7 7-11 11H6l-4-4Z"/><path d="m7 12 7 7M10 21h12"/></svg></button>
-                  <button type="button" data-map-tool="text" title="Texto libre" aria-label="Texto libre" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m2 19 5-14 5 14M4 14h6M21 19v-8M21 15a4 4 0 1 0-8 0 4 4 0 0 0 8 0"/></svg></button>
-                  <label title="Color"><input type="color" data-map-color value="#df1f29" aria-label="Color"></label>
-                  <label title="Grosor"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 5h18M3 12h18M3 19h18"/><path d="M3 12h18" stroke-width="3"/><path d="M3 19h18" stroke-width="5"/></svg><input type="range" data-map-size min="1" max="40" value="5" aria-label="Grosor"><output data-map-size-label>5 px</output></label>
-                  <button type="button" data-map-fill-toggle title="Relleno: sin relleno" aria-label="Relleno: sin relleno" aria-haspopup="listbox" aria-expanded="false" aria-controls="adminMapFillOptions"><svg data-map-fill-icon viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16"/><path d="m5 19 14-14"/></svg></button>
-                  <button type="button" data-map-action="undo" title="Deshacer" aria-label="Deshacer" disabled><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9 5-6 6 6 6"/><path d="M3 11h11a6 6 0 0 1 6 6v2"/></svg></button>
-                  <button type="button" data-map-action="redo" title="Rehacer" aria-label="Rehacer" disabled><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m15 5 6 6-6 6"/><path d="M21 11H10a6 6 0 0 0-6 6v2"/></svg></button>
-                  <button type="button" data-map-action="clear" title="Limpiar mapa" aria-label="Limpiar mapa" ><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/></svg></button>
-                  <button type="button" class="admin-map-fullscreen-button" data-map-action="fullscreen" title="Pantalla completa" aria-label="Pantalla completa" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path data-map-fullscreen-icon d="M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5"/></svg></button>
-                </div>
-                <div class="admin-map-fill-menu" id="adminMapFillOptions" data-map-fill-menu role="listbox" aria-label="Relleno de rectángulos y círculos" hidden>
-                  <button type="button" class="admin-map-fill-option" role="option" data-map-fill="none" aria-label="Sin relleno" title="Sin relleno" aria-selected="true" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16"/><path d="m5 19 14-14"/></svg></button>
-                  <button type="button" class="admin-map-fill-option" role="option" data-map-fill="hatched" aria-label="Translúcido y rayado a 45°" title="Translúcido y rayado a 45°" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" fill="currentColor" fill-opacity=".18"/><path d="m4 10 6-6M4 16 16 4M6 20 20 6m-8 14 8-8m-2 8 2-2"/></svg></button>
-                  <button type="button" class="admin-map-fill-option" role="option" data-map-fill="solid" aria-label="Sólido" title="Sólido" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" fill="currentColor"/></svg></button>
-                </div>
-                <div class="admin-map-canvas-wrap">
-                  <div class="admin-map-viewport">
-                  <div class="admin-map-canvas-stage">
-                    <img class="admin-map-background" src="assets/maps/carto-orto-detalle.png" alt="" draggable="false">
-                    <canvas width="1600" height="1131" aria-label="Lienzo de dibujo sobre el plano del campo. Usa el ratón o un dedo para dibujar."></canvas>
-                  </div>
-                  </div>
-                  <div class="admin-map-zoom" role="group" aria-label="Zoom del mapa">
-                    <button type="button" data-map-action="zoom-in" title="Acercar mapa" aria-label="Acercar mapa">+</button>
-                    <button type="button" data-map-action="zoom-out" title="Alejar mapa" aria-label="Alejar mapa" disabled>−</button>
-                  </div>
-                </div>
-                <p class="admin-map-load-error" role="alert" hidden>No se ha podido cargar el plano del campo. Recarga la página para volver a intentarlo.</p>
-                <div class="burnout-popup" data-map-clear-modal aria-hidden="true">
-                  <div class="burnout-popup__overlay" data-map-clear-close></div>
-                  <div class="burnout-popup__dialog" role="dialog" aria-modal="true" aria-labelledby="mapClearTitle" aria-describedby="mapClearDescription">
-                    <div class="burnout-popup__header">
-                      <h2 id="mapClearTitle">Eliminar anotaciones</h2>
-                      <button type="button" class="burnout-popup__close" data-map-clear-close aria-label="Cerrar ventana"><span aria-hidden="true">&times;</span></button>
-                    </div>
-                    <div class="burnout-popup__body"><p id="mapClearDescription">¿Eliminar todas las anotaciones? El plano se conservará y podrás deshacer esta acción.</p></div>
-                    <div class="burnout-popup__actions">
-                      <button type="button" class="admin-login-submit" data-map-clear-confirm>Aceptar</button>
-                      <button type="button" class="admin-back-link" data-map-clear-close data-map-clear-cancel>Cancelar</button>
-                    </div>
-                  </div>
-                </div>
-                <div class="admin-gallery-modal admin-map-text-modal burnout-popup" data-map-text-modal aria-hidden="true">
-                  <div class="admin-gallery-modal__overlay burnout-popup__overlay" data-map-text-close></div>
-                  <div class="admin-gallery-modal__dialog burnout-popup__dialog" role="dialog" aria-modal="true" aria-labelledby="mapTextTitle">
-                    <div class="admin-gallery-modal__header burnout-popup__header">
-                      <h2 id="mapTextTitle">Añadir texto</h2>
-                      <button class="burnout-popup__close" type="button" data-map-text-close aria-label="Cerrar ventana"><span aria-hidden="true">&#215;</span></button>
-                    </div>
-                    <form data-map-text-form>
-                      <div class="admin-login-field">
-                        <label for="mapTextInput">Escribe el texto que quieres añadir al mapa:</label>
-                        <input id="mapTextInput" type="text" required autocomplete="off" data-map-text-input>
-                      </div>
-                      <div class="admin-gallery-modal__actions burnout-popup__actions">
-                        <button class="admin-login-submit" type="submit">Aceptar</button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-                </div>
+                <?php burnout_render_map('hq-admin-map'); ?>
               </section>
               <?php require __DIR__ . '/config/hq_panels.php'; ?>
             </div>
@@ -214,6 +148,7 @@ header('Cache-Control: no-store');
     <script type="text/javascript" src="assets/js/jquery-3.7.1.min.js"></script>
     <script type="text/javascript" src='assets/js/plugins.min.js'></script>
     <script type="text/javascript" src="assets/js/main.js"></script>
+    <script src="assets/js/map.js"></script>
     <script type="text/javascript" src="assets/js/admin_mapainteractivo.js"></script>
     <script src="assets/js/hq.js"></script>
   </body>

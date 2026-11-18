@@ -46,6 +46,7 @@ if (in_array('--install-local', $argv, true)) {
         $pdo->exec(file_get_contents(__DIR__ . '/../database/migrations/2026_11_03_hq_deleted_missions.sql'));
     }
     $pdo->exec(file_get_contents(__DIR__ . '/../database/migrations/2026_11_03_add_hq_maps.sql'));
+    $pdo->exec(file_get_contents(__DIR__ . '/../database/migrations/2026_11_18_hq_mission_maps.sql'));
     $column = $pdo->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hq_missions' AND COLUMN_NAME = 'sort_order'")->fetchColumn();
     if (!$column) $pdo->exec(file_get_contents(__DIR__ . '/../database/migrations/2026_11_03_hq_mission_order.sql'));
     $column = $pdo->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'hq_mission_catalog' AND COLUMN_NAME = 'category'")->fetchColumn();
@@ -147,6 +148,7 @@ try {
     hq_check($page->query('//main')->length === 1 && $page->query('//*[@data-map-panel]')->length === 5, 'Carga directa de HQ con un único main y cinco pestañas');
     hq_check($page->query('//*[@data-map-section="jugadores"]')->length === 1 && $page->query('//*[@data-hq-players-list]')->length === 2, 'Menú Jugadores con dos equipos');
     hq_check($page->query('//script[@src="assets/js/hq.js"]')->length === 1 && $page->query('//link[@href="assets/css/hq.css"]')->length === 1 && $page->query('//*[@data-hq-console]')->length === 1, 'El HTML incluye el contenedor y los recursos para navegación parcial');
+    hq_check($page->query('//*[@data-burnout-map and @data-map-mode="edit"]')->length === 2 && $page->query('//link[@href="assets/css/map.css"]')->length === 1 && $page->query('//script[@src="assets/js/admin_mapainteractivo.js"]/preceding-sibling::script[@src="assets/js/map.js"]')->length === 1, 'Administración usa el componente y carga su núcleo antes del adaptador');
     $seenIds = [];
     foreach ($page->query('//*[@id]') as $element) {
         $elementId = $element->getAttribute('id');
@@ -163,11 +165,12 @@ try {
     hq_check($page->query('//*[@data-hq-catalog-browser="import"]//*[@data-hq-table-size]')->length === 0 && $page->query('//*[@data-hq-catalog-browser="manage"]//*[@data-hq-table-size]')->length === 1, 'Importar mantiene cinco filas fijas y Gestionar permite elegir');
     $page = hq_page($alpha, 'hq_equipo.php');
     hq_check($page->query('//main')->length === 1 && $page->query('//*[@data-hq-form="login"]')->length === 1 && $page->query('//*[@data-map-panel="ajustes"]')->length === 0, 'Carga de enlace sin herramientas administrativas');
+    hq_check($page->query('//link[@href="assets/css/map.css"]')->length === 1 && $page->query('//script[@src="assets/js/hq.js"]/preceding-sibling::script[@src="assets/js/map.js"]')->length === 1, 'Enlace HQ carga el mismo CSS y núcleo compartido antes de HQ');
     hq_check($page->query('//details[contains(@class,"hq-team-roster") and not(@open)]')->length === 1, 'Jugadores plegado por defecto en el enlace');
     hq_check($page->query('//*[@data-hq-signal and @hidden]')->length === 1, 'Indicador de canal oculto en el enlace');
     hq_check($page->query('//*[@data-hq-role-choice]')->length === 5 && $page->query('//*[@data-hq-role-popup]//select')->length === 0, 'Popup con cinco iconos y sin selector');
     hq_check($page->query('//details[contains(@class,"hq-team-map-section")]/preceding-sibling::details[1][@data-map-panel="misiones"]')->length === 1, 'Mapa del enlace colocado debajo de Misiones');
-    hq_check($page->query('//*[@data-hq-team-map]//*[@data-hq-map-view]')->length === 3 && $page->query('//*[@data-hq-team-map]//canvas')->length === 0 && $page->query('//*[@data-hq-team-map]//*[@data-map-tool]')->length === 0, 'Visor de mapa con zoom y pantalla completa, sin editor');
+    hq_check($page->query('//*[@data-burnout-map and @data-map-mode="readonly"]//*[@data-map-action]')->length === 3 && $page->query('//*[@data-burnout-map and @data-map-mode="readonly"]//canvas')->length === 0 && $page->query('//*[@data-burnout-map and @data-map-mode="readonly"]//*[@data-map-tool]')->length === 0, 'Componente de mapa en lectura con zoom y pantalla completa, sin editor');
     hq_check($page->query('//details[@data-map-panel="canales"]/summary/h2[text()="Canales"]')->length === 1, 'El enlace muestra Canales');
     [$status] = hq_request($alpha, 'list');
     hq_check($status === 401, 'Sin sesión administrativa no se enumeran partidas');
@@ -393,7 +396,30 @@ try {
     $testTitle = 'HQ CATALOGO TEST ' . bin2hex(random_bytes(5));
     [$status, $createdCatalog] = hq_request($admin, 'catalog_save', ['title' => $testTitle, 'briefing' => 'Guion de catálogo de prueba'], true);
     $catalogId = (int) $createdCatalog['catalog_id'];
+    $catalogCreated[] = $catalogId;
     hq_check($status === 200 && $catalogId > 0, 'Ajustes crea una misión de catálogo sin depender de un evento');
+    $chunk = static fn (string $type, string $data): string => pack('N', strlen($data)) . $type . $data . pack('N', crc32($type . $data));
+    $missionPng = 'data:image/png;base64,' . base64_encode("\x89PNG\r\n\x1a\n" . $chunk('IHDR', pack('NNCCCCC', 1600, 1131, 8, 6, 0, 0, 0)) . $chunk('IDAT', gzcompress(str_repeat("\0", (1600 * 4 + 1) * 1131))) . $chunk('IEND', ''));
+    [$status, $emptyMap] = hq_request($admin, 'catalog_map', ['catalog_id' => $catalogId]);
+    hq_check($status === 200 && $emptyMap['annotations'] === null, 'Misión nueva sin dibujo heredado');
+    [$status] = hq_request($admin, 'catalog_map_save', ['catalog_id' => $catalogId, 'annotations' => $missionPng], true);
+    hq_check($status === 200, 'Guarda mapa independiente de la misión');
+    [$status, $storedMap] = hq_request($admin, 'catalog_map', ['catalog_id' => $catalogId]);
+    hq_check($status === 200 && $storedMap['annotations'] === $missionPng, 'Recupera exactamente el PNG guardado');
+    [$status] = hq_request($alpha, 'catalog_map', ['operation_id' => $id, 'catalog_id' => $catalogId], false, true);
+    hq_check($status === 403, 'Enlace de equipo no recibe mapas del catálogo');
+    [$status] = hq_request($alpha, 'catalog_map_save', ['operation_id' => $id, 'catalog_id' => $catalogId, 'annotations' => $missionPng], true, true);
+    hq_check($status === 403, 'Enlace de equipo no escribe mapas del catálogo');
+    [$status] = hq_request($admin, 'catalog_map_save', ['catalog_id' => $catalogId, 'annotations' => $missionPng, 'csrf_token' => 'incorrecto'], true);
+    hq_check($status === 403, 'CSRF protege el mapa de misión');
+    foreach ([['catalog_id' => ['1'], 'annotations' => $missionPng], ['catalog_id' => $catalogId, 'annotations' => $png], ['catalog_id' => $catalogId, 'annotations' => ['PNG']]] as $invalidMap) {
+        [$status] = hq_request($admin, 'catalog_map_save', $invalidMap, true);
+        hq_check($status === 422, 'Valida identificador, tipo y dimensiones del mapa de misión');
+    }
+    [$status, $draftCatalog] = hq_request($admin, 'catalog_save', ['title' => $testTitle . ' MAPA', 'briefing' => 'Nueva misión con mapa', 'annotations' => $missionPng], true);
+    hq_check($status === 200, 'Crea misión nueva y mapa en la misma transacción');
+    [$status, $draftMap] = hq_request($admin, 'catalog_map', ['catalog_id' => $draftCatalog['catalog_id']]);
+    hq_check($status === 200 && $draftMap['annotations'] === $missionPng, 'Recupera el dibujo de una misión creada con mapa');
     [$status] = hq_request($admin, 'catalog_save', ['catalog_id' => $catalogId, 'title' => $testTitle, 'briefing' => 'Guion de catálogo editado', 'category' => $catalogState['categories'][0], 'mission_type' => 'Reconocimiento'], true);
     hq_check($status === 200, 'Ajustes edita un guion del catálogo');
     [$status, $classified] = hq_request($admin, 'catalog');
@@ -411,6 +437,24 @@ try {
     hq_check($status === 200, 'Importación de una misión desde el catálogo');
     [$status, $adminState] = hq_request($admin, 'state', ['operation_id' => $id, 'channel' => 'alpha']);
     $importedMission = array_values(array_filter($adminState['missions'], static fn ($mission) => $mission['title'] === $testTitle))[0];
+    $previousActive = array_values(array_filter($adminState['missions'], static fn ($mission) => $mission['team'] === 'alpha' && $mission['status'] === 'active'));
+    foreach ($previousActive as $activeMission) hq_request($admin, 'mission_status', ['operation_id' => $id, 'mission_id' => $activeMission['id'], 'status' => 'reset'], true);
+    hq_request($admin, 'mission_status', ['operation_id' => $id, 'mission_id' => $importedMission['id'], 'status' => 'active'], true);
+    [$mapStatus, $teamMap] = hq_request($alpha, 'team_map', ['operation_id' => $id, 'team' => 'bravo', 'catalog_id' => $draftCatalog['catalog_id']], false, true);
+    hq_check($mapStatus === 200 && $teamMap['mission_map']['mission_id'] === (int) $importedMission['id'] && $teamMap['mission_map']['annotations'] === $missionPng, 'El enlace recibe el mapa de su misión activa e ignora identificadores manipulados');
+    [$mapStatus, $teamMapState] = hq_request($alpha, 'state', ['operation_id' => $id], false, true);
+    hq_check($mapStatus === 200 && $teamMapState['mission_map']['version'] === hash('sha256', base64_decode(substr($missionPng, 22))) && !array_key_exists('annotations', $teamMapState['mission_map']), 'El sondeo solo incluye identidad y versión del mapa propio');
+    [$mapStatus, $otherMap] = hq_request($bravo, 'team_map', ['operation_id' => $id, 'team' => 'alpha', 'mission_id' => $importedMission['id']], false, true);
+    hq_check($mapStatus === 200 && ($otherMap['mission_map']['mission_id'] ?? null) !== (int) $importedMission['id'] && ($otherMap['mission_map']['annotations'] ?? null) === null, 'Bravo no recibe el mapa de Alpha');
+    [$mapStatus] = hq_request($alpha, 'team_map', ['operation_id' => $id], true, true);
+    hq_check($mapStatus === 405, 'El mapa de enlace solo permite lectura');
+    hq_request($admin, 'mission_status', ['operation_id' => $id, 'mission_id' => $importedMission['id'], 'status' => 'reset'], true);
+    [$mapStatus, $noMap] = hq_request($alpha, 'team_map', ['operation_id' => $id], false, true);
+    hq_check($mapStatus === 200 && $noMap['mission_map'] === null, 'Sin misión activa desaparece el mapa de misión');
+    foreach ($previousActive as $activeMission) {
+        hq_request($admin, 'mission_status', ['operation_id' => $id, 'mission_id' => $activeMission['id'], 'status' => 'active'], true);
+        if ($activeMission['acknowledged_at'] !== null) hq_request($alpha, 'ack', ['operation_id' => $id, 'mission_id' => $activeMission['id']], true, true);
+    }
     hq_check($importedMission['title'] === $testTitle && $importedMission['briefing'] === 'Guion de catálogo editado' && (int) $importedMission['is_imported'] === 1, 'La importación usa el texto del servidor e ignora campos manipulados');
     [$status] = hq_request($admin, 'mission_update', ['operation_id' => $id, 'mission_id' => $importedMission['id'], 'title' => 'Manipulado', 'briefing' => 'Manipulado'], true);
     hq_check($status === 422, 'Una misión importada no se convierte en manual ni permite cambiar su texto');

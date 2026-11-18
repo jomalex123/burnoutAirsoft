@@ -44,6 +44,10 @@ La documentación puede estar desactualizada. Si difiere del código, contrastar
   de `admin.css`. Respetar los tamaños propios de iconos compactos, cierres y paginación.
 - Reutilizar `.burnout-popup*` de `style.css` para ventanas nuevas. Los títulos y el cierre
   comparten estilo; no sobrescribirlos desde CSS de página. Gestionar foco, Tab, Escape y retorno del foco.
+- En los popups de confirmación, colocar **Cancelar a la izquierda y Aceptar a la derecha**,
+  usando `.burnout-popup__actions.burnout-popup__actions--split`. Mantener ese orden
+  también en el DOM y en la adaptación móvil. Reutilizar los estilos de botón primario
+  y secundario existentes, sin crear variantes de página para cambiar su aspecto.
 
 ## JavaScript y navegación parcial
 

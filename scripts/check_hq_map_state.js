@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
-const source = fs.readFileSync(path.join(__dirname, '../assets/js/admin_mapainteractivo.js'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, '../assets/js/map.js'), 'utf8');
 let pixels = 'empty';
 const context = {
     Map, drawing: false, textPosition: null, busy: false,
@@ -33,7 +33,7 @@ vm.runInContext(source.slice(source.indexOf('        var mapId ='), source.index
     assert.equal(pixels, 'empty');
     assert.equal(context.busy, true);
     context.root.isConnected = false;
-    context.window.initAdminMapaInteractivoPage.cleanup();
+    context.destroyEditor();
     await context.root.hqMap.load(1);
     assert.equal(pixels, 'empty');
     assert.ok(!/fetch\(|map_save|mapChanged|saveTimer|beforeunload/.test(source));

@@ -1,5 +1,13 @@
 # Contexto del proyecto Burnout Airsoft
 
+Los mapas del catálogo de misiones se editan en un popup desde «Editar misión» y se
+consultan en lectura desde la columna «Mapa» de «Importar misión». Se guardan como
+PNG en `hq_mission_maps` mediante endpoints exclusivos de administración. El mapa
+general del HQ conserva sus anotaciones solo en memoria. El mapa del enlace HQ carga
+en lectura el dibujo de la misión activa de su propio equipo, mediante `team_map`,
+y lo retira si deja de haber una misión activa. Ver `docs/hq.md` y la
+migración `2026_11_18_hq_mission_maps.sql` (aplicada únicamente en local).
+
 ## Entorno local actual
 
 El usuario utiliza XAMPP en local, no Docker. Usar Apache y MySQL de XAMPP, PHP en
@@ -35,6 +43,9 @@ proyecto, leer este documento y contrastar los cambios con los patrones descrito
 - Frontend sin bundler: HTML, CSS y JavaScript directo.
 - HQ usa Canvas 2D, Pointer Events, Fullscreen API, Fetch, URLSearchParams y JSON nativos.
   No requiere Node en servidor, WebSockets ni nuevos paquetes.
+- Los mapas se renderizan con `config/map_component.php` y comparten `assets/js/map.js`
+  y `assets/css/map.css`. `initBurnoutMapsPage` se ejecuta antes del adaptador
+  `initAdminMapaInteractivoPage` y de `initHqPage`. Enlace HQ usa el modo lectura.
 - Node.js solo ejecuta scripts de regresión con sus módulos integrados.
 - Diagnóstico local 03/11/2026: PHP 8.0.30; actualizar el entorno a una rama con soporte.
 - Librerías JS/CSS locales:
@@ -311,6 +322,7 @@ Usado en `registro.html`.
 Todos los popups nuevos deben reutilizar el componente `.burnout-popup` de `assets/css/style.css`, ya aplicado en administración, HQ, inscripción, galería e Instagram. No copiar los estilos de otra página ni crear otro estilo de cierre. Las clases antiguas se mantienen como hooks de JavaScript o variantes de contenido.
 
 - Estructura: `.burnout-popup`, `.burnout-popup__overlay`, `.burnout-popup__dialog`, `.burnout-popup__header`, `.burnout-popup__body` y `.burnout-popup__actions`. Usar `.burnout-popup__actions--split` para dos acciones separadas.
+- Estándar de confirmación: **Cancelar a la izquierda y Aceptar a la derecha**, con `.burnout-popup__actions--split`. Cancelar debe ir primero y Aceptar segundo en el DOM; conservar el orden en móvil y los estilos primario/secundario existentes. No agrupar ambos botones a la derecha ni crear estilos específicos para esta distribución.
 - Cierre: botón `type="button"` con `.burnout-popup__close`, `aria-label="Cerrar ventana"` y `<span aria-hidden="true">&times;</span>`. Es cuadrado, blanco, con borde gris y cruz negra; al hacer hover, borde y cruz pasan a rojo `#df1f29`, como «Volver al panel». Mantener el indicador de foco accesible. No sobrescribir su estilo desde CSS de página.
 - Diálogo: `role="dialog"`, `aria-modal="true"` y `aria-labelledby` apuntando a un título único. El formulario y sus validaciones pertenecen a la funcionalidad; las acciones quedan abajo a la derecha con separación respecto al contenido.
 - Estado estándar: `.is-open` y `aria-hidden="false"` al abrir; retirar la clase y poner `aria-hidden="true"` al cerrar. Mantener el código de apertura/cierre existente si se amplía un popup actual. Las galerías conservan su apertura por `display` y sus variantes para imágenes.
@@ -328,7 +340,10 @@ Plantilla mínima (añadir los eventos de la funcionalidad sin duplicar iniciali
       <button class="burnout-popup__close" type="button" data-popup-close aria-label="Cerrar ventana"><span aria-hidden="true">&times;</span></button>
     </div>
     <div class="burnout-popup__body">Contenido</div>
-    <div class="burnout-popup__actions"><button type="button">Aceptar</button></div>
+    <div class="burnout-popup__actions burnout-popup__actions--split">
+      <button type="button" data-popup-close>Cancelar</button>
+      <button type="button">Aceptar</button>
+    </div>
   </div>
 </div>
 ```

@@ -1,5 +1,13 @@
 # Base de datos y entornos
 
+### Mapas de misiones (18/11/2026)
+
+`migrations/2026_11_18_hq_mission_maps.sql` crea `hq_mission_maps`, con un PNG de
+anotaciones por entrada del catálogo. Es independiente de `hq_maps`, que se conserva
+por compatibilidad: el mapa general del HQ sigue trabajando en memoria.
+La migración está aplicada en local con copia previa; PRE y PRO quedan pendientes.
+Para instalaciones existentes, aplicar este SQL después de crear el catálogo HQ.
+
 El entorno de este equipo es XAMPP: Apache, PHP en `D:\xampp\php\php.exe` y MySQL
 compatible en `127.0.0.1:3306`. No arrancar Docker para trabajar aquí. Docker es una
 alternativa descrita en [README.md](../README.md).

@@ -25,6 +25,7 @@
 })(window);
 
 function InitPage() {
+    if (typeof window.initBurnoutMapsPage === 'function') { window.initBurnoutMapsPage(); }
     if (typeof window.initAdminMapaInteractivoPage === 'function') {
         window.initAdminMapaInteractivoPage();
     }

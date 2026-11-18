@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__ . '/map_component.php';
 
 // Incluido por admin_hq.php y hq_equipo.php; no se sirve directamente.
 $hqTeamView = $hqTeamView ?? false;
@@ -78,21 +79,7 @@ $hqTeamView = $hqTeamView ?? false;
     <details class="hq-team-accordion hq-team-map-section">
       <summary class="hq-team-accordion-heading"><h2>Mapa</h2><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
       <div class="hq-team-accordion-body">
-        <div class="hq-team-map" data-hq-team-map>
-          <div class="hq-team-map-toolbar" role="group" aria-label="Controles del mapa">
-            <button type="button" data-hq-map-view="zoom-out" title="Alejar mapa" aria-label="Alejar mapa" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
-            <output data-hq-map-zoom aria-label="Nivel de zoom">100 %</output>
-            <button type="button" data-hq-map-view="zoom-in" title="Acercar mapa" aria-label="Acercar mapa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></button>
-            <button type="button" class="hq-team-map-fullscreen" data-hq-map-view="fullscreen" title="Pantalla completa" aria-label="Pantalla completa" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path data-hq-map-fullscreen-icon d="M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5"/></svg></button>
-          </div>
-          <div class="hq-team-map-viewport" data-hq-map-viewport tabindex="0" role="region" aria-label="Mapa de la partida, solo lectura">
-            <div class="hq-team-map-stage" data-hq-map-stage>
-              <img src="assets/maps/carto-orto-detalle.png" alt="Plano del campo de Burnout Airsoft" draggable="false" data-hq-map-image>
-              <div class="hq-team-map-overlay" data-hq-map-overlay aria-hidden="true"></div>
-            </div>
-          </div>
-          <p class="hq-feedback is-error" data-hq-map-error role="status" hidden>No se ha podido cargar el mapa.</p>
-        </div>
+        <?php burnout_render_map('hq-team-map', false); ?>
       </div>
     </details>
     <details class="hq-team-accordion" data-map-panel="canales">
@@ -181,6 +168,7 @@ $hqTeamView = $hqTeamView ?? false;
           <label>Nombre de la misión<input name="title" maxlength="180" required></label>
           <label>Categoría<select name="category"><option value="">Sin clasificar</option></select></label>
           <label>Guion<textarea name="briefing" maxlength="8000" rows="6" required></textarea></label>
+          <button type="button" class="hq-mission-map-button" data-hq-mission-map-edit title="Editar mapa" aria-label="Editar mapa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 5-2-1-6 3v14l6-3 8 3 6-3v-5M8 4v14M16 16v5M22 7c0 3-5 7-5 7s-5-4-5-7a5 5 0 0 1 10 0ZM19 7a2 2 0 1 1-4 0 2 2 0 0 1 4 0Z"/></svg></button>
           <p class="hq-feedback" data-hq-catalog-editor-feedback role="status"></p>
           <div class="burnout-popup__actions"><button class="admin-login-submit" type="submit">Guardar misión</button></div>
         </form>
@@ -217,6 +205,24 @@ $hqTeamView = $hqTeamView ?? false;
           <p class="hq-muted" data-hq-import-feedback role="status"></p>
           <div class="burnout-popup__actions"><button type="submit" data-hq-import-accept disabled>IMPORTAR</button></div>
         </form>
+      </div>
+    </div>
+    <div class="burnout-popup" data-hq-access-popup aria-hidden="true">
+      <div class="burnout-popup__overlay" data-hq-access-close></div>
+      <div class="burnout-popup__dialog" role="dialog" aria-modal="true" aria-labelledby="hqAccessConfirmTitle" aria-describedby="hqAccessConfirmDescription">
+        <div class="burnout-popup__header"><h2 id="hqAccessConfirmTitle">Generar c&oacute;digo</h2><button class="burnout-popup__close" type="button" data-hq-access-close aria-label="Cerrar ventana"><span aria-hidden="true">&times;</span></button></div>
+        <div class="burnout-popup__body"><p id="hqAccessConfirmDescription">&iquest;Generar un c&oacute;digo para el equipo <strong data-hq-access-confirm-team></strong>? Se invalidar&aacute; su c&oacute;digo anterior.</p></div>
+        <div class="burnout-popup__actions burnout-popup__actions--split"><button class="admin-back-link" type="button" data-hq-access-close>Cancelar</button><button class="admin-login-submit" type="button" data-hq-access-confirm>Aceptar</button></div>
+      </div>
+    </div>
+    <div class="burnout-popup hq-mission-map-popup" data-hq-mission-map-popup aria-hidden="true">
+      <div class="burnout-popup__overlay" data-hq-mission-map-close></div>
+      <div class="burnout-popup__dialog" role="dialog" aria-modal="true" aria-labelledby="hqMissionMapTitle">
+        <div class="burnout-popup__header"><h2 id="hqMissionMapTitle">Mapa de misi&oacute;n</h2><button class="burnout-popup__close" type="button" data-hq-mission-map-close aria-label="Cerrar ventana"><span aria-hidden="true">&times;</span></button></div>
+        <div data-hq-mission-map-editable><?php burnout_render_map('hq-mission-editor'); ?></div>
+        <div data-hq-mission-map-preview hidden><?php burnout_render_map('hq-mission-preview', false); ?></div>
+        <p class="hq-feedback" data-hq-mission-map-feedback role="status"></p>
+        <div class="burnout-popup__actions"><button class="admin-login-submit" type="button" data-hq-mission-map-save>Guardar mapa</button></div>
       </div>
     </div>
     <?php endif; ?>

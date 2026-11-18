@@ -33,6 +33,7 @@ const catalog = Array.from({ length: 35 }, (_, i) => ({
 }));
 catalog.push({ id: 36, title: '<script>texto</script>', briefing: 'Sin etiquetas', category: '', mission_type: '' });
 const context = vm.createContext({ catalog, document: { createElement: element, createElementNS: element } });
+vm.runInContext(source.slice(source.indexOf('        function mapIcon('), source.indexOf('        async function closeMissionMap(')), context);
 vm.runInContext(source.slice(source.indexOf('        function normalizeCatalog('), source.indexOf('        function syncCatalogTables(')) + source.slice(source.indexOf('        function node('), source.indexOf('        function report(')), context);
 const state = { element: browser('manage'), filters: {}, sort: 'title', direction: 1, page: 1, size: 5, selected: 0 };
 const render = () => context.renderCatalogTable(state);
@@ -58,7 +59,8 @@ assert.equal(state.element.sorters[0].header.attributes['aria-sort'], 'descendin
 const imported = { element: browser('import'), filters: { category: 'Rescate' }, sort: 'title', direction: 1, page: 1, size: 5, selected: 1 };
 context.renderCatalogTable(imported);
 assert.equal(imported.element.parts.count.textContent, '17 de 36 misiones');
-assert.equal(imported.element.parts.body.children[0].children.length, 2);
+assert.equal(imported.element.parts.body.children[0].children.length, 3);
+assert.equal(imported.element.parts.body.children[0].children[2].children[0].dataset.hqMissionMapPreview, 1);
 assert.equal(imported.element.parts.body.children[0].attributes['aria-selected'], 'true');
 assert.equal(imported.element.parts.body.children[0].tabIndex, 0);
 assert.equal(imported.element.parts.body.children[0].dataset.hqCatalogItem, 1);

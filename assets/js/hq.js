@@ -12,6 +12,31 @@
         var cursor = 0, generation = 0, signature = '', timer, connected = false, connectionFailed = false, operation, operations = [];
         var selectionGeneration = 0;
         var rosterSignature = '';
+        var teamMapSignature = '', teamMapVersion = 0;
+        function clearTeamMissionMap() {
+            teamMapVersion++; teamMapSignature = '';
+            var map = root.querySelector('#hq-team-map');
+            if (map && map.burnoutMap) map.burnoutMap.setAnnotations(null);
+        }
+        async function updateTeamMissionMap(current, requestGeneration) {
+            if (!teamView) return;
+            var map = root.querySelector('#hq-team-map');
+            if (!map) return;
+            var component = window.burnoutCreateMap(map);
+            var key = current ? operationId + ':' + current.mission_id + ':' + current.version : 'empty';
+            if (key === teamMapSignature) return;
+            var version = ++teamMapVersion;
+            await component.setAnnotations(null);
+            teamMapSignature = '';
+            if (current && current.version) {
+                var response = await api('team_map');
+                if (!root.isConnected || version !== teamMapVersion || requestGeneration !== generation) return;
+                var saved = response.mission_map;
+                if (!saved || saved.mission_id !== current.mission_id || saved.version !== current.version) return;
+                await component.setAnnotations(saved.annotations);
+            }
+            if (root.isConnected && version === teamMapVersion && requestGeneration === generation) teamMapSignature = key;
+        }
         var rosterBusy = false;
         var teamRoster = [], rolePlayer = null, roleOpener = null;
         var rolePopup = root.querySelector('[data-hq-role-popup]');
@@ -25,6 +50,76 @@
         var filterOpener = null;
         var catalogEditor = root.querySelector('[data-hq-catalog-editor-popup]'), catalogEditorOpener = null, catalogEditorVersion = 0;
         var catalogDelete = root.querySelector('[data-hq-catalog-delete-popup]'), catalogDeleteId = 0, catalogDeleteOpener = null, catalogDeleting = false;
+        var accessPopup = root.querySelector('[data-hq-access-popup]'), accessResolve = null, accessOpener = null;
+        function closeAccessConfirm(accepted) {
+            if (!accessResolve) return;
+            var resolve = accessResolve; accessResolve = null;
+            accessPopup.classList.remove('is-open'); accessPopup.setAttribute('aria-hidden', 'true');
+            if (!root.querySelector('.burnout-popup.is-open')) document.body.classList.remove('burnout-popup-open');
+            if (accessOpener && accessOpener.isConnected) accessOpener.focus();
+            resolve(accepted === true);
+        }
+        function confirmAccess(button) {
+            if (accessResolve) return Promise.resolve(false);
+            accessOpener = button;
+            accessPopup.querySelector('[data-hq-access-confirm-team]').textContent = button.dataset.hqAccess === 'alpha' ? 'Alpha' : 'Bravo';
+            accessPopup.classList.add('is-open'); accessPopup.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('burnout-popup-open');
+            accessPopup.querySelector('.burnout-popup__actions [data-hq-access-close]').focus();
+            return new Promise(function (resolve) { accessResolve = resolve; });
+        }
+        var missionMapPopup = root.querySelector('[data-hq-mission-map-popup]');
+        var missionMapParent = null, missionMapOpener = null, missionMapId = 0, missionMapApi = null;
+        var missionMapGeneration = 0, missionMapBusy = false, missionMapReady = false, missionMapDraft = null;
+        function mapIcon(button) {
+            var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('aria-hidden', 'true');
+            var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', 'm10 5-2-1-6 3v14l6-3 8 3 6-3v-5M8 4v14M16 16v5M22 7c0 3-5 7-5 7s-5-4-5-7a5 5 0 0 1 10 0ZM19 7a2 2 0 1 1-4 0 2 2 0 0 1 4 0Z');
+            svg.append(path); button.append(svg);
+        }
+        async function closeMissionMap() {
+            if (missionMapBusy) return;
+            missionMapGeneration++;
+            if (document.fullscreenElement && missionMapPopup.contains(document.fullscreenElement)) await document.exitFullscreen();
+            if (missionMapApi) missionMapApi.closePopups();
+            missionMapPopup.classList.remove('is-open'); missionMapPopup.setAttribute('aria-hidden', 'true');
+            if (missionMapParent) {
+                missionMapParent.classList.add('is-open'); missionMapParent.setAttribute('aria-hidden', 'false');
+                document.body.classList.add('burnout-popup-open');
+            }
+            if (missionMapOpener && missionMapOpener.isConnected) missionMapOpener.focus();
+        }
+        async function openMissionMap(id, editable, opener) {
+            if (missionMapBusy) return;
+            var request = ++missionMapGeneration;
+            missionMapId = Number(id); missionMapOpener = opener;
+            missionMapParent = editable ? catalogEditor : importPopup;
+            missionMapParent.classList.remove('is-open'); missionMapParent.setAttribute('aria-hidden', 'true');
+            missionMapPopup.classList.add('is-open'); missionMapPopup.setAttribute('aria-hidden', 'false');
+            var edit = missionMapPopup.querySelector('[data-hq-mission-map-editable]');
+            var preview = missionMapPopup.querySelector('[data-hq-mission-map-preview]');
+            edit.hidden = !editable; preview.hidden = editable;
+            var save = missionMapPopup.querySelector('[data-hq-mission-map-save]');
+            save.hidden = !editable; save.disabled = true; missionMapReady = false;
+            var message = missionMapPopup.querySelector('[data-hq-mission-map-feedback]');
+            message.textContent = 'Cargando mapa…'; message.classList.remove('is-error');
+            missionMapPopup.querySelector('button[data-hq-mission-map-close]').focus();
+            missionMapApi = window.burnoutCreateMap((editable ? edit : preview).querySelector('[data-burnout-map]'));
+            // Ocultar el dibujo anterior mientras se recupera la misión elegida.
+            (editable ? edit : preview).style.visibility = 'hidden';
+            try {
+                var data = missionMapId ? await api('catalog_map', { catalog_id: missionMapId }) : { annotations: missionMapDraft };
+                if (!root.isConnected || request !== missionMapGeneration) return;
+                await missionMapApi.setAnnotations(data.annotations);
+                if (!root.isConnected || request !== missionMapGeneration) return;
+                missionMapApi.changeZoom(-3); missionMapReady = true;
+                save.disabled = false; message.textContent = '';
+                (editable ? edit : preview).style.visibility = '';
+            } catch (error) {
+                if (request === missionMapGeneration) { message.textContent = error.message; message.classList.add('is-error'); }
+            }
+        }
         function missionSource(form, item) {
             form.elements.catalog_id.value = item ? item.id : '';
             form.elements.title.readOnly = Boolean(item);
@@ -72,10 +167,16 @@
                         var path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); path.setAttribute('d', action[2]); svg.append(path); button.append(svg); actions.append(button);
                     });
                     cell.append(actions); row.append(cell);
+                } else {
+                    var mapCell = node('td', 'hq-mission-map-column');
+                    var mapButton = node('button', 'hq-mission-map-button'); mapButton.type = 'button';
+                    mapButton.dataset.hqMissionMapPreview = item.id;
+                    mapButton.title = 'Ver mapa'; mapButton.setAttribute('aria-label', 'Ver mapa: ' + item.title);
+                    mapIcon(mapButton); mapCell.append(mapButton); row.append(mapCell);
                 }
                 body.append(row);
             });
-            if (!items.length) { var row = node('tr'), cell = node('td', 'hq-muted', 'No hay misiones con estos filtros.'); cell.colSpan = browser.dataset.hqCatalogBrowser === 'manage' ? 3 : 2; row.append(cell); body.append(row); }
+            if (!items.length) { var row = node('tr'), cell = node('td', 'hq-muted', 'No hay misiones con estos filtros.'); cell.colSpan = 3; row.append(cell); body.append(row); }
             browser.querySelector('[data-hq-table-count]').textContent = items.length + ' de ' + catalog.length + ' misiones';
             var pageButtons = browser.querySelector('[data-hq-table-pages]'); pageButtons.replaceChildren();
             browser.querySelector('[data-hq-table-pagination]').hidden = pages <= 1;
@@ -184,6 +285,7 @@
         }
         function openCatalogEditor(id, opener) {
             catalogEditorVersion++;
+            missionMapDraft = null;
             catalogEditorOpener = opener; selectCatalogItem(id);
             catalogEditor.querySelector('#hqCatalogEditorTitle').textContent = id ? 'Editar misión' : 'Nueva misión';
             catalogEditor.querySelector('[data-hq-catalog-editor-feedback]').textContent = '';
@@ -201,6 +303,34 @@
             state.selected = item ? item.id : 0; renderCatalogTable(state);
         }
         if (!teamView) {
+            accessPopup.querySelectorAll('[data-hq-access-close]').forEach(function (button) { button.addEventListener('click', function () { closeAccessConfirm(false); }); });
+            accessPopup.querySelector('[data-hq-access-confirm]').addEventListener('click', function () { closeAccessConfirm(true); });
+            accessPopup.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); closeAccessConfirm(false); return; }
+                trapPopupFocus(event, accessPopup);
+            });
+            missionMapPopup.querySelectorAll('[data-hq-mission-map-close]').forEach(function (button) { button.addEventListener('click', closeMissionMap); });
+            missionMapPopup.addEventListener('keydown', function (event) {
+                if (event.target.closest('[data-map-clear-modal].is-open, [data-map-text-modal].is-open')) return;
+                if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); closeMissionMap(); return; }
+                // Los diálogos internos del componente gestionan su propio foco.
+                if (!missionMapPopup.querySelector('.burnout-map .burnout-popup.is-open')) trapPopupFocus(event, missionMapPopup);
+            });
+            missionMapPopup.querySelector('[data-hq-mission-map-save]').addEventListener('click', async function (event) {
+                if (missionMapBusy || !missionMapReady || !await missionMapApi.flush()) return;
+                var saveButton = missionMapPopup.querySelector('[data-hq-mission-map-save]');
+                missionMapBusy = true; saveButton.disabled = true;
+                try {
+                    var annotations = missionMapApi.exportAnnotations();
+                    if (missionMapId) await api('catalog_map_save', { catalog_id: missionMapId, annotations: annotations }, true);
+                    else missionMapDraft = annotations;
+                    missionMapBusy = false;
+                    if (root.isConnected) await closeMissionMap();
+                } catch (error) {
+                    var message = missionMapPopup.querySelector('[data-hq-mission-map-feedback]');
+                    message.textContent = error.message; message.classList.add('is-error');
+                } finally { missionMapBusy = false; saveButton.disabled = false; }
+            });
             root.querySelectorAll('[data-hq-catalog-browser]').forEach(function (element) {
                 var state = { element: element, filters: { search: '', category: '' }, sort: 'title', direction: 1, page: 1, size: 5, selected: 0, filterRoot: element.dataset.hqCatalogBrowser === 'manage' ? filterPopup : element };
                 catalogTables.push(state);
@@ -228,7 +358,7 @@
                     if (selectedRow) selectedRow.focus();
                 }
                 element.addEventListener('click', function (event) {
-                    if (event.target.closest('[data-hq-catalog-action]')) return;
+                    if (event.target.closest('[data-hq-catalog-action], [data-hq-mission-map-preview]')) return;
                     var sort = event.target.closest('[data-hq-table-sort]'), item = event.target.closest('[data-hq-catalog-item]'), page = event.target.closest('[data-hq-table-page]');
                     if (sort) { state.direction = state.sort === sort.dataset.hqTableSort ? -state.direction : 1; state.sort = sort.dataset.hqTableSort; state.page = 1; renderCatalogTable(state); }
                     if (page) {
@@ -320,59 +450,6 @@
         function setConnection(text, active) {
             signal.textContent = text;
             signal.classList.toggle('is-connected', active);
-        }
-        function setupTeamMap() {
-            var viewer = root.querySelector('[data-hq-team-map]');
-            if (!teamView || !viewer) return;
-            var viewport = viewer.querySelector('[data-hq-map-viewport]');
-            var stage = viewer.querySelector('[data-hq-map-stage]');
-            var image = viewer.querySelector('[data-hq-map-image]');
-            var zoomLabel = viewer.querySelector('[data-hq-map-zoom]');
-            var fullscreen = viewer.querySelector('[data-hq-map-view="fullscreen"]');
-            var zoomIn = viewer.querySelector('[data-hq-map-view="zoom-in"]');
-            var zoomOut = viewer.querySelector('[data-hq-map-view="zoom-out"]');
-            var errorMessage = viewer.querySelector('[data-hq-map-error]');
-            var zoom = 1;
-            function changeZoom(delta) {
-                var x = stage.offsetWidth ? (viewport.scrollLeft + viewport.clientWidth / 2) / stage.offsetWidth : .5;
-                var y = stage.offsetHeight ? (viewport.scrollTop + viewport.clientHeight / 2) / stage.offsetHeight : .5;
-                zoom = Math.max(1, Math.min(3, Math.round((zoom + delta) * 100) / 100));
-                stage.style.width = (zoom * 100) + '%';
-                viewport.scrollLeft = x * stage.offsetWidth - viewport.clientWidth / 2;
-                viewport.scrollTop = y * stage.offsetHeight - viewport.clientHeight / 2;
-                zoomLabel.textContent = Math.round(zoom * 100) + ' %';
-                zoomIn.disabled = zoom >= 3; zoomOut.disabled = zoom <= 1;
-            }
-            function syncFullscreen() {
-                var active = document.fullscreenElement === viewer;
-                var label = active ? 'Salir de pantalla completa' : 'Pantalla completa';
-                fullscreen.title = label; fullscreen.setAttribute('aria-label', label);
-                fullscreen.setAttribute('aria-pressed', String(active));
-                fullscreen.querySelector('[data-hq-map-fullscreen-icon]').setAttribute('d', active ? 'M3 8h5V3M16 3v5h5M21 16h-5v5M8 21v-5H3' : 'M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5');
-            }
-            fullscreen.disabled = !document.fullscreenEnabled || !viewer.requestFullscreen;
-            viewer.addEventListener('fullscreenchange', syncFullscreen);
-            viewer.addEventListener('click', async function (event) {
-                var button = event.target.closest('[data-hq-map-view]');
-                if (!button || button.disabled) return;
-                var action = button.dataset.hqMapView;
-                if (action === 'zoom-in' || action === 'zoom-out') { changeZoom(action === 'zoom-in' ? .25 : -.25); return; }
-                if (action !== 'fullscreen') return;
-                try {
-                    if (document.fullscreenElement === viewer) await document.exitFullscreen();
-                    else await viewer.requestFullscreen();
-                    syncFullscreen();
-                } catch (error) {
-                    errorMessage.textContent = 'No se ha podido cambiar a pantalla completa.'; errorMessage.hidden = false;
-                }
-            });
-            function imageState() {
-                errorMessage.textContent = 'No se ha podido cargar el mapa.';
-                errorMessage.hidden = Boolean(image.naturalWidth);
-            }
-            image.addEventListener('load', imageState); image.addEventListener('error', imageState);
-            if (image.complete) imageState();
-            syncFullscreen();
         }
         function playerRoleIcon(role) {
             var paths = {
@@ -557,6 +634,7 @@
             }
         }
         function resetChannel() {
+            if (teamView) clearTeamMissionMap();
             generation++;
             cursor = 0;
             signature = '';
@@ -709,6 +787,7 @@
                 renderMissions(data.missions);
                 renderMessages(data.messages);
                 renderTeamPlayers(data.roster || null);
+                await updateTeamMissionMap(data.mission_map || null, requestGeneration);
                 await loadPlayers();
             } catch (error) {
                 if (requestGeneration !== generation || !root.isConnected) return;
@@ -824,6 +903,7 @@
             event.preventDefault();
             var action = form.dataset.hqForm;
             var payload = Object.fromEntries(new FormData(form));
+            if (action === 'catalog_save' && missionMapDraft !== null) payload.annotations = missionMapDraft;
             if (action === 'mission') payload.status = event.submitter?.value || 'draft';
             if (action === 'message') payload.team = channel;
             var submitButtons = form.querySelectorAll('[type="submit"]');
@@ -858,6 +938,12 @@
         root.addEventListener('click', async function (event) {
             var button = event.target.closest('button');
             if (!button) return;
+            if (button.hasAttribute('data-hq-mission-map-edit')) {
+                openMissionMap(root.querySelector('[data-hq-form="catalog_save"]').elements.catalog_id.value, true, button); return;
+            }
+            if (button.hasAttribute('data-hq-mission-map-preview')) {
+                openMissionMap(button.dataset.hqMissionMapPreview, false, button); return;
+            }
             if (button.hasAttribute('data-hq-player-role')) { openRolePopup(button); return; }
             if (button.hasAttribute('data-hq-player-group')) {
                 selectedPlayerGroup = selectedPlayerGroup === Number(button.dataset.hqPlayerGroup) ? 0 : Number(button.dataset.hqPlayerGroup);
@@ -920,12 +1006,16 @@
             }
             if (!button.hasAttribute('data-hq-access') && !button.hasAttribute('data-hq-mission') && !button.hasAttribute('data-hq-logout')) return;
             if (button.dataset.hqStatus === 'delete' && !window.confirm('¿Marcar esta misión como eliminada? Se conservará tachada en el historial.')) return;
-            if (button.dataset.hqAccess && !window.confirm('¿Generar un código para ' + button.dataset.hqAccess.toUpperCase() + '? Se invalidará su código anterior.')) return;
+            if (button.dataset.hqAccess) {
+                var accessOperation = operationId;
+                if (!await confirmAccess(button) || accessOperation !== operationId || !root.isConnected) return;
+            }
             button.disabled = true;
             var selectedOperation = operationId;
             try {
                 if (button.hasAttribute('data-hq-logout')) {
-                    generation++;
+                    missionMapGeneration++;
+                generation++;
                     window.clearTimeout(timer);
                     await api('logout', {}, true);
                     connected = false;
@@ -955,6 +1045,8 @@
         document.addEventListener('visibilitychange', visibility);
         window.initHqPage.cleanup = function () {
             if (!root.isConnected) {
+                teamMapVersion++;
+                closeAccessConfirm(false);
                 generation++;
                 window.clearTimeout(timer);
                 document.removeEventListener('visibilitychange', visibility);
@@ -962,7 +1054,6 @@
             }
         };
         if (teamView) {
-            setupTeamMap();
             refresh();
         } else {
             root.querySelector('[data-hq-send]').disabled = true;

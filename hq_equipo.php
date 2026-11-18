@@ -15,7 +15,7 @@ header('Cache-Control: no-store');
     <link rel="stylesheet" href="assets/css/plugins.min.css">
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/admin.css">
-    <link rel="stylesheet" href="assets/css/admin_mapainteractivo.css">
+    <link rel="stylesheet" href="assets/css/map.css">
     <link rel="stylesheet" href="assets/css/hq.css">
   </head>
   <body>
@@ -89,6 +89,7 @@ header('Cache-Control: no-store');
     <script type="text/javascript" src='assets/js/plugins.min.js'></script>
     <script type="text/javascript" src="assets/js/main.js"></script>
 
+    <script src="assets/js/map.js"></script>
     <script src="assets/js/hq.js"></script>
   </body>
 </html>

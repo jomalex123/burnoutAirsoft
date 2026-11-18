@@ -105,20 +105,6 @@
 .hq-team-page .hq-team-accordion[open] { border-color: #df1f29; }
 .hq-team-accordion-body { padding: 18px; }
 .hq-team-accordion-body > .hq-missions { margin: 0; }
-.hq-team-map { background: #f4f4f4; border: 1px solid #ddd; }
-.hq-team-map-toolbar { display: flex; align-items: center; gap: 8px; padding: 10px; background: #fff; border-bottom: 1px solid #ddd; }
-.hq-console .hq-team-map-toolbar button { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 10px; margin: 0; }
-.hq-team-map-toolbar svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.hq-team-map-toolbar output { min-width: 52px; text-align: center; font-size: 14px; color: #555; }
-.hq-console .hq-team-map-toolbar .hq-team-map-fullscreen { margin-left: auto; }
-.hq-team-map-viewport { overflow: auto; max-height: 60vh; overscroll-behavior: contain; }
-.hq-team-map-stage { position: relative; width: 100%; }
-.hq-team-map-stage img { display: block; width: 100%; max-width: none; height: auto; user-select: none; }
-.hq-team-map-overlay { position: absolute; inset: 0; pointer-events: none; }
-.hq-team-map:fullscreen { display: flex; flex-direction: column; width: 100%; height: 100%; box-sizing: border-box; background: #f4f4f4; padding: 12px; }
-.hq-team-map:fullscreen .hq-team-map-toolbar { flex-shrink: 0; }
-.hq-team-map:fullscreen .hq-team-map-viewport { flex: 1; min-height: 0; max-height: none; }
-.hq-team-map button:focus-visible, .hq-team-map-viewport:focus-visible { outline: 2px solid #df1f29; outline-offset: -2px; }
 .hq-console button.hq-team-player-name { display: block; padding: 0; border: 0; background: transparent; color: #151515; text-align: left; font-weight: 700; text-transform: none; height: auto; overflow-wrap: anywhere; }
 .hq-console button.hq-team-player-name:not(:disabled):hover { background: transparent; color: #df1f29; }
 .hq-team-player-function { display: flex; align-items: center; }
@@ -229,3 +215,8 @@
 .hq-console .hq-catalog-row-actions button { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; min-height: 0; padding: 4px; border: 0; background: transparent; color: #555; }
 .hq-console .hq-catalog-row-actions button:not(:disabled):hover { background: transparent; color: #df1f29; }
 .hq-catalog-row-actions svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.hq-console button.hq-mission-map-button { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; width: 44px; height: 44px; padding: 9px; border: 1px solid #ddd; border-radius: 0; background: #fff; color: #555; }
+.hq-mission-map-button svg { flex: 0 0 24px; width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.hq-mission-map-column { width: 70px; text-align: center; }
+.hq-mission-map-popup > .burnout-popup__dialog { width: min(100%, 1200px); max-width: 1200px; }
+.hq-mission-map-popup > .burnout-popup__dialog > .burnout-popup__actions { justify-content: flex-end; }

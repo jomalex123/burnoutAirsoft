@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/config/hq.php';
 require_once __DIR__ . '/config/hq_players.php';
+require_once __DIR__ . '/config/hq_mission_maps.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -16,8 +17,8 @@ try {
         throw new BurnoutUserException('Método no permitido.');
     }
     $input = $method === 'POST' ? $_POST : $_GET;
-    $action = burnout_hq_choice($input, 'action', ['login', 'logout', 'list', 'state', 'select', 'settings', 'access', 'mission', 'mission_update', 'mission_status', 'ack', 'message', 'catalog', 'catalog_save', 'catalog_remove', 'map', 'map_save', 'mission_move', 'mission_remove', 'players', 'players_move', 'players_balance', 'player_role']);
-    if (($method === 'GET') !== in_array($action, ['list', 'state', 'catalog', 'map', 'players'], true)) {
+    $action = burnout_hq_choice($input, 'action', ['login', 'logout', 'list', 'state', 'team_map', 'select', 'settings', 'access', 'mission', 'mission_update', 'mission_status', 'ack', 'message', 'catalog_map', 'catalog_map_save', 'catalog', 'catalog_save', 'catalog_remove', 'map', 'map_save', 'mission_move', 'mission_remove', 'players', 'players_move', 'players_balance', 'player_role']);
+    if (($method === 'GET') !== in_array($action, ['list', 'state', 'team_map', 'catalog', 'catalog_map', 'map', 'players'], true)) {
         http_response_code(405);
         throw new BurnoutUserException('Método no permitido.');
     }
@@ -74,7 +75,7 @@ try {
             http_response_code(401);
             throw new BurnoutUserException('Accede de nuevo con el código de tu equipo.');
         }
-        if (!$admin && !in_array($action, ['state', 'ack', 'message', 'player_role'], true)) {
+        if (!$admin && !in_array($action, ['state', 'team_map', 'ack', 'message', 'player_role'], true)) {
             http_response_code(403);
             throw new BurnoutUserException('Esta acción corresponde a HQ.');
         }
@@ -131,11 +132,29 @@ try {
                 $image = $query->fetchColumn();
                 $result['annotations'] = $image === false ? null : 'data:image/png;base64,' . base64_encode($image);
             }
+        } elseif ($action === 'catalog_map' || $action === 'catalog_map_save') {
+            $catalogId = burnout_hq_id($input, 'catalog_id');
+            if ($action === 'catalog_map_save') {
+                $binary = burnout_hq_mission_map_png($input['annotations'] ?? null);
+                $pdo->beginTransaction();
+                $query = $pdo->prepare('SELECT id FROM hq_mission_catalog WHERE id = ? AND is_available = 1 FOR UPDATE');
+                $query->execute([$catalogId]);
+                if (!$query->fetchColumn()) { http_response_code(404); throw new BurnoutUserException('La misión ya no está disponible.'); }
+                burnout_hq_mission_map_store($catalogId, $binary);
+                $pdo->commit();
+            } else {
+                burnout_hq_catalog_item($catalogId);
+                $query = $pdo->prepare('SELECT annotations FROM hq_mission_maps WHERE catalog_id = ?');
+                $query->execute([$catalogId]);
+                $image = $query->fetchColumn();
+                $result['annotations'] = $image === false ? null : 'data:image/png;base64,' . base64_encode($image);
+            }
         } elseif ($action === 'catalog') {
             $result['missions'] = burnout_hq_catalog();
             $result['categories'] = burnout_hq_categories();
         } elseif ($action === 'catalog_save') {
             $catalogId = burnout_hq_id($input, 'catalog_id', true);
+            $mapBinary = array_key_exists('annotations', $input) ? burnout_hq_mission_map_png($input['annotations']) : null;
             $title = burnout_hq_text($input, 'title', 180);
             $briefing = burnout_hq_text($input, 'briefing', 8000);
             $classification = [];
@@ -169,6 +188,7 @@ try {
             }
             $query = $pdo->prepare('UPDATE hq_mission_catalog SET category = ? WHERE id = ?');
             $query->execute([$classification['category'], $catalogId]);
+            if ($mapBinary !== null) burnout_hq_mission_map_store($catalogId, $mapBinary);
             $pdo->commit();
             $result['catalog_id'] = $catalogId;
         } elseif ($action === 'catalog_remove') {
@@ -179,11 +199,16 @@ try {
         } elseif ($action === 'select') {
             $eventId = burnout_hq_id($input, 'event_id');
             $result['operation_id'] = burnout_hq_select_event($eventId);
+        } elseif ($action === 'team_map') {
+            if ($team === null) { http_response_code(403); throw new BurnoutUserException('Accede desde el enlace de equipo.'); }
+            burnout_hq_operation($id);
+            $result['mission_map'] = burnout_hq_team_mission_map($id, $team, true);
         } elseif ($action === 'state') {
             $channel = $team ?? burnout_hq_choice($input, 'channel', ['alpha', 'bravo']);
             $after = burnout_hq_id($input, 'after', true);
             $result = burnout_hq_state($id, $team, $channel, $after);
             if ($team !== null) {
+                $result['mission_map'] = burnout_hq_team_mission_map($id, $team);
                 $result['roster'] = burnout_hq_team_players((int) $result['operation']['event_id'], $team);
             }
         } else {

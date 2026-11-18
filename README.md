@@ -20,6 +20,7 @@ El entorno local habitual del proyecto utiliza **XAMPP**: Apache y MySQL locales
 - Jugadores en HQ: traslado de inscripciones completas entre Alpha/Bravo y reparto automático por puntos y roles, con asignación guardada por partida.
 - El enlace HQ muestra los jugadores en un panel plegable. Al pulsar un nombre, un popup con cinco iconos permite asignar Team Leader, Ingeniero, Radio Operator, Segundo TL o Médico a sus propios jugadores, sin modificar armas ni puntuaciones. Las filas con función se resaltan suavemente.
 - El enlace incluye un mapa de solo lectura debajo de Misiones, con zoom y pantalla completa. La sección de chat se llama Canales tanto en el enlace como en administración.
+- Los mapas comparten el componente `config/map_component.php`, `assets/js/map.js` y `assets/css/map.css`, con modos de edición y lectura y estado independiente por instancia.
 - Consulta, filtrado, ordenación, eliminación y exportación CSV/PDF de inscripciones, además de reenvío de notificaciones.
 
 ## Tecnologías

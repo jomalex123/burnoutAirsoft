@@ -387,3 +387,13 @@ UPDATE hq_mission_catalog SET category = 'Emboscadas e intercepciones' WHERE con
 UPDATE hq_mission_catalog SET category = 'Recogida de muestras' WHERE content_hash = '28649abb9fa33718f2d8352a0f2f66f5c162e85f9bb0be4ccd49ccf560de8de2';
 UPDATE hq_mission_catalog SET category = 'Recogida de muestras' WHERE content_hash = '87eaa9302ab09e3512e062ddef92161c08dc55ee819a4310e22ed301917fa6e5';
 UPDATE hq_mission_catalog SET category = 'Captura de vehículos y conductores' WHERE content_hash = 'c572db5bf7476d78821894b67fcb763b54e14be71731dd7d314b078f384ade04';
+
+-- Mapas del catalogo de misiones; independiente del mapa temporal de cada partida.
+CREATE TABLE IF NOT EXISTS hq_mission_maps (
+  catalog_id INT UNSIGNED NOT NULL,
+  annotations MEDIUMBLOB NOT NULL,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (catalog_id),
+  CONSTRAINT hq_mission_maps_catalog_fk FOREIGN KEY (catalog_id)
+    REFERENCES hq_mission_catalog(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
